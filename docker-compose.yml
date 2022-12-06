@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    tty: true
+    volumes:
+      - ./:/go/src/
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./env/app.env
+    depends_on:
+      - db
+  db:
+    image: arm64v8/mysql
+    #platform: linux/x86_64
+    restart: always
+    ports:
+      - "3306:3306"
+    env_file:
+      - ./env/db.env
