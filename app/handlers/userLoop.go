@@ -29,6 +29,15 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // userLoopの保存
+type S3Url struct {
+	Mp3  string `json:"mp3"`
+	Midi string `json:"midi"`
+}
+type LoopHandlerResponse struct {
+	UserLoopInput models.UserLoopInput `json:"user_loop_input"`
+	S3Url         S3Url                `json:"s3url"`
+}
+
 func LoopHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		//新規作成、更新
@@ -76,8 +85,14 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorJSON(w, err)
 		}
 	}
+	responseUri := models.UserLoopInput{}
+	responseUri.ApplyULtoULInput(ul)
+	response := LoopHandlerResponse{
+		UserLoopInput: responseUri,
+		S3Url:         S3Url{"mp3", "midi"},
+	}
 
-	utils.ResponseJSON(w, ul, http.StatusOK)
+	utils.ResponseJSON(w, response, http.StatusOK)
 }
 func getLoop(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
@@ -101,6 +116,10 @@ func getLoop(w http.ResponseWriter, r *http.Request) {
 	var ulInput = models.UserLoopInput{}
 	//ulをuliに変換
 	ulInput.ApplyULtoULInput(ul)
+	response := LoopHandlerResponse{
+		UserLoopInput: ulInput,
+		S3Url:         S3Url{"mp3", "midi"},
+	}
 
-	utils.ResponseJSON(w, ulInput, http.StatusOK)
+	utils.ResponseJSON(w, response, http.StatusOK)
 }
