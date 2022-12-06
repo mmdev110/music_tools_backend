@@ -4,25 +4,27 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"example.com/app/handlers"
 	"example.com/app/models"
+	"example.com/app/utils"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	//exec_code()
+	//AWS初期設定
+	utils.ConfigureAWS()
+	exec_code()
 	web_simple()
 }
 
 // 単純なコード
 func exec_code() {
 	fmt.Println("exec_code")
-	PORT := os.Getenv("MYSQL_PORT")
-	fmt.Printf("%s", PORT)
+	url, _ := utils.GenerateSignedUrl(1, "test.mp3", http.MethodGet, 100)
+	fmt.Println(url)
 }
 
 // DB接続無しのwebサーバ
