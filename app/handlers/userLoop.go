@@ -100,7 +100,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 		mp3Url = url
 	}
 	if ul.MidiPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.AudioPath, http.MethodPut, 15*60)
+		url, err := utils.GenerateSignedUrl(ul.ID, ul.MidiPath, http.MethodPut, 15*60)
 		if err != nil {
 			utils.ErrorJSON(w, fmt.Errorf("error at GenerateSignedUrl: %v", err))
 			return
@@ -144,7 +144,7 @@ func getLoop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if ul.MidiPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.AudioPath, http.MethodGet, 15*60)
+		url, err := utils.GenerateSignedUrl(ul.ID, ul.MidiPath, http.MethodGet, 15*60)
 		if err == nil {
 			midiUrl = url
 		}
