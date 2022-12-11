@@ -6,10 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
-	_ "github.com/aws/aws-sdk-go-v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -24,44 +22,42 @@ func ConfigureAWS() {
 
 }
 
-func GenerateSignedUrl(userId uint, fileName string, method string, seconds int64) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		log.Fatalf("failed to load configuration, %v", err)
+func GenerateSignedUrl(path string, method string, seconds time.Duration) (string, error) {
+	cfg, loadErr := config.LoadDefaultConfig(context.TODO())
+	if loadErr != nil {
+		log.Fatalf("failed to load configuration, %v", loadErr)
 	}
+	fmt.Printf("@@GenerateSignedUrl: %s %s\n", path, method)
 	Client = s3.NewFromConfig(cfg)
 	presignClient := s3.NewPresignClient(Client)
 	bucketName := os.Getenv("AWS_BUCKET_NAME")
-	key := getKey(userId, fileName)
-	fmt.Println(key)
+	var url string
+	var err error
 	if method == http.MethodGet {
-		presignedGetRequest, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+		presignedGetRequest, err1 := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
-			Key:    aws.String(key),
+			Key:    aws.String(path),
 		}, func(opts *s3.PresignOptions) {
-			opts.Expires = time.Duration(15 * time.Minute)
+			opts.Expires = seconds * time.Second
 		})
-		if err != nil {
-			log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, key, err)
-
-		}
-		return presignedGetRequest.URL, err
+		url = presignedGetRequest.URL
+		err = err1
 	} else if method == http.MethodPut {
-		presignedPutRequest, err := presignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
+		presignedPutRequest, err2 := presignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(bucketName),
-			Key:    aws.String(key),
+			Key:    aws.String(path),
 		}, func(opts *s3.PresignOptions) {
-			opts.Expires = time.Duration(15 * time.Minute)
+			opts.Expires = seconds * time.Second
 		})
-		if err != nil {
-			log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, key, err)
-
-		}
-		return presignedPutRequest.URL, err
+		url = presignedPutRequest.URL
+		err = err2
 	}
-	return "", fmt.Errorf("method %s not allowed", method)
-}
-
-func getKey(userId uint, fileName string) string {
-	return strconv.Itoa(int(userId)) + "/" + fileName
+	if err != nil {
+		log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, path, err)
+		return "", err
+	}
+	if url == "" {
+		return "", fmt.Errorf("method %s not allowed", method)
+	}
+	return url, nil
 }
