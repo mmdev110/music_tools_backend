@@ -1,22 +1,21 @@
 package models
 
 import (
-	"errors"
-	"os"
-	"strconv"
-
 	_ "golang.org/x/crypto/bcrypt"
 )
 
 // userLoopに登録されたオーディオファイル
 type UserLoopMidi struct {
-	ID           uint   `gorm:"primarykey" json:"id"`
-	UserLoopId   uint   `gorm:"not null" json:"user_loop_id"`
-	Name         string `gorm:"not null" json:"Name"`
-	OriginalName string `gorm:"not null" json:"original_name"`
-	//midiファイル内でルートとなるノートのindexをcsv化したもの
-	//[1,2,3,4]->"1,2,3,4"
-	MidiRoots string ` json:"midi_roots"`
+	ID         uint   `gorm:"primarykey" json:"id"`
+	UserLoopId uint   `gorm:"not null" json:"user_loop_id"`
+	Name       string `gorm:"not null" json:"Name"`
+	Url        Url    `gorm:"-:all" json:"url"`
+}
+
+// GET用のURLとPUT用のURL
+type Url struct {
+	Get string `json:"get"`
+	Put string `json:"put"`
 }
 
 func (midi *UserLoopMidi) Create() error {
@@ -55,13 +54,4 @@ func (midi *UserLoopMidi) delete() {
 func (midi *UserLoopMidi) SetPlaylistName() {
 
 	midi.Name = midi.Name
-}
-
-// s3ファイルの格納場所を返す
-func (midi *UserLoopMidi) GetmidiUrl(user *User, ul *UserLoop) (string, error) {
-	if midi.Name == "" {
-		return "", errors.New("midi Name not set.")
-	}
-	CFDomain := os.Getenv("AWS_CLOUDFRONT_DOMAIN")
-	return "https://" + CFDomain + "/" + strconv.Itoa(int(user.ID)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + midi.Name, nil
 }

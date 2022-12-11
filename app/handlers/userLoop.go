@@ -28,14 +28,8 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ResponseJSON(w, userLoopsInputs, http.StatusOK)
 }
 
-// userLoopの保存
-type S3Url struct {
-	Mp3  string `json:"mp3"`
-	Midi string `json:"midi"`
-}
 type LoopHandlerResponse struct {
 	UserLoopInput models.UserLoopInput `json:"user_loop_input"`
-	S3Url         S3Url                `json:"s3url"`
 }
 
 func LoopHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,14 +65,14 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorJSON(w, err)
 		}
 	} else {
+		//update
 		userLoopId, _ := strconv.Atoi(param)
 		err := ul.GetByID(uint(userLoopId))
 		if err != nil {
 			utils.ErrorJSON(w, err)
 		}
-		//update
 		ul.ApplyULInputToUL(ulInput)
-		utils.PrintStruct(ul)
+		//utils.PrintStruct(ul)
 
 		err2 := ul.Update()
 		if err2 != nil {
@@ -87,31 +81,9 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 	}
 	responseUri := models.UserLoopInput{}
 	responseUri.ApplyULtoULInput(ul)
-	//s3presignedURL生成(PUT用)
-	mp3Url := ""
-	midiUrl := ""
-	fmt.Println("@@@beforegenerate")
-	if ul.AudioPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.AudioPath, http.MethodPut, 15*60)
-		if err != nil {
-			utils.ErrorJSON(w, fmt.Errorf("error at GenerateSignedUrl: %v", err))
-			return
-		}
-		mp3Url = url
-	}
-	if ul.MidiPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.MidiPath, http.MethodPut, 15*60)
-		if err != nil {
-			utils.ErrorJSON(w, fmt.Errorf("error at GenerateSignedUrl: %v", err))
-			return
-		}
-		midiUrl = url
-	}
-	fmt.Printf("AudioPath: %s.mp3Url:  %s\n", ul.AudioPath, mp3Url)
-	fmt.Printf("MidiPath: %s.midiUrl:  %s\n", ul.MidiPath, midiUrl)
+
 	response := LoopHandlerResponse{
 		UserLoopInput: responseUri,
-		S3Url:         S3Url{mp3Url, midiUrl},
 	}
 
 	utils.ResponseJSON(w, response, http.StatusOK)
@@ -134,28 +106,11 @@ func getLoop(w http.ResponseWriter, r *http.Request) {
 	if ul.UserId != user.ID {
 		utils.ErrorJSON(w, errors.New("you cannot get this loop"))
 	}
-	//s3presignedURL生成(GET用)
-	mp3Url := ""
-	midiUrl := ""
-	if ul.AudioPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.AudioPath, http.MethodGet, 15*60)
-		if err == nil {
-			mp3Url = url
-		}
-	}
-	if ul.MidiPath != "" {
-		url, err := utils.GenerateSignedUrl(ul.ID, ul.MidiPath, http.MethodGet, 15*60)
-		if err == nil {
-			midiUrl = url
-		}
-
-	}
 	var ulInput = models.UserLoopInput{}
 	//ulをuliに変換
 	ulInput.ApplyULtoULInput(ul)
 	response := LoopHandlerResponse{
 		UserLoopInput: ulInput,
-		S3Url:         S3Url{mp3Url, midiUrl},
 	}
 
 	utils.ResponseJSON(w, response, http.StatusOK)
