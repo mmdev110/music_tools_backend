@@ -16,15 +16,15 @@ import (
 func main() {
 	//AWS初期設定
 	utils.ConfigureAWS()
-	exec_code()
+	//exec_code()
 	web_simple()
 }
 
 // 単純なコード
 func exec_code() {
 	fmt.Println("exec_code")
-	url, _ := utils.GenerateSignedUrl(1, "test.mp3", http.MethodGet, 100)
-	fmt.Println(url)
+	//url, _ := utils.GenerateSignedUrl(1, "test.mp3", http.MethodGet, 100)
+	//fmt.Println(url)
 }
 
 // DB接続無しのwebサーバ
