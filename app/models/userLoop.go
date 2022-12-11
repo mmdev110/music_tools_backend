@@ -9,14 +9,14 @@ import (
 
 // clientとの通信に使うstruct
 type UserLoopInput struct {
-	ID           uint     `json:"id"`
-	Progressions []string `json:"progressions"`
-	Key          int      `json:"key"`
-	Scale        string   `json:"scale"`
-	MidiRoots    []int    ` json:"midi_roots"`
-	Memo         string   ` json:"memo"`
-	AudioPath    string   `json:"audio_path"`
-	MidiPath     string   `json:"midi_path"`
+	ID            uint            `json:"id"`
+	Progressions  []string        `json:"progressions"`
+	Key           int             `json:"key"`
+	Scale         string          `json:"scale"`
+	Memo          string          ` json:"memo"`
+	MidiRoots     []int           `json:"midi_roots"`
+	UserLoopAudio []UserLoopAudio `json:"user_loop_audio"`
+	UserLoopMidi  []UserLoopMidi  `json:"user_loop_midi"`
 }
 
 // DBに格納するためのstruct
@@ -29,10 +29,10 @@ type UserLoop struct {
 	Progressions string `json:"progressions"`
 	Key          int    `json:"key"`
 	Scale        string `json:"scale"`
-	//s3上のmp3ファイルのパス
-	AudioPath string `json:"audio_path"`
-	//s3上のmidiファイルのパス
-	MidiPath string `json:"midi_path"`
+	//オーディオファイル
+	UserLoopAudio []UserLoopAudio `json:"user_loop_audio"`
+	//midiファイル
+	UserLoopMidi []UserLoopMidi `json:"midi_path"`
 	//midiファイル内でルートとなるノートのindexをcsv化したもの
 	//[1,2,3,4]->"1,2,3,4"
 	MidiRoots string ` json:"midi_roots"`
@@ -82,8 +82,8 @@ func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
 	ul.Scale = ulInput.Scale
 	ul.MidiRoots = string(midiroots)
 	ul.Memo = ulInput.Memo
-	ul.AudioPath = ulInput.AudioPath
-	ul.MidiPath = ulInput.MidiPath
+	ul.UserLoopAudio = ulInput.UserLoopAudio
+	ul.UserLoopMidi = ulInput.UserLoopMidi
 }
 func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	var prog []string
@@ -96,6 +96,6 @@ func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	uli.Scale = ul.Scale
 	uli.MidiRoots = midiroots
 	uli.Memo = ul.Memo
-	uli.AudioPath = ul.AudioPath
-	uli.MidiPath = ul.MidiPath
+	uli.UserLoopAudio = ul.UserLoopAudio
+	uli.UserLoopMidi = ul.UserLoopMidi
 }
