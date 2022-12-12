@@ -67,12 +67,14 @@ func (ul *UserLoop) GetByID(id uint) error {
 }
 func (ul *UserLoop) GetAllByUserId(userId uint) []UserLoop {
 	var loops []UserLoop
-	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Debug().Find(&loops)
+	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Debug().Where("user_id=?", userId).Find(&loops)
 	if result.RowsAffected == 0 {
 		return nil
 	}
-	for _, ul := range loops {
-		err := ul.SetMediaUrl()
+	for i := range loops {
+		err := loops[i].SetMediaUrl()
+		//utils.PrintStruct(ul.UserLoopAudio)
+
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -146,6 +148,9 @@ func (ul *UserLoop) SetMediaUrl() error {
 			return err
 		}
 		audio.Url.Put = put
+	} else {
+		ul.UserLoopAudio.Url.Get = ""
+		ul.UserLoopAudio.Url.Put = ""
 	}
 	//midi
 	//midiはpresigned urlを直接返す
@@ -162,8 +167,11 @@ func (ul *UserLoop) SetMediaUrl() error {
 		if err != nil {
 			return err2
 		}
-		ul.UserLoopMidi.Url.Get = get
-		ul.UserLoopMidi.Url.Put = put
+		midi.Url.Get = get
+		midi.Url.Put = put
+	} else {
+		ul.UserLoopMidi.Url.Get = ""
+		ul.UserLoopMidi.Url.Put = ""
 	}
 	return nil
 }
