@@ -57,6 +57,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/loop/", requireAuth(handlers.LoopHandler))
+	mux.HandleFunc("/hls/", handlers.HLSHandler)
 
 	return enableCORS(mux)
 }

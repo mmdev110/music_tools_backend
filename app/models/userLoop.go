@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -62,7 +63,6 @@ func (ul *UserLoop) GetByID(id uint) error {
 	if err != nil {
 		fmt.Println(err)
 	}
-	utils.PrintStruct(ul.UserLoopAudio)
 	return nil
 }
 func (ul *UserLoop) GetAllByUserId(userId uint) []UserLoop {
@@ -80,7 +80,7 @@ func (ul *UserLoop) GetAllByUserId(userId uint) []UserLoop {
 	return loops
 }
 func (ul *UserLoop) Update() error {
-	result := DB.Model(&ul).Debug().Updates(ul)
+	result := DB.Model(&ul).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -123,24 +123,24 @@ var PlaylistSuffix = "_hls"
 // s3ファイルの格納場所を返す
 func (ul *UserLoop) SetMediaUrl() error {
 	//CFDomain := os.Getenv("AWS_LOUDFRONT_DOMAIN")
-	//backend := os.Getenv("BACKEND_DOMAIN")
+	Backend := os.Getenv("BACKEND_DOMAIN")
 
 	//audio
 	if ul.UserLoopAudio.Name != "" {
 		audio := &ul.UserLoopAudio
 		//拡張子削除
-		n := strings.ReplaceAll(audio.Name, ".wav", "")
-		n = strings.ReplaceAll(audio.Name, ".mp3", "")
-		hlsName := n + PlaylistSuffix + ".m3u8"
+		//n := strings.ReplaceAll(audio.Name, ".wav", "")
+		//n = strings.ReplaceAll(audio.Name, ".mp3", "")
+		//hlsName := n + PlaylistSuffix + ".m3u8"
 		folder := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/"
-		hlsPath := folder + hlsName
+		//hlsPath := folder + hlsName
 		//https://{CloudFront_Domain}/{user_id}/{userLoop_id}/{Name}_hls.m3u8
 		//ul.UserLoopAudio.Url = backend + "/" + strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + name + PlaylistSuffix + ".m3u8"
 		//{backend_domain}/hls/{user_loop_id}
 		//m3u8ファイルをバックエンドで書き換える必要があるためGETのurlはバックエンドを指定する
-		get, _ := utils.GenerateSignedUrl(hlsPath, http.MethodGet, 60*15)
+		//get, _ := utils.GenerateSignedUrl(hlsPath, http.MethodGet, 60*15)
 		//audio.Url.Get = backend + "/" + "hls" + "/" + strconv.Itoa(int(ul.ID))
-		audio.Url.Get = get
+		audio.Url.Get = Backend + "/hls/" + strconv.Itoa(int(ul.ID))
 		put, err := utils.GenerateSignedUrl(folder+audio.Name, http.MethodPut, 60*15)
 		if err != nil {
 			return err
@@ -166,4 +166,16 @@ func (ul *UserLoop) SetMediaUrl() error {
 		ul.UserLoopMidi.Url.Put = put
 	}
 	return nil
+}
+
+func (ul *UserLoop) GetHLSName() string {
+	audio := &ul.UserLoopAudio
+	n := strings.ReplaceAll(audio.Name, ".wav", "")
+	n = strings.ReplaceAll(audio.Name, ".mp3", "")
+
+	return n + PlaylistSuffix + ".m3u8"
+}
+func (ul *UserLoop) GetFolderName() string {
+	folder := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/"
+	return folder
 }

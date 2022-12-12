@@ -2,6 +2,7 @@ package models
 
 import (
 	_ "golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // userLoopに登録されたオーディオファイル
@@ -10,6 +11,7 @@ type UserLoopMidi struct {
 	UserLoopId uint   `gorm:"not null" json:"user_loop_id"`
 	Name       string `gorm:"not null" json:"Name"`
 	Url        Url    `gorm:"-:all" json:"url"`
+	gorm.Model
 }
 
 // GET用のURLとPUT用のURL

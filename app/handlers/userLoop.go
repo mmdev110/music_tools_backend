@@ -72,7 +72,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorJSON(w, err)
 		}
 		ul.ApplyULInputToUL(ulInput)
-		//utils.PrintStruct(ul)
+		utils.PrintStruct(ul)
 
 		err2 := ul.Update()
 		if err2 != nil {
