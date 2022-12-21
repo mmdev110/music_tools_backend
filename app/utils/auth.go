@@ -11,20 +11,22 @@ import (
 )
 
 type MyCustomClaims struct {
-	UserId uint `json:"uid"`
+	UserId    uint   `json:"uid"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
 var signingKey string = os.Getenv("HMAC_SECRET_KEY")
 
-func GenerateJwt(userId uint) (string, error) {
+func GenerateJwt(userId uint, tokenType string, duration time.Duration) (string, error) {
 	fmt.Println("@@@@@GenerateJwt")
 	// Create the claims
 	claims := MyCustomClaims{
 		userId,
+		tokenType,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			//NotBefore: jwt.NewNumericDate(time.Now()),
 			//Issuer:    "test",
@@ -63,7 +65,7 @@ func ParseJwt(tokenString string) (*MyCustomClaims, error) {
 	}
 	return claims, nil
 }
-func Authenticate(authHeader string) (*MyCustomClaims, error) {
+func Authenticate(authHeader, tokenType string) (*MyCustomClaims, error) {
 	if authHeader == "" {
 		return nil, errors.New("authorization not set")
 	}
@@ -77,5 +79,8 @@ func Authenticate(authHeader string) (*MyCustomClaims, error) {
 		return nil, err
 	}
 	//verify claim
+	if claim.TokenType != tokenType {
+		return nil, errors.New("TokenType mismatch")
+	}
 	return claim, nil
 }

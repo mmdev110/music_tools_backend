@@ -8,14 +8,12 @@ import (
 
 	"example.com/app/handlers"
 	"example.com/app/models"
-	"example.com/app/utils"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	//AWS初期設定
-	utils.ConfigureAWS()
 	//exec_code()
 	web_simple()
 }
@@ -23,6 +21,7 @@ func main() {
 // 単純なコード
 func exec_code() {
 	fmt.Println("exec_code")
+	//utils.SendEmail()
 	//url, _ := utils.GenerateSignedUrl(1, "test.mp3", http.MethodGet, 100)
 	//fmt.Println(url)
 }
@@ -54,6 +53,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/_chk", handlers.ChkHandler)
 	mux.HandleFunc("/signin", handlers.SignInHandler)
 	mux.HandleFunc("/signup", handlers.SignUpHandler)
+	mux.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/loop/", requireAuth(handlers.LoopHandler))

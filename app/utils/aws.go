@@ -11,16 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 )
 
 var Client *s3.Client
-
-func ConfigureAWS() {
-	fmt.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
-	fmt.Println(os.Getenv("AWS_SECRET_ACCESS_KEY"))
-	fmt.Println(os.Getenv("AWS_BUCKET_NAME"))
-
-}
 
 func GenerateSignedUrl(path string, method string, seconds time.Duration) (string, error) {
 	cfg, loadErr := config.LoadDefaultConfig(context.TODO())
@@ -60,4 +55,38 @@ func GenerateSignedUrl(path string, method string, seconds time.Duration) (strin
 		return "", fmt.Errorf("method %s not allowed", method)
 	}
 	return url, nil
+}
+
+func SendEmail(to, title, body string) {
+	fmt.Println("email")
+	cfg, loadErr := config.LoadDefaultConfig(context.TODO())
+	if loadErr != nil {
+		log.Fatalf("failed to load configuration, %v", loadErr)
+	}
+	client := sesv2.NewFromConfig(cfg)
+
+	from := "support@loopanalyzer.tk"
+	input := &sesv2.SendEmailInput{
+		FromEmailAddress: &from,
+		Destination: &sestypes.Destination{
+			ToAddresses: []string{to},
+		},
+		Content: &sestypes.EmailContent{
+			Simple: &sestypes.Message{
+				Body: &sestypes.Body{
+					Text: &sestypes.Content{
+						Data: &body,
+					},
+				},
+				Subject: &sestypes.Content{
+					Data: &title,
+				},
+			},
+		},
+	}
+	result, err := client.SendEmail(context.TODO(), input)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result.MessageId)
 }

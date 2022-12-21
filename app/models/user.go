@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"example.com/app/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -29,6 +30,7 @@ func CreateUser(email, password string) (User, error) {
 func GetUserByID(id uint) *User {
 	var user User
 	result := DB.First(&user, id)
+	utils.PrintStruct(user)
 	if result.RowsAffected == 0 {
 		return nil
 	}
@@ -42,7 +44,7 @@ func GetUserByEmail(email string) *User {
 	}
 	return &user
 }
-func (user *User) update() {
+func (user *User) Update() {
 	DB.Model(&user).Debug().Updates(user)
 }
 func (user *User) delete() {
@@ -54,18 +56,33 @@ func encrypt(password string) string {
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
 	return string(bytes)
 }
+func (user *User) SetNewPassword(password string) error {
+	user.Password = encrypt(password)
+	return nil
+}
 
 func (user *User) ComparePassword(input string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input))
 	return err == nil
 }
-func (user *User) GenerateToken() (string, error) {
-	token, err := utils.GenerateJwt(user.ID)
+func (user *User) GenerateToken(tokenType string, duration time.Duration) (string, error) {
+	AllowedTokenTypes := []string{"access", "reset"}
+	isAllowed := false
+	for _, v := range AllowedTokenTypes {
+		fmt.Println("tokens: ", tokenType, v)
+		if tokenType == v {
+			isAllowed = true
+			break
+		}
+	}
+	//allowedtokentypesにない場合はエラー
+	if !isAllowed {
+		return "", fmt.Errorf("token type: %s not allowed", tokenType)
+	}
+
+	token, err := utils.GenerateJwt(user.ID, tokenType, duration)
 	if err != nil {
 		return "", fmt.Errorf("error while generating token: %v", err)
 	}
-	//user.update(struct{ Token string }{token})
-	user.Token = token
-	user.update()
 	return token, nil
 }

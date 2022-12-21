@@ -3,11 +3,12 @@ package utils
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestJwt(t *testing.T) {
 	userId := uint(100)
-	jwt, err := GenerateJwt(userId)
+	jwt, err := GenerateJwt(userId, "access", 24*time.Hour)
 	if err != nil {
 		t.Fatalf("error found at GenerateJwt: %v", err)
 	}

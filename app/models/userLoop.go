@@ -16,6 +16,7 @@ import (
 // clientとの通信に使うstruct
 type UserLoopInput struct {
 	ID            uint          `json:"id"`
+	Name          string        `json:"name"`
 	Progressions  []string      `json:"progressions"`
 	Key           int           `json:"key"`
 	Scale         string        `json:"scale"`
@@ -28,21 +29,22 @@ type UserLoopInput struct {
 // DBに格納するためのstruct
 // UserLoopInputの配列要素をstring化している
 type UserLoop struct {
-	ID     uint `gorm:"primarykey" json:"id"`
-	UserId uint `gorm:"not null" json:"user_id"`
+	ID     uint `gorm:"primarykey"`
+	UserId uint `gorm:"not null"`
+	Name   string
 	//コード進行をcsv化したもの
 	//["Am7","","","Dm7"]->"Am7,,,Dm7"
-	Progressions string `json:"progressions"`
-	Key          int    `json:"key"`
-	Scale        string `json:"scale"`
+	Progressions string
+	Key          int
+	Scale        string
 	//オーディオファイル
-	UserLoopAudio UserLoopAudio `json:"user_loop_audio"`
+	UserLoopAudio UserLoopAudio
 	//midiファイル
-	UserLoopMidi UserLoopMidi `json:"midi_path"`
+	UserLoopMidi UserLoopMidi
 	//midiファイル内でルートとなるノートのindexをcsv化したもの
 	//[1,2,3,4]->"1,2,3,4"
-	MidiRoots string ` json:"midi_roots"`
-	Memo      string ` json:"memo"`
+	MidiRoots string
+	Memo      string
 	gorm.Model
 }
 
@@ -96,6 +98,7 @@ func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
 	prog, _ := json.Marshal(ulInput.Progressions)
 	midiroots, _ := json.Marshal(ulInput.MidiRoots)
 	//ul.ID = ulInput.ID
+	ul.Name = ulInput.Name
 	ul.Progressions = string(prog)
 	ul.Key = ulInput.Key
 	ul.Scale = ulInput.Scale
@@ -111,6 +114,7 @@ func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	var midiroots []int
 	json.Unmarshal([]byte(ul.MidiRoots), &midiroots)
 	uli.ID = ul.ID
+	uli.Name = ul.Name
 	uli.Progressions = prog
 	uli.Key = ul.Key
 	uli.Scale = ul.Scale

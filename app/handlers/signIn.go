@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"example.com/app/models"
 	"example.com/app/utils"
@@ -36,7 +37,9 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//generate jwt
-	user.GenerateToken()
+	token, _ := user.GenerateToken("access", 24*time.Hour)
+	user.Token = token
+	user.Update()
 
 	utils.ResponseJSON(w, user, http.StatusOK)
 }

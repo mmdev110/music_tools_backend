@@ -40,7 +40,7 @@ func LoopHandler(w http.ResponseWriter, r *http.Request) {
 		//取得
 		getLoop(w, r)
 	} else {
-		utils.ErrorJSON(w, errors.New("method not allowed"))
+		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
 	}
 
 }

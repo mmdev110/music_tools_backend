@@ -11,7 +11,27 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("auth middreware")
 		authHeader := r.Header.Get("Authorization")
-		claim, err := utils.Authenticate(authHeader)
+		claim, err := utils.Authenticate(authHeader, "access")
+		//for key, value := range r.Header {
+		//	fmt.Printf("%v: %v\n", key, value)
+		//}
+		if err != nil {
+			//w.WriteHeader(http.StatusUnauthorized)
+			utils.ErrorJSON(w, err)
+			return
+		}
+		userId := claim.UserId
+		fmt.Println(userId)
+		ctx := utils.SetUIDInContext(r.Context(), userId)
+		next(w, r.WithContext(ctx))
+	}
+}
+
+func requirePasswordResetAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("auth middreware")
+		tokenString := r.URL.Query().Get("token")
+		claim, err := utils.Authenticate(tokenString, "reset")
 		//for key, value := range r.Header {
 		//	fmt.Printf("%v: %v\n", key, value)
 		//}
