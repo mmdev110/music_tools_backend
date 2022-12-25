@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -11,7 +13,9 @@ type UserLoopAudio struct {
 	UserLoopId uint   `gorm:"not null" json:"user_loop_id"`
 	Name       string `gorm:"not null" json:"Name"`
 	Url        Url    `gorm:"-:all" json:"url"`
-	gorm.Model
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
 
 // UserLoop経由で取得、更新するのでメソッド全て不要？

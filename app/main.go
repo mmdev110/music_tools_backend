@@ -13,27 +13,18 @@ import (
 )
 
 func main() {
-	//AWS初期設定
-	//exec_code()
-	web_simple()
-}
-
-// 単純なコード
-func exec_code() {
-	fmt.Println("exec_code")
-	//utils.SendEmail()
-	//url, _ := utils.GenerateSignedUrl(1, "test.mp3", http.MethodGet, 100)
-	//fmt.Println(url)
-}
-
-// DB接続無しのwebサーバ
-func web_simple() {
-	fmt.Println("web_simple")
 	//DB接続
 	err := models.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
+	//playground()
+	web_simple()
+}
+
+// DB接続無しのwebサーバ
+func web_simple() {
+	fmt.Println("web_simple")
 
 	//ハンドラ登録
 	mux := registerHandlers()
@@ -56,6 +47,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
+	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))
 	mux.HandleFunc("/loop/", requireAuth(handlers.LoopHandler))
 	mux.HandleFunc("/hls/", handlers.HLSHandler)
 

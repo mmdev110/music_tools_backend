@@ -14,10 +14,20 @@ import (
 
 // userLoopの一覧
 func ListHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		return
+	}
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
+
+	//検索条件取り出し
+	var condition = models.ULSearchCond{}
+	json.NewDecoder(r.Body).Decode(&condition)
+	utils.PrintStruct(condition)
+
 	var ul = models.UserLoop{}
-	userLoops := ul.GetAllByUserId(user.ID)
+	userLoops, _ := ul.GetByUserId(user.ID, condition)
 	var userLoopsInputs []models.UserLoopInput
 	for _, v := range userLoops {
 		//UserLoopsをUserLoopsINputsに変換
@@ -41,6 +51,7 @@ func LoopHandler(w http.ResponseWriter, r *http.Request) {
 		getLoop(w, r)
 	} else {
 		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		return
 	}
 
 }
@@ -66,19 +77,43 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		//update
-		userLoopId, _ := strconv.Atoi(param)
-		err := ul.GetByID(uint(userLoopId))
+		uid, _ := strconv.Atoi(param)
+		userLoopId := uint(uid)
+		err := ul.GetByID(userLoopId)
 		if err != nil {
 			utils.ErrorJSON(w, err)
 		}
+		ul_db := ul
 		ul.ApplyULInputToUL(ulInput)
 		utils.PrintStruct(ul)
+		//タグの削除
+		//DBにあってinputに存在しないものが対象
+		tags_to_delete := []models.UserLoopTag{}
+		for _, tag_db := range ul_db.UserLoopTags {
+			found := false
+			for _, tag := range ul.UserLoopTags {
+				if tag_db.ID == tag.ID {
+					found = true
+				}
+			}
+			if !found {
+				tags_to_delete = append(tags_to_delete, tag_db)
+			}
+		}
+		if err := ul.DeleteTagRelations(tags_to_delete); err != nil {
+			utils.ErrorJSON(w, err)
+			return
+		}
 
 		err2 := ul.Update()
 		if err2 != nil {
 			utils.ErrorJSON(w, err)
+			return
 		}
+		//再取得
+		ul.GetByID(userLoopId)
 	}
+
 	responseUri := models.UserLoopInput{}
 	responseUri.ApplyULtoULInput(ul)
 

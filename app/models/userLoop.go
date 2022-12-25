@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"example.com/app/utils"
 	_ "golang.org/x/crypto/bcrypt"
@@ -24,6 +25,7 @@ type UserLoopInput struct {
 	MidiRoots     []int         `json:"midi_roots"`
 	UserLoopAudio UserLoopAudio `json:"user_loop_audio"`
 	UserLoopMidi  UserLoopMidi  `json:"user_loop_midi"`
+	UserLoopTags  []UserLoopTag `json:"user_loop_tags"`
 }
 
 // DBに格納するためのstruct
@@ -43,13 +45,16 @@ type UserLoop struct {
 	UserLoopMidi UserLoopMidi
 	//midiファイル内でルートとなるノートのindexをcsv化したもの
 	//[1,2,3,4]->"1,2,3,4"
-	MidiRoots string
-	Memo      string
-	gorm.Model
+	MidiRoots    string
+	Memo         string
+	UserLoopTags []UserLoopTag `gorm:"many2many:userloops_tags"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 func (ul *UserLoop) Create() error {
-	result := DB.Create(&ul)
+	result := DB.Omit("UserLoopTags.*").Create(&ul)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -57,7 +62,7 @@ func (ul *UserLoop) Create() error {
 	return nil
 }
 func (ul *UserLoop) GetByID(id uint) error {
-	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Debug().First(&ul, id)
+	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Preload("UserLoopTags").Debug().First(&ul, id)
 	if result.RowsAffected == 0 {
 		return nil
 	}
@@ -67,24 +72,38 @@ func (ul *UserLoop) GetByID(id uint) error {
 	}
 	return nil
 }
-func (ul *UserLoop) GetAllByUserId(userId uint) []UserLoop {
+
+type ULSearchCond struct {
+	TagIds    []uint `json:"tag_ids"`
+	SubString string `json:"substring"`
+}
+
+func (ul *UserLoop) GetByUserId(userId uint, condition ULSearchCond) ([]UserLoop, error) {
 	var loops []UserLoop
-	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Debug().Where("user_id=?", userId).Find(&loops)
+	var result *gorm.DB
+	//うまいやり方を考える
+	if len(condition.TagIds) > 0 {
+		result = DB.Debug().Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Preload("UserLoopTags").Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&loops)
+	} else {
+		result = DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Preload("UserLoopTags").Debug().Where("user_id=?", userId).Find(&loops)
+	}
 	if result.RowsAffected == 0 {
-		return nil
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
 	}
 	for i := range loops {
 		err := loops[i].SetMediaUrl()
-		//utils.PrintStruct(ul.UserLoopAudio)
-
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	return loops
+	return loops, nil
 }
 func (ul *UserLoop) Update() error {
-	result := DB.Model(&ul).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
+	//result := DB.Model(&ul).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
+	result := DB.Debug().Omit("UserLoopTags.*").Save(&ul)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -94,6 +113,7 @@ func (ul *UserLoop) delete() {
 	DB.Delete(&ul, ul.ID)
 }
 
+// input->DB
 func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
 	prog, _ := json.Marshal(ulInput.Progressions)
 	midiroots, _ := json.Marshal(ulInput.MidiRoots)
@@ -106,8 +126,11 @@ func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
 	ul.Memo = ulInput.Memo
 	ul.UserLoopAudio.Name = ulInput.UserLoopAudio.Name
 	ul.UserLoopMidi.Name = ulInput.UserLoopMidi.Name
+	ul.UserLoopTags = ulInput.UserLoopTags
 	ul.SetMediaUrl()
 }
+
+// DB->input
 func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	var prog []string
 	json.Unmarshal([]byte(ul.Progressions), &prog)
@@ -122,6 +145,7 @@ func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	uli.Memo = ul.Memo
 	uli.UserLoopAudio = ul.UserLoopAudio
 	uli.UserLoopMidi = ul.UserLoopMidi
+	uli.UserLoopTags = ul.UserLoopTags
 }
 
 var PlaylistSuffix = "_hls"
@@ -190,4 +214,17 @@ func (ul *UserLoop) GetHLSName() string {
 func (ul *UserLoop) GetFolderName() string {
 	folder := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/"
 	return folder
+}
+
+// 中間テーブルのrelationを削除
+func (ul *UserLoop) DeleteTagRelations(tags []UserLoopTag) error {
+	if len(tags) == 0 {
+		return nil
+	}
+	//中間テーブルのレコード削除
+	err := DB.Debug().Model(&ul).Association("UserLoopTags").Delete(tags)
+	if err != nil {
+		return err
+	}
+	return nil
 }

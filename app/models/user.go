@@ -10,12 +10,15 @@ import (
 )
 
 type User struct {
-	ID        uint   `gorm:"primarykey" json:"user_id"`
-	Email     string `gorm:"unique;not null" json:"email"`
-	Password  string `gorm:"not null" json:"-"`
-	Token     string `gorm:"not null" json:"token"`
-	UserLoops []UserLoop
-	gorm.Model
+	ID           uint   `gorm:"primarykey" json:"user_id"`
+	Email        string `gorm:"unique;not null" json:"email"`
+	Password     string `gorm:"not null" json:"-"`
+	Token        string `gorm:"not null" json:"token"`
+	UserLoops    []UserLoop
+	UserLoopTags []UserLoopTag
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 func CreateUser(email, password string) (User, error) {

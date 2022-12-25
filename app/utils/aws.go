@@ -22,7 +22,7 @@ func GenerateSignedUrl(path string, method string, seconds time.Duration) (strin
 	if loadErr != nil {
 		log.Fatalf("failed to load configuration, %v", loadErr)
 	}
-	fmt.Printf("@@GenerateSignedUrl: %s %s\n", path, method)
+	//fmt.Printf("@@GenerateSignedUrl: %s %s\n", path, method)
 	Client = s3.NewFromConfig(cfg)
 	presignClient := s3.NewPresignClient(Client)
 	bucketName := os.Getenv("AWS_BUCKET_NAME")

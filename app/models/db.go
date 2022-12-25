@@ -35,8 +35,8 @@ func connect() (*gorm.DB, error) {
 }
 func migrateModels(db *gorm.DB) {
 	fmt.Println("@@@migration")
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&UserLoop{})
+	db.AutoMigrate(&User{}, &UserLoop{}, &UserLoopTag{})
+	//db.AutoMigrate(&UserLoop{})
 	db.AutoMigrate(&UserLoopAudio{})
 	db.AutoMigrate(&UserLoopMidi{})
 }
