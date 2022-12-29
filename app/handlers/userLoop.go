@@ -18,6 +18,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
+	fmt.Println("listhandler")
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 
@@ -79,9 +80,12 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 		//update
 		uid, _ := strconv.Atoi(param)
 		userLoopId := uint(uid)
-		err := ul.GetByID(userLoopId)
-		if err != nil {
-			utils.ErrorJSON(w, err)
+		result := ul.GetByID(userLoopId)
+		if result.RowsAffected == 0 {
+			utils.ErrorJSON(w, errors.New("loop not found"))
+		}
+		if result.Error != nil {
+			utils.ErrorJSON(w, result.Error)
 		}
 		ul_db := ul
 		ul.ApplyULInputToUL(ulInput)
@@ -107,7 +111,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 
 		err2 := ul.Update()
 		if err2 != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, err2)
 			return
 		}
 		//再取得
@@ -117,11 +121,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 	responseUri := models.UserLoopInput{}
 	responseUri.ApplyULtoULInput(ul)
 
-	response := LoopHandlerResponse{
-		UserLoopInput: responseUri,
-	}
-
-	utils.ResponseJSON(w, response, http.StatusOK)
+	utils.ResponseJSON(w, responseUri, http.StatusOK)
 }
 func getLoop(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
@@ -133,9 +133,14 @@ func getLoop(w http.ResponseWriter, r *http.Request) {
 
 	//DBから取得
 	var ul = models.UserLoop{}
-	err := ul.GetByID(userLoopId)
-	if err != nil {
-		utils.ErrorJSON(w, err)
+	result := ul.GetByID(userLoopId)
+	if result.RowsAffected == 0 {
+		utils.ErrorJSON(w, errors.New("loop not found"))
+		return
+	}
+	if result.Error != nil {
+		utils.ErrorJSON(w, result.Error)
+		return
 	}
 	//他人のデータは取得不可
 	if ul.UserId != user.ID {
@@ -149,4 +154,35 @@ func getLoop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ResponseJSON(w, response, http.StatusOK)
+}
+func DeleteLoop(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		return
+	}
+	user := getUserFromContext(r.Context())
+	fmt.Printf("userid in handler = %d\n", user.ID)
+	type Req struct {
+		ID uint `json:"Id"`
+	}
+
+	var req = Req{}
+	json.NewDecoder(r.Body).Decode(&req)
+
+	ul := &models.UserLoop{}
+	result := ul.GetByID(req.ID)
+	if result.RowsAffected == 0 {
+		utils.ErrorJSON(w, errors.New("loop not found"))
+		return
+	}
+	err := ul.Delete()
+	if err != nil {
+		utils.ErrorJSON(w, err)
+		return
+	}
+	type Res struct {
+		Message string `json:"message"`
+	}
+
+	utils.ResponseJSON(w, &Res{"OK"}, http.StatusOK)
 }

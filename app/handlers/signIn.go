@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
+	"example.com/app/conf"
 	"example.com/app/models"
 	"example.com/app/utils"
+	"github.com/google/uuid"
 )
 
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,9 +38,30 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//generate jwt
-	token, _ := user.GenerateToken("access", 24*time.Hour)
-	user.Token = token
+	accessToken, _ := user.GenerateToken("access", conf.TokenDuration)
+	refreshToken, _ := user.GenerateToken("refresh", conf.RefreshDuration)
+	user.AccessToken = accessToken
 	user.Update()
 
-	utils.ResponseJSON(w, user, http.StatusOK)
+	//session生成
+	session := models.Session{}
+	result := session.GetByUserID(user.ID)
+	if result.RowsAffected == 0 {
+		session.UserId = user.ID
+	}
+	session.SessionString = uuid.NewString()
+	session.RefreshToken = "Bearer " + refreshToken
+	session.Update()
+	//sessionIdをクッキーにセットさせる
+	//httponly, secure, samesite
+	cookie := utils.GetSessionCookie(session.SessionString, conf.RefreshDuration)
+	http.SetCookie(w, cookie)
+	fmt.Println("header:")
+	fmt.Println(w.Header())
+
+	type Response = struct {
+		User        *models.User `json:"user"`
+		AccessToken string       `json:"access_token"`
+	}
+	utils.ResponseJSON(w, &Response{user, accessToken}, http.StatusOK)
 }

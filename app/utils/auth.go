@@ -76,6 +76,7 @@ func Authenticate(authHeader, tokenType string) (*MyCustomClaims, error) {
 	token := headerParts[1]
 	claim, err := ParseJwt(token)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	//verify claim

@@ -10,15 +10,22 @@ import (
 )
 
 type User struct {
-	ID           uint   `gorm:"primarykey" json:"user_id"`
-	Email        string `gorm:"unique;not null" json:"email"`
+	ID    uint   `gorm:"primarykey" json:"user_id"`
+	Email string `gorm:"unique;not null" json:"email"`
+	//トークン類はユーザーに返さない
 	Password     string `gorm:"not null" json:"-"`
-	Token        string `gorm:"not null" json:"token"`
+	AccessToken  string `gorm:"not null" json:"-"`
+	RefreshToken string `gorm:"not null" json:"-"`
 	UserLoops    []UserLoop
 	UserLoopTags []UserLoopTag
+	Session      Session `json:"-"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+type Tokens struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func CreateUser(email, password string) (User, error) {
@@ -69,10 +76,9 @@ func (user *User) ComparePassword(input string) bool {
 	return err == nil
 }
 func (user *User) GenerateToken(tokenType string, duration time.Duration) (string, error) {
-	AllowedTokenTypes := []string{"access", "reset"}
+	AllowedTokenTypes := []string{"access", "reset", "refresh"}
 	isAllowed := false
 	for _, v := range AllowedTokenTypes {
-		fmt.Println("tokens: ", tokenType, v)
 		if tokenType == v {
 			isAllowed = true
 			break

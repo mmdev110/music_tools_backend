@@ -61,16 +61,16 @@ func (ul *UserLoop) Create() error {
 	ul.SetMediaUrl()
 	return nil
 }
-func (ul *UserLoop) GetByID(id uint) error {
+func (ul *UserLoop) GetByID(id uint) *gorm.DB {
 	result := DB.Model(&UserLoop{}).Preload("UserLoopAudio").Preload("UserLoopMidi").Preload("UserLoopTags").Debug().First(&ul, id)
 	if result.RowsAffected == 0 {
-		return nil
+		return result
 	}
 	err := ul.SetMediaUrl()
 	if err != nil {
 		fmt.Println(err)
 	}
-	return nil
+	return result
 }
 
 type ULSearchCond struct {
@@ -109,8 +109,18 @@ func (ul *UserLoop) Update() error {
 	}
 	return nil
 }
-func (ul *UserLoop) delete() {
-	DB.Delete(&ul, ul.ID)
+func (ul *UserLoop) Delete() error {
+	//relationの削除
+	err := ul.DeleteTagRelations(ul.UserLoopTags)
+	if err != nil {
+		return err
+	}
+	//audio,midiもまとめて削除
+	result := DB.Debug().Delete(&ul, ul.ID)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 // input->DB

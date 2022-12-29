@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.15.3
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/google/uuid v1.3.0
 	golang.org/x/crypto v0.3.0
 	gorm.io/driver/mysql v1.4.3
 	gorm.io/gorm v1.24.0
