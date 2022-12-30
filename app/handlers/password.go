@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
+	"example.com/app/conf"
 	"example.com/app/models"
 	"example.com/app/utils"
 )
@@ -51,7 +51,7 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//リセット用のリンク生成
-	link, err2 := url.JoinPath(os.Getenv("FRONTEND_DOMAIN"), "reset_password", "new")
+	link, err2 := url.JoinPath(conf.FRONTEND_URL, "reset_password", "new")
 	if err2 != nil {
 		utils.ErrorJSON(w, err2)
 		return

@@ -38,8 +38,8 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//generate jwt
-	accessToken, _ := user.GenerateToken("access", conf.TokenDuration)
-	refreshToken, _ := user.GenerateToken("refresh", conf.RefreshDuration)
+	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
+	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
 	user.AccessToken = accessToken
 	user.Update()
 
@@ -54,7 +54,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	session.Update()
 	//sessionIdをクッキーにセットさせる
 	//httponly, secure, samesite
-	cookie := utils.GetSessionCookie(session.SessionString, conf.RefreshDuration)
+	cookie := utils.GetSessionCookie(session.SessionString, conf.REFRESH_DURATION)
 	http.SetCookie(w, cookie)
 	fmt.Println("header:")
 	fmt.Println(w.Header())

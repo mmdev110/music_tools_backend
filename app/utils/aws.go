@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"example.com/app/conf"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -25,7 +25,7 @@ func GenerateSignedUrl(path string, method string, seconds time.Duration) (strin
 	//fmt.Printf("@@GenerateSignedUrl: %s %s\n", path, method)
 	Client = s3.NewFromConfig(cfg)
 	presignClient := s3.NewPresignClient(Client)
-	bucketName := os.Getenv("AWS_BUCKET_NAME")
+	bucketName := conf.AWS_BUCKET_NAME
 	var url string
 	var err error
 	if method == http.MethodGet {
@@ -65,7 +65,7 @@ func SendEmail(to, title, body string) {
 	}
 	client := sesv2.NewFromConfig(cfg)
 
-	from := "support@loopanalyzer.tk"
+	from := conf.SUPPORT_EMAIL
 	input := &sesv2.SendEmailInput{
 		FromEmailAddress: &from,
 		Destination: &sestypes.Destination{

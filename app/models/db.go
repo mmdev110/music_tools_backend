@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
-	"os"
 
+	"example.com/app/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -21,10 +21,10 @@ func Init() error {
 	return nil
 }
 func connect() (*gorm.DB, error) {
-	user := os.Getenv("MYSQL_USER")
-	password := os.Getenv("MYSQL_PASSWORD")
-	db_name := os.Getenv("MYSQL_DATABASE")
-	db_host := "db:" + os.Getenv("MYSQL_PORT")
+	user := conf.MYSQL_USER
+	password := conf.MYSQL_PASSWORD
+	db_name := conf.MYSQL_DATABASE
+	db_host := "db:" + conf.MYSQL_PORT
 	dsn := user + ":" + password + "@tcp(" + db_host + ")/" + db_name + "?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
 	fmt.Printf("DSN = %s\n", dsn)
 	//"gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8&parseTime=True&loc=Local", // data source name

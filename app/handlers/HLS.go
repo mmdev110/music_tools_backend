@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"example.com/app/conf"
 	"example.com/app/models"
 	"example.com/app/utils"
 )
@@ -28,7 +29,7 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	//if ul.UserId != user.ID {
 	//	utils.ErrorJSON(w, errors.New("user mismatch"))
 	//}
-	presignedUrl, _ := utils.GenerateSignedUrl(ul.GetFolderName()+ul.GetHLSName(), http.MethodGet, 60*15)
+	presignedUrl, _ := utils.GenerateSignedUrl(ul.GetFolderName()+ul.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
 	resp, err := http.Get(presignedUrl)
 	if err != nil {
 		utils.ErrorJSON(w, err)
@@ -43,7 +44,7 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 		line := scanner.Text()
 		if r_aac.MatchString(line) {
 			aac, _ := url.QueryUnescape(line)
-			presigned, _ := utils.GenerateSignedUrl(ul.GetFolderName()+aac, http.MethodGet, 60*15)
+			presigned, _ := utils.GenerateSignedUrl(ul.GetFolderName()+aac, http.MethodGet, conf.PRESIGNED_DURATION)
 			newHLS = newHLS + presigned
 		} else {
 			newHLS = newHLS + line

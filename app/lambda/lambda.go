@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
+	"example.com/app/conf"
 	"github.com/aws/aws-lambda-go/events"
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,7 +28,7 @@ func callLambda(ctx context.Context, event events.S3Event) (string, error) {
 		if service == mediaconvert.ServiceID && region == Region {
 			return aws.Endpoint{
 				PartitionID:       "aws",
-				URL:               os.Getenv("AWS_MEDIACONVERT_ENDPOINT"),
+				URL:               conf.AWS_MEDIACONVERT_ENDPOINT,
 				SigningRegion:     Region,
 				HostnameImmutable: true,
 			}, nil

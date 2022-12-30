@@ -17,8 +17,8 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 		Name: "originalcookie",
 		//Path:    "/",
 		Value:    "lalala",
-		Expires:  time.Now().Add(conf.RefreshDuration),
-		MaxAge:   int(conf.RefreshDuration.Seconds()),
+		Expires:  time.Now().Add(conf.REFRESH_DURATION),
+		MaxAge:   int(conf.REFRESH_DURATION.Seconds()),
 		SameSite: http.SameSiteStrictMode,
 		Domain:   "localhost", //環境変数から読み込む
 		HttpOnly: true,

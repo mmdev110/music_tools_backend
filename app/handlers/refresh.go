@@ -17,7 +17,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed for refresh", r.Method))
 		return
 	}
-	cookie, err := r.Cookie(conf.SessionID_KEY)
+	cookie, err := r.Cookie(conf.SESSION_ID_KEY)
 	if err != nil {
 		utils.ErrorJSON(w, errors.New("session_id not found"))
 		return
@@ -48,8 +48,8 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.GetUserByID(userId)
 
 	//regenerate jwt
-	accessToken, _ := user.GenerateToken("access", conf.TokenDuration)
-	refreshToken, _ := user.GenerateToken("refresh", conf.RefreshDuration)
+	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
+	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
 	user.AccessToken = accessToken
 	user.Update()
 
@@ -66,7 +66,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	//sessionIdをクッキーにセットさせる
 	//httponly, secure, samesite
-	newCookie := utils.GetSessionCookie(session.SessionString, conf.RefreshDuration)
+	newCookie := utils.GetSessionCookie(session.SessionString, conf.REFRESH_DURATION)
 	http.SetCookie(w, newCookie)
 
 	type Response = struct {

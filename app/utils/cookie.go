@@ -9,14 +9,14 @@ import (
 
 func GetSessionCookie(sessionString string, duration time.Duration) *http.Cookie {
 	return &http.Cookie{
-		Name:    conf.SessionID_KEY,
-		Path:    "/",
-		Value:   sessionString,
-		Expires: time.Now().Add(duration),
-		MaxAge:  int(duration.Seconds()),
-		//SameSite: http.SameSiteStrictMode,
-		Domain: "localhost", //環境変数から読み込む
-		//HttpOnly: true,
-		//Secure: true,
+		Name:     conf.SESSION_ID_KEY,
+		Path:     "/",
+		Value:    sessionString,
+		Expires:  time.Now().Add(duration),
+		MaxAge:   int(duration.Seconds()),
+		SameSite: http.SameSiteStrictMode,
+		Domain:   conf.COOKIE_DOMAIN, //環境変数から読み込む
+		HttpOnly: true,
+		Secure:   true,
 	}
 }

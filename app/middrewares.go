@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 
+	"example.com/app/conf"
 	"example.com/app/utils"
 )
 
@@ -59,7 +59,7 @@ func enableCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("path = %s. method = %s\n", r.URL.Path, r.Method)
-		w.Header().Set("Access-Control-Allow-Origin", os.Getenv("FRONTEND_DOMAIN"))
+		w.Header().Set("Access-Control-Allow-Origin", conf.FRONTEND_URL)
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, X-CSRF-Token, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"example.com/app/conf"
 	"example.com/app/utils"
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -162,8 +162,7 @@ var PlaylistSuffix = "_hls"
 
 // s3ファイルの格納場所を返す
 func (ul *UserLoop) SetMediaUrl() error {
-	//CFDomain := os.Getenv("AWS_LOUDFRONT_DOMAIN")
-	Backend := os.Getenv("BACKEND_DOMAIN")
+	Backend := conf.BACKEND_URL
 
 	//audio
 	if ul.UserLoopAudio.Name != "" {
@@ -178,10 +177,10 @@ func (ul *UserLoop) SetMediaUrl() error {
 		//ul.UserLoopAudio.Url = backend + "/" + strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + name + PlaylistSuffix + ".m3u8"
 		//{backend_domain}/hls/{user_loop_id}
 		//m3u8ファイルをバックエンドで書き換える必要があるためGETのurlはバックエンドを指定する
-		//get, _ := utils.GenerateSignedUrl(hlsPath, http.MethodGet, 60*15)
+		//get, _ := utils.GenerateSignedUrl(hlsPath, http.MethodGet, conf.PRESIGNED_DURATION)
 		//audio.Url.Get = backend + "/" + "hls" + "/" + strconv.Itoa(int(ul.ID))
 		audio.Url.Get = Backend + "/hls/" + strconv.Itoa(int(ul.ID))
-		put, err := utils.GenerateSignedUrl(folder+audio.Name, http.MethodPut, 60*15)
+		put, err := utils.GenerateSignedUrl(folder+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
 		}
@@ -197,11 +196,11 @@ func (ul *UserLoop) SetMediaUrl() error {
 		path := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + midi.Name
 		//https://{CloudFront_Domain}/{user_id}/{userLoop_id}/{midi.name}
 		//ul.UserLoopMidi.Url = "https://" + CFDomain + "/" + strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + midi.Name
-		get, err := utils.GenerateSignedUrl(path, http.MethodGet, 60*15)
+		get, err := utils.GenerateSignedUrl(path, http.MethodGet, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
 		}
-		put, err2 := utils.GenerateSignedUrl(path, http.MethodPut, 60*15)
+		put, err2 := utils.GenerateSignedUrl(path, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err2
 		}

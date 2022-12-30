@@ -3,10 +3,10 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	"example.com/app/conf"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -15,8 +15,6 @@ type MyCustomClaims struct {
 	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
-
-var signingKey string = os.Getenv("HMAC_SECRET_KEY")
 
 func GenerateJwt(userId uint, tokenType string, duration time.Duration) (string, error) {
 	fmt.Println("@@@@@GenerateJwt")
@@ -28,15 +26,15 @@ func GenerateJwt(userId uint, tokenType string, duration time.Duration) (string,
 			// A usual scenario is to set the expiration time relative to the current time
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			//NotBefore: jwt.NewNumericDate(time.Now()),
-			//Issuer:    "test",
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    conf.BACKEND_URL,
 			//Subject:   "somebody",
 			//ID:        "1",
-			//Audience:  []string{"somebody_else"},
+			Audience: []string{conf.FRONTEND_URL},
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(signingKey))
+	ss, err := token.SignedString([]byte(conf.HMAC_SECRET_KEY))
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +49,7 @@ func ParseJwt(tokenString string) (*MyCustomClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(signingKey), nil
+		return []byte(conf.HMAC_SECRET_KEY), nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error at ParseWithClaims: %v", err)
@@ -60,10 +58,17 @@ func ParseJwt(tokenString string) (*MyCustomClaims, error) {
 	claims, ok := token.Claims.(*MyCustomClaims)
 	if ok && token.Valid {
 		//add more verifications
-		fmt.Println("OK")
 		//fmt.Printf("%v %v", claims.UserId, claims.RegisteredClaims.Issuer)
+		if claims.Issuer != conf.BACKEND_URL {
+			return nil, errors.New("invalid token issuer")
+		}
+		if claims.Audience[0] != conf.FRONTEND_URL {
+			return nil, errors.New("invalid token audience")
+		}
+		fmt.Println("OK")
+		return claims, nil
 	}
-	return claims, nil
+	return nil, errors.New("invalid token")
 }
 func Authenticate(authHeader, tokenType string) (*MyCustomClaims, error) {
 	if authHeader == "" {
