@@ -14,8 +14,8 @@ type User struct {
 	Email string `gorm:"unique;not null" json:"email"`
 	//トークン類はユーザーに返さない
 	Password     string `gorm:"not null" json:"-"`
-	AccessToken  string `gorm:"not null" json:"-"`
-	RefreshToken string `gorm:"not null" json:"-"`
+	AccessToken  string `json:"-"`
+	RefreshToken string `json:"-"`
 	UserLoops    []UserLoop
 	UserLoopTags []UserLoopTag
 	Session      Session `json:"-"`

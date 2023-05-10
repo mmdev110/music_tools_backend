@@ -15,38 +15,49 @@ import (
 )
 
 // clientとの通信に使うstruct
+//
+//	type UserLoopInput struct {
+//		ID            uint              `json:"id"`
+//		Name          string            `json:"name"`
+//		Progressions  []string          `json:"progressions"`
+//		Key           int               `json:"key"`
+//		Scale         string            `json:"scale"`
+//		Memo          string            ` json:"memo"`
+//		UserLoopAudio UserLoopAudio     `json:"user_loop_audio"`
+//		UserLoopMidi  UserLoopMidiInput `json:"user_loop_midi"`
+//		UserLoopTags  []UserLoopTag     `json:"user_loop_tags"`
+//		UserLoop
+//	}
 type UserLoopInput struct {
-	ID            uint          `json:"id"`
-	Name          string        `json:"name"`
-	Progressions  []string      `json:"progressions"`
-	Key           int           `json:"key"`
-	Scale         string        `json:"scale"`
-	Memo          string        ` json:"memo"`
-	MidiRoots     []int         `json:"midi_roots"`
-	UserLoopAudio UserLoopAudio `json:"user_loop_audio"`
-	UserLoopMidi  UserLoopMidi  `json:"user_loop_midi"`
-	UserLoopTags  []UserLoopTag `json:"user_loop_tags"`
+	UserLoop
+	Progressions []string          `json:"progressions"`
+	UserLoopMidi UserLoopMidiInput `json:"user_loop_midi"`
 }
 
 // DBに格納するためのstruct
 // UserLoopInputの配列要素をstring化している
 type UserLoop struct {
-	ID     uint `gorm:"primarykey"`
-	UserId uint `gorm:"not null"`
-	Name   string
+	ID      uint   `gorm:"primarykey" json:"id"`
+	UserId  uint   `gorm:"not null" json:"user_id"`
+	Name    string `json:"name"`
+	Artist  string `json:"artist"`
+	Section string `json:"section"`
 	//コード進行をcsv化したもの
 	//["Am7","","","Dm7"]->"Am7,,,Dm7"
-	Progressions string
-	Key          int
-	Scale        string
+	Progressions   string
+	Key            int    `json:"key"`
+	BPM            int    `json:"bpm"`
+	Scale          string `json:"scale"`
+	Memo           string `json:"memo"`
+	MemoBass       string `json:"memo_nass"`
+	MemoChord      string `json:"memo_chord"`
+	MemoLead       string `json:"memo_lead"`
+	MemoRhythm     string `json:"memo_rhythm"`
+	MemoTransition string `json:"memo_transition"`
 	//オーディオファイル
 	UserLoopAudio UserLoopAudio
 	//midiファイル
 	UserLoopMidi UserLoopMidi
-	//midiファイル内でルートとなるノートのindexをcsv化したもの
-	//[1,2,3,4]->"1,2,3,4"
-	MidiRoots    string
-	Memo         string
 	UserLoopTags []UserLoopTag `gorm:"many2many:userloops_tags"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -102,8 +113,9 @@ func (ul *UserLoop) GetByUserId(userId uint, condition ULSearchCond) ([]UserLoop
 	return loops, nil
 }
 func (ul *UserLoop) Update() error {
+	fmt.Println("@@@@update")
 	//result := DB.Model(&ul).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
-	result := DB.Debug().Omit("UserLoopTags.*").Save(&ul)
+	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("UserLoopTags.*").Save(&ul)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -125,17 +137,32 @@ func (ul *UserLoop) Delete() error {
 
 // input->DB
 func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
+	midi := ulInput.UserLoopMidi
 	prog, _ := json.Marshal(ulInput.Progressions)
-	midiroots, _ := json.Marshal(ulInput.MidiRoots)
+	midiroots, _ := json.Marshal(midi.MidiRoots)
 	//ul.ID = ulInput.ID
 	ul.Name = ulInput.Name
 	ul.Progressions = string(prog)
 	ul.Key = ulInput.Key
+	ul.BPM = ulInput.BPM
+	ul.Section = ulInput.Section
 	ul.Scale = ulInput.Scale
-	ul.MidiRoots = string(midiroots)
 	ul.Memo = ulInput.Memo
-	ul.UserLoopAudio.Name = ulInput.UserLoopAudio.Name
-	ul.UserLoopMidi.Name = ulInput.UserLoopMidi.Name
+	ul.MemoBass = ulInput.MemoBass
+	ul.MemoChord = ulInput.MemoChord
+	ul.MemoLead = ulInput.MemoLead
+	ul.MemoRhythm = ulInput.MemoRhythm
+	ul.MemoTransition = ulInput.MemoTransition
+	ul.UserLoopAudio = ulInput.UserLoopAudio
+	ul.UserLoopMidi = UserLoopMidi{
+		ID:   midi.ID,
+		Name: midi.Name,
+		Url: Url{
+			Get: midi.Url.Get,
+			Put: midi.Url.Put,
+		},
+		MidiRoots: string(midiroots),
+	}
 	ul.UserLoopTags = ulInput.UserLoopTags
 	ul.SetMediaUrl()
 }
@@ -143,18 +170,35 @@ func (ul *UserLoop) ApplyULInputToUL(ulInput UserLoopInput) {
 // DB->input
 func (uli *UserLoopInput) ApplyULtoULInput(ul UserLoop) {
 	var prog []string
+	midi := ul.UserLoopMidi
 	json.Unmarshal([]byte(ul.Progressions), &prog)
 	var midiroots []int
-	json.Unmarshal([]byte(ul.MidiRoots), &midiroots)
+	json.Unmarshal([]byte(midi.MidiRoots), &midiroots)
 	uli.ID = ul.ID
 	uli.Name = ul.Name
 	uli.Progressions = prog
 	uli.Key = ul.Key
+	uli.BPM = ul.BPM
+	uli.Section = ul.Section
 	uli.Scale = ul.Scale
-	uli.MidiRoots = midiroots
 	uli.Memo = ul.Memo
+	uli.MemoBass = ul.MemoBass
+	uli.MemoLead = ul.MemoLead
+	uli.MemoChord = ul.MemoChord
+	uli.MemoRhythm = ul.MemoRhythm
+	uli.MemoTransition = ul.MemoTransition
 	uli.UserLoopAudio = ul.UserLoopAudio
-	uli.UserLoopMidi = ul.UserLoopMidi
+	uli.UserLoopMidi = UserLoopMidiInput{
+		UserLoopMidi: UserLoopMidi{
+			ID:   midi.ID,
+			Name: midi.Name,
+			Url: Url{
+				Get: midi.Url.Get,
+				Put: midi.Url.Put,
+			},
+		},
+		MidiRoots: midiroots,
+	}
 	uli.UserLoopTags = ul.UserLoopTags
 }
 
@@ -163,7 +207,8 @@ var PlaylistSuffix = "_hls"
 // s3ファイルの格納場所を返す
 func (ul *UserLoop) SetMediaUrl() error {
 	Backend := conf.BACKEND_URL
-
+	fmt.Println("@@@@setmediaurl")
+	fmt.Println(ul.UserLoopAudio)
 	//audio
 	if ul.UserLoopAudio.Name != "" {
 		audio := &ul.UserLoopAudio
@@ -171,7 +216,6 @@ func (ul *UserLoop) SetMediaUrl() error {
 		//n := strings.ReplaceAll(audio.Name, ".wav", "")
 		//n = strings.ReplaceAll(audio.Name, ".mp3", "")
 		//hlsName := n + PlaylistSuffix + ".m3u8"
-		folder := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/"
 		//hlsPath := folder + hlsName
 		//https://{CloudFront_Domain}/{user_id}/{userLoop_id}/{Name}_hls.m3u8
 		//ul.UserLoopAudio.Url = backend + "/" + strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/" + name + PlaylistSuffix + ".m3u8"
@@ -180,7 +224,8 @@ func (ul *UserLoop) SetMediaUrl() error {
 		//get, _ := utils.GenerateSignedUrl(hlsPath, http.MethodGet, conf.PRESIGNED_DURATION)
 		//audio.Url.Get = backend + "/" + "hls" + "/" + strconv.Itoa(int(ul.ID))
 		audio.Url.Get = Backend + "/hls/" + strconv.Itoa(int(ul.ID))
-		put, err := utils.GenerateSignedUrl(folder+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
+		fmt.Println(conf.PRESIGNED_DURATION)
+		put, err := utils.GenerateSignedUrl(ul.GetFolderName()+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
 		}
@@ -216,12 +261,13 @@ func (ul *UserLoop) SetMediaUrl() error {
 func (ul *UserLoop) GetHLSName() string {
 	audio := &ul.UserLoopAudio
 	n := strings.ReplaceAll(audio.Name, ".wav", "")
-	n = strings.ReplaceAll(audio.Name, ".mp3", "")
-
+	n = strings.ReplaceAll(n, ".mp3", "")
+	n = strings.ReplaceAll(n, ".m4a", "")
+	fmt.Println(n)
 	return n + PlaylistSuffix + ".m3u8"
 }
 func (ul *UserLoop) GetFolderName() string {
-	folder := strconv.Itoa(int(ul.UserId)) + "/" + strconv.Itoa(int(ul.ID)) + "/"
+	folder := strconv.Itoa(int(ul.UserId)) + "/"
 	return folder
 }
 

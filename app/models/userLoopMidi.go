@@ -7,15 +7,24 @@ import (
 	"gorm.io/gorm"
 )
 
-// userLoopに登録されたオーディオファイル
+// userLoopに紐づいたmidiファイル
 type UserLoopMidi struct {
 	ID         uint   `gorm:"primarykey" json:"id"`
 	UserLoopId uint   `gorm:"not null" json:"user_loop_id"`
 	Name       string `gorm:"not null" json:"Name"`
 	Url        Url    `gorm:"-:all" json:"url"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
+	//midiファイル内でルートとなるノートのindexをcsv化したもの
+	//[1,2,3,4]->"1,2,3,4"
+	MidiRoots string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+// フロントからの入力
+type UserLoopMidiInput struct {
+	UserLoopMidi
+	MidiRoots []int
 }
 
 // GET用のURLとPUT用のURL

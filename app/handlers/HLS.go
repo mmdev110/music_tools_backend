@@ -29,7 +29,10 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	//if ul.UserId != user.ID {
 	//	utils.ErrorJSON(w, errors.New("user mismatch"))
 	//}
-	presignedUrl, _ := utils.GenerateSignedUrl(ul.GetFolderName()+ul.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
+	presignedUrl, err := utils.GenerateSignedUrl(ul.GetFolderName()+ul.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
+	if err != nil {
+		utils.ErrorJSON(w, err)
+	}
 	resp, err := http.Get(presignedUrl)
 	if err != nil {
 		utils.ErrorJSON(w, err)

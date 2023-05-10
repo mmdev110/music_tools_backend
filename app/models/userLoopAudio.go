@@ -10,12 +10,17 @@ import (
 // userLoopに登録されたオーディオファイル
 type UserLoopAudio struct {
 	ID         uint   `gorm:"primarykey" json:"id"`
-	UserLoopId uint   `gorm:"not null" json:"user_loop_id"`
+	UserLoopId uint   `gorm:"not null;unique" json:"user_loop_id"`
 	Name       string `gorm:"not null" json:"Name"`
 	Url        Url    `gorm:"-:all" json:"url"`
+	*LoopRange `json:"range"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
+}
+type LoopRange struct {
+	Start uint `gorm:"not null" json:"start"`
+	End   uint `gorm:"not null" json:"end"`
 }
 
 // UserLoop経由で取得、更新するのでメソッド全て不要？
@@ -42,7 +47,7 @@ func (audio *UserLoopAudio) GetAllByUserId(userId uint) []UserLoop {
 	return loops
 }
 func (audio *UserLoopAudio) Update() error {
-	result := DB.Model(&audio).Debug().Updates(audio)
+	result := DB.Model(&audio).Debug().Save(audio)
 	if err := result.Error; err != nil {
 		return err
 	}

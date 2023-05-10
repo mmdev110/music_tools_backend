@@ -34,4 +34,4 @@ var AWS_BUCKET_NAME = os.Getenv("AWS_BUCKET_NAME")
 var AWS_MEDIACONVERT_ENDPOINT = os.Getenv("AWS_MEDIACONVERT_ENDPOINT")
 var AWS_CLOUDFRONT_DOMAIN = os.Getenv("AWS_CLOUDFRONT_DOMAIN")
 var SUPPORT_EMAIL = "support@loopanalyzer.tk"
-var PRESIGNED_DURATION = 15 * time.Minute
+var PRESIGNED_DURATION = time.Duration(15 * time.Minute)

@@ -17,7 +17,7 @@ import (
 
 var Client *s3.Client
 
-func GenerateSignedUrl(path string, method string, seconds time.Duration) (string, error) {
+func GenerateSignedUrl(path string, method string, duration time.Duration) (string, error) {
 	cfg, loadErr := config.LoadDefaultConfig(context.TODO())
 	if loadErr != nil {
 		log.Fatalf("failed to load configuration, %v", loadErr)
@@ -27,30 +27,32 @@ func GenerateSignedUrl(path string, method string, seconds time.Duration) (strin
 	presignClient := s3.NewPresignClient(Client)
 	bucketName := conf.AWS_BUCKET_NAME
 	var url string
-	var err error
 	if method == http.MethodGet {
-		presignedGetRequest, err1 := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+		presignedGetRequest, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(path),
 		}, func(opts *s3.PresignOptions) {
-			opts.Expires = seconds * time.Second
+			opts.Expires = duration
 		})
+		if err != nil {
+			log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, path, err)
+			return "", err
+		}
 		url = presignedGetRequest.URL
-		err = err1
 	} else if method == http.MethodPut {
-		presignedPutRequest, err2 := presignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
+		presignedPutRequest, err := presignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(path),
 		}, func(opts *s3.PresignOptions) {
-			opts.Expires = seconds * time.Second
+			opts.Expires = duration
 		})
+		if err != nil {
+			log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, path, err)
+			return "", err
+		}
 		url = presignedPutRequest.URL
-		err = err2
 	}
-	if err != nil {
-		log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n", bucketName, path, err)
-		return "", err
-	}
+
 	if url == "" {
 		return "", fmt.Errorf("method %s not allowed", method)
 	}

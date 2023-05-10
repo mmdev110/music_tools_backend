@@ -58,6 +58,7 @@ func LoopHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveLoop(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("@@@@saveLoop")
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	param := strings.TrimPrefix(r.URL.Path, "/loop/")
@@ -67,6 +68,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&ulInput)
 	utils.PrintStruct(ulInput)
 	var ul = models.UserLoop{}
+	utils.PrintStruct(ulInput)
 
 	if param == "new" {
 		//create
@@ -88,6 +90,7 @@ func saveLoop(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorJSON(w, result.Error)
 		}
 		ul_db := ul
+		utils.PrintStruct(ulInput)
 		ul.ApplyULInputToUL(ulInput)
 		utils.PrintStruct(ul)
 		//タグの削除
