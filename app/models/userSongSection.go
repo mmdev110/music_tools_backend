@@ -21,10 +21,17 @@ type UserSongSection struct {
 	BPM             int    `json:"bpm"`
 	Scale           string `json:"scale"`
 	Memo            string `json:"memo"`
+	//オーディオ再生範囲
+	*LoopRange `json:"audio_playback_range"`
 	//midiファイル
 	Midi      UserSectionMidi `json:"user_loop_midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type LoopRange struct {
+	Start uint `gorm:"not null" json:"start"`
+	End   uint `gorm:"not null" json:"end"`
 }

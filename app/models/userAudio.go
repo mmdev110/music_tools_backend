@@ -9,18 +9,13 @@ import (
 
 // songに紐づくオーディオファイル
 type UserSongAudio struct {
-	ID                uint   `gorm:"primarykey" json:"id"`
-	UserSongSectionId uint   `gorm:"not null;unique" json:"user_loop_id"`
-	Name              string `gorm:"not null" json:"Name"`
-	Url               Url    `gorm:"-:all" json:"url"`
-	*LoopRange        `json:"range"`
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	DeletedAt         gorm.DeletedAt `gorm:"index"`
-}
-type LoopRange struct {
-	Start uint `gorm:"not null" json:"start"`
-	End   uint `gorm:"not null" json:"end"`
+	ID         uint   `gorm:"primarykey" json:"id"`
+	UserSongId uint   `gorm:"not null;unique" json:"user_song_id"`
+	Name       string `gorm:"not null" json:"Name"`
+	Url        Url    `gorm:"-:all" json:"url"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
 
 // UserSongSection経由で取得、更新するのでメソッド全て不要？
