@@ -13,12 +13,13 @@ type User struct {
 	ID    uint   `gorm:"primarykey" json:"user_id"`
 	Email string `gorm:"unique;not null" json:"email"`
 	//トークン類はユーザーに返さない
-	Password     string `gorm:"not null" json:"-"`
-	AccessToken  string `json:"-"`
-	RefreshToken string `json:"-"`
-	UserLoops    []UserLoop
-	UserLoopTags []UserLoopTag
-	Session      Session `json:"-"`
+	Password     string      `gorm:"not null" json:"-"`
+	AccessToken  string      `json:"-"`
+	RefreshToken string      `json:"-"`
+	Songs        []UserSong  `json:"songs"`
+	Tags         []UserTag   `json:"tags"`
+	Genres       []UserGenre `json:"genres"`
+	Session      Session     `json:"-"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`

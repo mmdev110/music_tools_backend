@@ -7,43 +7,43 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserLoopTag struct {
+type UserGenre struct {
 	ID        uint       `gorm:"primarykey" json:"id"`
 	UserId    uint       `gorm:"index:idx_uid_name,unique;not null" json:"user_id"`
 	Name      string     `gorm:"index:idx_uid_name,unique;not null" json:"name"`
 	SortOrder int        `gorm:"not null;default:0" json:"sort_order"`
-	UserLoops []UserLoop `gorm:"many2many:userloops_tags" json:"user_loops"`
+	UserSongs []UserSong `gorm:"many2many:usersongs_genres" json:"user_songs"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (tag *UserLoopTag) Create() error {
+func (tag *UserGenre) Create() error {
 	result := DB.Create(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserLoopTag) Update() error {
+func (tag *UserGenre) Update() error {
 	result := DB.Save(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserLoopTag) GetById(id uint) error {
-	result := DB.Debug().Preload("UserLoops").First(tag, id)
+func (tag *UserGenre) GetById(id uint) error {
+	result := DB.Debug().Preload("UserSongSections").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
-// UserLoopsも取得する版
-func (tag *UserLoopTag) GetAllByUserId(uid uint) ([]UserLoopTag, error) {
-	var uls []UserLoopTag
-	result := DB.Debug().Preload("UserLoops").Where("user_id=?", uid).Find(&uls)
+// UserSongSectionsも取得する版
+func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
+	var uls []UserGenre
+	result := DB.Debug().Preload("UserSongSections").Where("user_id=?", uid).Find(&uls)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -51,18 +51,18 @@ func (tag *UserLoopTag) GetAllByUserId(uid uint) ([]UserLoopTag, error) {
 }
 
 // tagと中間テーブルのrelationを削除
-func (tag *UserLoopTag) DeleteTagAndRelations(tags []UserLoopTag) error {
+func (tag *UserGenre) DeleteTagAndRelations(tags []UserGenre) error {
 	if len(tags) == 0 {
 		return nil
 	}
 	utils.PrintStruct(tags)
 	//中間テーブルのレコード削除
-	//err := DB.Debug().Model(&UserLoopTag{}).Association("UserLoops").Delete(tags)
+	//err := DB.Debug().Model(&UserGenre{}).Association("UserSongSections").Delete(tags)
 	//if err != nil {
 	//	return err
 	//}
 	//tagの削除
-	result := DB.Debug().Model(&UserLoopTag{}).Delete(tags)
+	result := DB.Debug().Model(&UserGenre{}).Delete(tags)
 	if result.Error != nil {
 		return result.Error
 	}

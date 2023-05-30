@@ -19,11 +19,11 @@ func main() {
 		log.Fatal(err)
 	}
 	//playground()
-	web_simple()
+	web_server()
 }
 
 // DB接続無しのwebサーバ
-func web_simple() {
+func web_server() {
 	fmt.Println("web_simple")
 
 	//ハンドラ登録
@@ -50,8 +50,8 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))
-	mux.HandleFunc("/loop/", requireAuth(handlers.LoopHandler))
-	mux.HandleFunc("/delete_loop", requireAuth(handlers.DeleteLoop))
+	mux.HandleFunc("/song/", requireAuth(handlers.SongHandler))
+	mux.HandleFunc("/delete_song", requireAuth(handlers.DeleteSong))
 	mux.HandleFunc("/hls/", handlers.HLSHandler)
 	mux.HandleFunc("/test", handlers.TestHandler)
 

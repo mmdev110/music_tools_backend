@@ -13,23 +13,23 @@ func TestTags(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Run("create and delete", func(t *testing.T) {
-		tag := UserLoopTag{}
+		tag := UserTag{}
 		tag.Name = "testtag2"
 		tag.UserId = 6
 
 		if err := tag.Create(); err != nil {
 			t.Fatalf("error at tag.Create(): %v", err)
 		}
-		if err2 := tag.DeleteTagAndRelations([]UserLoopTag{tag}); err2 != nil {
+		if err2 := tag.DeleteTagAndRelations([]UserTag{tag}); err2 != nil {
 			t.Fatalf("error at tag.Delete(): %v", err2)
 		}
 	})
 	t.Run("tag.GetAllByUserId()", func(t *testing.T) {
 		//create
-		var tags []UserLoopTag
+		var tags []UserTag
 		userId := uint(8)
 		for i, v := range []string{"tag1", "tag2", "tag3"} {
-			tag := UserLoopTag{}
+			tag := UserTag{}
 			tag.UserId = userId
 			tag.Name = v
 			tag.SortOrder = i
@@ -39,7 +39,7 @@ func TestTags(t *testing.T) {
 			tags = append(tags, tag)
 		}
 		//getAll
-		emptyTag := UserLoopTag{}
+		emptyTag := UserTag{}
 		gotTags, err := emptyTag.GetAllByUserId(userId)
 		if err != nil {
 			t.Errorf("error found at tag.GetAll(): %v", err)
@@ -56,7 +56,7 @@ func TestTags(t *testing.T) {
 		}
 		//delete
 		for _, v := range gotTags {
-			if errDelete := v.DeleteTagAndRelations([]UserLoopTag{v}); errDelete != nil {
+			if errDelete := v.DeleteTagAndRelations([]UserTag{v}); errDelete != nil {
 				t.Errorf("error at Delete: %v", errDelete)
 			}
 		}
@@ -70,9 +70,9 @@ func TestDeleteTag(t *testing.T) {
 	}
 	t.Run("get tag and its userloops", func(t *testing.T) {
 		//tagid := uint(1)
-		tag := UserLoopTag{}
+		tag := UserTag{}
 		DB.First(&tag, uint(1))
-		result := DB.Debug().Model(&UserLoopTag{}).Preload("UserLoops").Find(&tag)
+		result := DB.Debug().Model(&UserTag{}).Preload("UserSongSections").Find(&tag)
 		if result.Error != nil {
 			t.Errorf("error:= %v", result.Error)
 		}
@@ -80,14 +80,14 @@ func TestDeleteTag(t *testing.T) {
 	})
 	t.Run("delete tag", func(t *testing.T) {
 		//tagid := uint(1)
-		tag := UserLoopTag{}
+		tag := UserTag{}
 		DB.First(&tag, uint(1))
 		//SELECT * FROM user_loops INNER JOIN userloops_tags
 		//ON user_loops.id=userloops_tags.user_loops_id
 		//WHERE user_loops_tags.user_loop_tag.id=?
-		//result := DB.Debug().Model(&UserLoop{}).Joins("inner join userloops_tags on user_loops.id=userloops_tags.user_loop_id").Where("userloops_tags.user_loop_tag_id = ?", tagid).Find(&ulp)
+		//result := DB.Debug().Model(&UserSongSection{}).Joins("inner join userloops_tags on user_loops.id=userloops_tags.user_loop_id").Where("userloops_tags.user_loop_tag_id = ?", tagid).Find(&ulp)
 
-		result := DB.Debug().Model(&tag).Association("UserLoops").Clear()
+		result := DB.Debug().Model(&tag).Association("UserSongSections").Clear()
 		if result != nil {
 			t.Errorf("error:= %v", result)
 		}

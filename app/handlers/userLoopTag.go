@@ -27,13 +27,13 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@savetags")
-	var input = []models.UserLoopTag{}
+	var input = []models.UserTag{}
 
 	json.NewDecoder(r.Body).Decode(&input)
 	//for _, v := range input {
 	//	utils.PrintStruct(v)
 	//}
-	tmp := models.UserLoopTag{}
+	tmp := models.UserTag{}
 	tags, err := tmp.GetAllByUserId(user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, err)
@@ -41,8 +41,8 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//削除する(=DBにあってinputに無い)レコードを探す
-	tags_to_delete := []models.UserLoopTag{}
-	tags_not_deleted := []models.UserLoopTag{}
+	tags_to_delete := []models.UserTag{}
+	tags_not_deleted := []models.UserTag{}
 	for _, tag_db := range tags {
 		found_in_input := false
 		for _, tag_input := range input {
@@ -58,7 +58,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 			tags_not_deleted = append(tags_not_deleted, tag_db)
 		}
 	}
-	var t = models.UserLoopTag{}
+	var t = models.UserTag{}
 	if err := t.DeleteTagAndRelations(tags_to_delete); err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -100,7 +100,7 @@ func getTags(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("@@@gettags")
 
 	//DBから取得
-	var tag = models.UserLoopTag{}
+	var tag = models.UserTag{}
 	tags, err := tag.GetAllByUserId(user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, err)
