@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,7 +18,10 @@ var r_aac = regexp.MustCompile(`\.aac`)
 
 // S3からm3u8ファイルを取得し、その中身のaacファイルのアドレスをpresigned urlに置き換えた上で返す
 func HLSHandler(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromContext(r.Context())
+	//TODO
+	//認証つけた方が良い
+
+	//user := getUserFromContext(r.Context())
 	//fmt.Printf("userid in handler = %d\n", user.ID)
 	//パラメータ取り出し
 	str := strings.TrimPrefix(r.URL.Path, "/hls/")
@@ -28,9 +30,10 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 
 	var us = models.UserSong{}
 	us.GetByID(userSongId)
-	if us.UserId != user.ID {
-		utils.ErrorJSON(w, errors.New("user mismatch"))
-	}
+	//if us.UserId != user.ID {
+	//	utils.ErrorJSON(w, errors.New("user mismatch"))
+	//}
+	fmt.Println(us.GetFolderName() + us.GetHLSName())
 	presignedUrl, err := utils.GenerateSignedUrl(us.GetFolderName()+us.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
 	if err != nil {
 		utils.ErrorJSON(w, err)

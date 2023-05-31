@@ -17,7 +17,7 @@ type MyCustomClaims struct {
 }
 
 func GenerateJwt(userId uint, tokenType string, duration time.Duration) (string, error) {
-	fmt.Println("@@@@@GenerateJwt")
+	//fmt.Println("@@@@@GenerateJwt")
 	// Create the claims
 	claims := MyCustomClaims{
 		userId,

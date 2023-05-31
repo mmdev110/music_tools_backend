@@ -24,14 +24,14 @@ func (s *Session) Create(refreshToken string) (*Session, error) {
 	return s, nil
 }
 func (s *Session) GetByUserID(uid uint) *gorm.DB {
-	result := DB.Debug().Model(&Session{}).Where("user_id=?", uid).First(s)
+	result := DB.Model(&Session{}).Where("user_id=?", uid).First(s)
 	return result
 }
 func (s *Session) GetBySessionID(sessionString string) *gorm.DB {
-	result := DB.Debug().Model(&Session{}).Where("session_string=?", sessionString).First(s)
+	result := DB.Model(&Session{}).Where("session_string=?", sessionString).First(s)
 	return result
 }
 func (s *Session) Update() error {
-	result := DB.Debug().Save(&s)
+	result := DB.Save(&s)
 	return result.Error
 }

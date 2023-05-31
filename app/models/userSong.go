@@ -19,10 +19,10 @@ type UserSong struct {
 	UserId   uint              `gorm:"not null" json:"user_id"`
 	Title    string            `json:"title"`
 	Artist   string            `json:"artist"`
-	Sections []UserSongSection `json:"user_song_section"`
+	Sections []UserSongSection `json:"sections"`
 	Memo     string            `json:"memo"`
 	//オーディオファイル
-	Audio UserSongAudio `json:"user_audio"`
+	Audio UserSongAudio `json:"audio"`
 	//ジャンル
 	Genres []UserGenre `gorm:"many2many:usersongs_genres" json:"genres"`
 	//タグ
@@ -43,7 +43,7 @@ func (us *UserSong) Create() error {
 
 // songを返す
 func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Model(&UserSongSection{}).Preload("UserAudio").Preload("UserSongMidi").Preload("UserTags").Debug().First(&us, id)
+	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Debug().First(&us, id)
 	if result.RowsAffected == 0 {
 		return result
 	}
@@ -65,9 +65,9 @@ func (us *UserSong) GetByUserId(userId uint, condition ULSearchCond) ([]UserSong
 	var result *gorm.DB
 	//うまいやり方を考える
 	if len(condition.TagIds) > 0 {
-		result = DB.Debug().Model(&UserSongSection{}).Preload("UserAudio").Preload("UserSongMidi").Preload("UserTags").Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
+		result = DB.Debug().Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
 	} else {
-		result = DB.Model(&UserSongSection{}).Preload("UserAudio").Preload("UserSongMidi").Preload("UserTags").Debug().Where("user_id=?", userId).Find(&songs)
+		result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Debug().Where("user_id=?", userId).Find(&songs)
 	}
 	if result.RowsAffected == 0 {
 		return nil, nil
@@ -86,7 +86,7 @@ func (us *UserSong) GetByUserId(userId uint, condition ULSearchCond) ([]UserSong
 func (us *UserSong) Update() error {
 	fmt.Println("@@@@update")
 	//result := DB.Model(&us).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
-	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("UserTags.*").Save(&us)
+	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("UserTags.*", "created_at").Save(&us)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (us *UserSong) SetMediaUrls() error {
 func (us *UserSong) setAudioUrl() error {
 	Backend := conf.BACKEND_URL
 	fmt.Println("@@@@setmediaurl")
-	fmt.Println(us.Audio)
+	//fmt.Println(us.Audio)
 	//audio
 	if us.Audio.Name != "" {
 		audio := &us.Audio

@@ -29,15 +29,16 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 
 	var us = models.UserSong{}
 	userSongs, _ := us.GetByUserId(user.ID, condition)
-
+	fmt.Println("list handler response")
+	utils.PrintStruct(userSongs)
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
 }
 
 func SongHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("@@@@saveSong")
+	fmt.Println("@@@@songhandler")
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
-	param := strings.TrimPrefix(r.URL.Path, "/Song/")
+	param := strings.TrimPrefix(r.URL.Path, "/song/")
 	fmt.Printf("param = %s\n", param)
 
 	if r.Method == http.MethodPost {
@@ -48,7 +49,7 @@ func SongHandler(w http.ResponseWriter, r *http.Request) {
 			//更新
 			uid, _ := strconv.Atoi(param)
 			userSongId := uint(uid)
-			saveSong(w, r, user, userSongId)
+			updateSong(w, r, user, userSongId)
 		}
 	} else if r.Method == http.MethodGet {
 		//取得
@@ -62,6 +63,7 @@ func SongHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
+	fmt.Println("@@@@Create Song")
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
 	utils.PrintStruct(us)
@@ -72,12 +74,13 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 		utils.ErrorJSON(w, err)
 	}
 
-	fmt.Println("@@@@saveSong response")
+	fmt.Println("@@@@CreateSong response")
 	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 
 }
-func saveSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
+func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
+	fmt.Println("@@@@Update Song")
 
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
@@ -92,6 +95,7 @@ func saveSong(w http.ResponseWriter, r *http.Request, user *models.User, userSon
 	if result.Error != nil {
 		utils.ErrorJSON(w, result.Error)
 	}
+
 	//タグの削除
 	//dbにあってusに存在しないものが対象
 	tags_to_delete := []models.UserTag{}
@@ -111,15 +115,32 @@ func saveSong(w http.ResponseWriter, r *http.Request, user *models.User, userSon
 		return
 	}
 
-	err2 := us.Update()
-	if err2 != nil {
-		utils.ErrorJSON(w, err2)
+	if err := us.Update(); err != nil {
+		utils.ErrorJSON(w, err)
 		return
+	}
+	//sectionsの削除
+	//dbにあってusに存在しないものが対象
+	for _, sec_db := range db.Sections {
+		found := false
+		for _, sec_us := range us.Sections {
+			if sec_db.ID == sec_us.ID {
+				found = true
+			}
+		}
+		if !found {
+			sec_db.Delete()
+		}
 	}
 	//再取得
 	//us.GetByID(userSongId)
 
-	fmt.Println("@@@@saveSong response")
+	//presignedURLセット
+	if err := us.SetMediaUrls(); err != nil {
+		utils.ErrorJSON(w, err)
+	}
+
+	fmt.Println("@@@@UpdateSong response")
 	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 }

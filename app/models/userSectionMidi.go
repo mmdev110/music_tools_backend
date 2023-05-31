@@ -10,7 +10,7 @@ import (
 // userSongSectionに紐づいたmidiファイル
 type UserSectionMidi struct {
 	ID                uint   `gorm:"primarykey" json:"id"`
-	UserSongSectionId uint   `gorm:"not null" json:"user_loop_id"`
+	UserSongSectionId uint   `gorm:"not null" json:"user_song_section_id"`
 	Name              string `gorm:"not null" json:"Name"`
 	Url               Url    `gorm:"-:all" json:"url"`
 	//midiファイル内でルートとなるノートのindexをcsv化したもの

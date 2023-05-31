@@ -24,7 +24,7 @@ type UserSongSection struct {
 	//オーディオ再生範囲
 	*LoopRange `json:"audio_playback_range"`
 	//midiファイル
-	Midi      UserSectionMidi `json:"user_loop_midi"`
+	Midi      UserSectionMidi `json:"midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -34,4 +34,13 @@ type UserSongSection struct {
 type LoopRange struct {
 	Start uint `gorm:"not null" json:"start"`
 	End   uint `gorm:"not null" json:"end"`
+}
+
+// 中間テーブルのrelationを削除
+func (sec *UserSongSection) Delete() error {
+	result := DB.Debug().Delete(sec)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
