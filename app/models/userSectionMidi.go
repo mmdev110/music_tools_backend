@@ -60,7 +60,6 @@ func (midi *UserSectionMidi) delete() {
 	DB.Delete(&midi, midi.ID)
 }
 
-func (midi *UserSectionMidi) SetPlaylistName() {
-
-	midi.Name = midi.Name
+func (midi *UserSectionMidi) SetPlaylistName(str string) {
+	midi.Name = str
 }

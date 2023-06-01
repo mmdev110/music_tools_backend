@@ -8,7 +8,7 @@ import (
 
 // 短いコードの検証用
 func TestTags(t *testing.T) {
-	err := Init()
+	err := Init(true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestTags(t *testing.T) {
 }
 
 func TestDeleteTag(t *testing.T) {
-	err := Init()
+	err := Init(true)
 	if err != nil {
 		t.Fatal(err)
 	}

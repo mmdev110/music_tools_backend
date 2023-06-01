@@ -9,8 +9,8 @@ import (
 
 type UserGenre struct {
 	ID        uint       `gorm:"primarykey" json:"id"`
-	UserId    uint       `gorm:"index:idx_uid_name,unique;not null" json:"user_id"`
-	Name      string     `gorm:"index:idx_uid_name,unique;not null" json:"name"`
+	UserId    uint       `gorm:"index:idx_genre_uid_name,unique;not null" json:"user_id"`
+	Name      string     `gorm:"index:idx_genre_uid_name,unique;not null" json:"name"`
 	SortOrder int        `gorm:"not null;default:0" json:"sort_order"`
 	UserSongs []UserSong `gorm:"many2many:usersongs_genres" json:"user_songs"`
 	CreatedAt time.Time

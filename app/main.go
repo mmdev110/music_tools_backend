@@ -14,7 +14,7 @@ import (
 
 func main() {
 	//DB接続
-	err := models.Init()
+	err := models.Init(false)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,25 +2,38 @@ package models
 
 import (
 	"fmt"
+	"os"
 
 	"example.com/app/conf"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-func Init() error {
-	db, error := connect()
-	if error != nil {
-		return error
+const SQLITE_FILE = "data.db"
+
+func Init(isTesting bool) error {
+	var err error
+	if isTesting {
+		db, err2 := connectSQLite()
+		DB = db
+		err = err2
+	} else {
+		db, err2 := connectSQLite()
+		DB = db
+		err = err2
 	}
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("@@@DBconnection success")
-	DB = db
 	migrateModels(DB)
 	return nil
 }
-func connect() (*gorm.DB, error) {
+func connectMySQL() (*gorm.DB, error) {
 	user := conf.MYSQL_USER
 	password := conf.MYSQL_PASSWORD
 	db_name := conf.MYSQL_DATABASE
@@ -33,10 +46,17 @@ func connect() (*gorm.DB, error) {
 	}), &gorm.Config{})
 	return db, err
 }
+func connectSQLite() (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(SQLITE_FILE), &gorm.Config{})
+	return db, err
+}
 func migrateModels(db *gorm.DB) {
 	fmt.Println("@@@migration")
 	db.AutoMigrate(&User{}, &UserSong{}, &UserSongSection{}, &UserTag{}, &UserGenre{}, &Session{})
 	//db.AutoMigrate(&UserSongSection{})
 	db.AutoMigrate(&UserSongAudio{})
 	db.AutoMigrate(&UserSectionMidi{})
+}
+func ClearSQLiteDB() {
+	os.Remove(SQLITE_FILE)
 }
