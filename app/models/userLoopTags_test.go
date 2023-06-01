@@ -20,9 +20,7 @@ func TestTags(t *testing.T) {
 		if err := tag.Create(); err != nil {
 			t.Fatalf("error at tag.Create(): %v", err)
 		}
-		if err2 := tag.DeleteTagAndRelations([]UserTag{tag}); err2 != nil {
-			t.Fatalf("error at tag.Delete(): %v", err2)
-		}
+
 	})
 	t.Run("tag.GetAllByUserId()", func(t *testing.T) {
 		//create
@@ -54,12 +52,7 @@ func TestTags(t *testing.T) {
 				t.Errorf("sort_order mismatch: got: %d want: %d", got.SortOrder, want.SortOrder)
 			}
 		}
-		//delete
-		for _, v := range gotTags {
-			if errDelete := v.DeleteTagAndRelations([]UserTag{v}); errDelete != nil {
-				t.Errorf("error at Delete: %v", errDelete)
-			}
-		}
+
 	})
 }
 

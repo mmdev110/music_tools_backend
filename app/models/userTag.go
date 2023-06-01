@@ -51,20 +51,21 @@ func (tag *UserTag) GetAllByUserId(uid uint) ([]UserTag, error) {
 }
 
 // tagと中間テーブルのrelationを削除
-func (tag *UserTag) DeleteTagAndRelations(tags []UserTag) error {
-	if len(tags) == 0 {
-		return nil
-	}
-	utils.PrintStruct(tags)
+func (tag *UserTag) Delete() error {
+	utils.PrintStruct(tag)
 	//中間テーブルのレコード削除
-	//err := DB.Debug().Model(&UserTag{}).Association("UserSongSections").Delete(tags)
-	//if err != nil {
-	//	return err
-	//}
-	//tagの削除
-	result := DB.Debug().Model(&UserTag{}).Delete(tags)
+	err := DB.Debug().Model(tag).Association("UserSongs").Clear()
+	if err != nil {
+		return err
+	}
+	//tag自体の削除
+	result := DB.Debug().Delete(tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
+}
+
+func (tag UserTag) PrintID() uint {
+	return tag.ID
 }

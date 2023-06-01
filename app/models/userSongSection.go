@@ -22,7 +22,7 @@ type UserSongSection struct {
 	Scale           string `json:"scale"`
 	Memo            string `json:"memo"`
 	//オーディオ再生範囲
-	*LoopRange `json:"audio_playback_range"`
+	LoopRange `json:"audio_playback_range"`
 	//midiファイル
 	Midi      UserSectionMidi `json:"midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
@@ -32,8 +32,8 @@ type UserSongSection struct {
 }
 
 type LoopRange struct {
-	Start uint `gorm:"not null" json:"start"`
-	End   uint `gorm:"not null" json:"end"`
+	Start int `gorm:"not null" json:"start"`
+	End   int `gorm:"not null" json:"end"`
 }
 
 // 中間テーブルのrelationを削除
@@ -43,4 +43,8 @@ func (sec *UserSongSection) Delete() error {
 		return result.Error
 	}
 	return nil
+}
+
+func (sec UserSongSection) PrintID() uint {
+	return sec.ID
 }

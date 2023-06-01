@@ -191,3 +191,16 @@ func (us *UserSong) DeleteTagRelations(tags []UserTag) error {
 	}
 	return nil
 }
+
+func (us *UserSong) DeleteTagRelation(tag *UserTag) error {
+	if err := DB.Model(us).Association("Tags").Delete(tag); err != nil {
+		return err
+	}
+	return nil
+}
+func (us *UserSong) DeleteGenreRelation(genre *UserGenre) error {
+	if err := DB.Model(us).Association("Genres").Delete(genre); err != nil {
+		return err
+	}
+	return nil
+}

@@ -96,42 +96,33 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		utils.ErrorJSON(w, result.Error)
 	}
 
-	//タグの削除
-	//dbにあってusに存在しないものが対象
-	tags_to_delete := []models.UserTag{}
-	for _, tag_db := range db.Tags {
-		found := false
-		for _, tag := range us.Tags {
-			if tag_db.ID == tag.ID {
-				found = true
-			}
-		}
-		if !found {
-			tags_to_delete = append(tags_to_delete, tag_db)
+	//タグの中間テーブルの削除
+	//タグは消しちゃだめ
+	removedTags := utils.FindRemoved(db.Tags, us.Tags)
+	for _, tag := range removedTags {
+		if err := db.DeleteTagRelation(&tag); err != nil {
+			utils.ErrorJSON(w, err)
 		}
 	}
-	if err := us.DeleteTagRelations(tags_to_delete); err != nil {
-		utils.ErrorJSON(w, err)
-		return
+	//ジャンルの中間テーブルの削除
+	removedGenres := utils.FindRemoved(db.Genres, us.Genres)
+	for _, genre := range removedGenres {
+		if err := db.DeleteGenreRelation(&genre); err != nil {
+			utils.ErrorJSON(w, err)
+		}
 	}
-
+	//sectionsの削除
+	removedSections := utils.FindRemoved(db.Sections, us.Sections)
+	for _, sec := range removedSections {
+		if err := sec.Delete(); err != nil {
+			utils.ErrorJSON(w, err)
+		}
+	}
 	if err := us.Update(); err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
-	//sectionsの削除
-	//dbにあってusに存在しないものが対象
-	for _, sec_db := range db.Sections {
-		found := false
-		for _, sec_us := range us.Sections {
-			if sec_db.ID == sec_us.ID {
-				found = true
-			}
-		}
-		if !found {
-			sec_db.Delete()
-		}
-	}
+
 	//再取得
 	//us.GetByID(userSongId)
 
