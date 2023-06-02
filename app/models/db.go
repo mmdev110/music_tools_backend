@@ -21,7 +21,7 @@ func Init(isTesting bool) error {
 		DB = db
 		err = err2
 	} else {
-		db, err2 := connectSQLite()
+		db, err2 := connectMySQL()
 		DB = db
 		err = err2
 	}

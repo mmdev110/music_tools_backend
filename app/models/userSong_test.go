@@ -1,17 +1,21 @@
 package models
 
 import (
+	"fmt"
 	"testing"
+
+	"example.com/app/utils"
 )
 
 func TestUserSong(t *testing.T) {
-	err := Init(true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ClearSQLiteDB()
 
-	t.Run("save new UserSongSection", func(t *testing.T) {
+	t.Run("save new UserSong with full associations", func(t *testing.T) {
+		err := Init(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ClearSQLiteDB()
+
 		uid := uint(9999)
 		tag1 := UserTag{
 			UserId:    uid,
@@ -63,7 +67,7 @@ func TestUserSong(t *testing.T) {
 			Sections: []UserSongSection{{
 				Name:            "intro1",
 				ProgressionsCSV: "Am7,F,G,C",
-				Key:             0,
+				Key:             1,
 				BPM:             120,
 				Scale:           "メジャー",
 				Memo:            "sectionMemo1",
@@ -71,7 +75,7 @@ func TestUserSong(t *testing.T) {
 			}, {
 				Name:            "intro2",
 				ProgressionsCSV: "Am7,F,G,C",
-				Key:             0,
+				Key:             1,
 				BPM:             140,
 				Scale:           "マイナー",
 				Memo:            "sectionMemo2",
@@ -80,6 +84,113 @@ func TestUserSong(t *testing.T) {
 		}
 		if err := us.Create(); err != nil {
 			t.Errorf("error at create %v", err)
+		}
+		utils.PrintStruct(us.Genres)
+
+		fmt.Println("====update genre")
+		song := UserSong{}
+		song.GetByID(us.ID)
+		song.Genres[0].Name = "NewGenre"
+		song.Update()
+		fmt.Println("====check updated genre")
+		song2 := UserSong{}
+		song2.GetByID(song.ID)
+		utils.PrintStruct(song2.Genres)
+	})
+	t.Run("delete tag from UserSong", func(t *testing.T) {
+		want := 1
+		err := Init(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ClearSQLiteDB()
+
+		uid := uint(9999)
+		tag1 := UserTag{
+			UserId:    uid,
+			Name:      "tag1",
+			SortOrder: 0,
+			UserSongs: []UserSong{},
+		}
+		if err := tag1.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		tag2 := UserTag{
+			UserId:    uid,
+			Name:      "tag2",
+			SortOrder: 0,
+			UserSongs: []UserSong{},
+		}
+		if err := tag2.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		us := UserSong{
+			UserId: uid,
+			Genres: []UserGenre{},
+			Tags:   []UserTag{tag1, tag2},
+		}
+		if err := us.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		song := UserSong{}
+		song.GetByID(us.ID)
+		//tagのリレーション削除
+		song.DeleteTagRelation(&song.Tags[1])
+		//tagを一つ削除
+		song.Tags = append(song.Tags[:1])
+		song.Update()
+
+		song2 := UserSong{}
+		song2.GetByID(song.ID)
+		if l := len(song2.Tags); l != want {
+			t.Errorf("want =%d , but got =%d ", want, l)
+		}
+	})
+	t.Run("append tag to UserSong", func(t *testing.T) {
+		want := 2
+		err := Init(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ClearSQLiteDB()
+
+		uid := uint(9999)
+		tag1 := UserTag{
+			UserId:    uid,
+			Name:      "tag1",
+			SortOrder: 0,
+			UserSongs: []UserSong{},
+		}
+		if err := tag1.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		tag2 := UserTag{
+			UserId:    uid,
+			Name:      "tag2",
+			SortOrder: 0,
+			UserSongs: []UserSong{},
+		}
+		if err := tag2.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		us := UserSong{
+			UserId: uid,
+			Genres: []UserGenre{},
+			Tags:   []UserTag{tag1},
+		}
+		if err := us.Create(); err != nil {
+			t.Errorf("error at create %v", err)
+		}
+		song := UserSong{}
+		song.GetByID(us.ID)
+		//tagを一つ追加
+		song.Tags = append(song.Tags, tag2)
+		song.Update()
+
+		song2 := UserSong{}
+		song2.GetByID(song.ID)
+		if l := len(song2.Tags); l != want {
+			t.Errorf("want =%d , but got =%d ", want, l)
 		}
 	})
 

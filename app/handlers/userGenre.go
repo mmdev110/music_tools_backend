@@ -9,24 +9,24 @@ import (
 	"example.com/app/utils"
 )
 
-func TagHandler(w http.ResponseWriter, r *http.Request) {
+func GenreHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	if r.Method == http.MethodPost {
 		//新規作成、更新
-		saveTags(w, r)
+		saveGenres(w, r)
 	} else if r.Method == http.MethodGet {
 		//タグ一覧の取得
-		getTags(w, r)
+		getGenres(w, r)
 	} else {
 		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
 	}
 
 }
 
-func saveTags(w http.ResponseWriter, r *http.Request) {
+func saveGenres(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
-	fmt.Println("@@@savetags")
+	fmt.Println("@@@saveGenres")
 	var input = []models.UserTag{}
 
 	json.NewDecoder(r.Body).Decode(&input)
@@ -40,7 +40,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//タグリレーション削除
+	//DBにあって、リクエストにないタグを削除
 	removedTags := utils.FindRemoved(db, input)
 	for _, t := range removedTags {
 		if err := t.Delete(); err != nil {
@@ -52,7 +52,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	models.DB.Debug().Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
-func getTags(w http.ResponseWriter, r *http.Request) {
+func getGenres(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@gettags")

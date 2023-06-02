@@ -12,7 +12,7 @@ type UserTag struct {
 	UserId    uint       `gorm:"index:idx_tag_uid_name,unique;not null" json:"user_id"`
 	Name      string     `gorm:"index:idx_tag_uid_name,unique;not null" json:"name"`
 	SortOrder int        `gorm:"not null;default:0" json:"sort_order"`
-	UserSongs []UserSong `gorm:"many2many:usersongs_tags" json:"user_loops"`
+	UserSongs []UserSong `gorm:"many2many:usersongs_tags" json:"user_songs"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

@@ -18,8 +18,8 @@ type UserGenre struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (tag *UserGenre) Create() error {
-	result := DB.Create(&tag)
+func (genre *UserGenre) Create() error {
+	result := DB.Create(genre)
 	if result.Error != nil {
 		return result.Error
 	}

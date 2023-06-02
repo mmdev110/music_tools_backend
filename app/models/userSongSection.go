@@ -36,7 +36,6 @@ type LoopRange struct {
 	End   int `gorm:"not null" json:"end"`
 }
 
-// 中間テーブルのrelationを削除
 func (sec *UserSongSection) Delete() error {
 	result := DB.Debug().Delete(sec)
 	if result.Error != nil {

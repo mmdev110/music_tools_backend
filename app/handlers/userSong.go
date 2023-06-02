@@ -97,7 +97,6 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	}
 
 	//タグの中間テーブルの削除
-	//タグは消しちゃだめ
 	removedTags := utils.FindRemoved(db.Tags, us.Tags)
 	for _, tag := range removedTags {
 		if err := db.DeleteTagRelation(&tag); err != nil {

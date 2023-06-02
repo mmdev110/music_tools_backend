@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -33,7 +34,7 @@ type UserSong struct {
 }
 
 func (us *UserSong) Create() error {
-	result := DB.Omit("UserTags.*").Create(&us)
+	result := DB.Debug().Omit("Tags.*", "Genres.*").Create(&us)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -43,7 +44,7 @@ func (us *UserSong) Create() error {
 
 // songを返す
 func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Debug().First(&us, id)
+	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().First(&us, id)
 	if result.RowsAffected == 0 {
 		return result
 	}
@@ -67,7 +68,7 @@ func (us *UserSong) GetByUserId(userId uint, condition ULSearchCond) ([]UserSong
 	if len(condition.TagIds) > 0 {
 		result = DB.Debug().Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
 	} else {
-		result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Debug().Where("user_id=?", userId).Find(&songs)
+		result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().Where("user_id=?", userId).Find(&songs)
 	}
 	if result.RowsAffected == 0 {
 		return nil, nil
@@ -85,21 +86,15 @@ func (us *UserSong) GetByUserId(userId uint, condition ULSearchCond) ([]UserSong
 }
 func (us *UserSong) Update() error {
 	fmt.Println("@@@@update")
-	//result := DB.Model(&us).Session(&gorm.Session{FullSaveAssociations: true}).Debug().Updates(ul)
-	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("UserTags.*", "created_at").Save(&us)
+	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at").Save(&us)
 	if err := result.Error; err != nil {
 		return err
 	}
 	return nil
 }
 func (us *UserSong) Delete() error {
-	//relationの削除
-	err := us.DeleteTagRelations(us.Tags)
-	if err != nil {
-		return err
-	}
 	//audio,midiもまとめて削除
-	result := DB.Debug().Delete(&us, us.ID)
+	result := DB.Debug().Omit("Tags.*", "Genres.*").Delete(&us)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -168,10 +163,7 @@ func (us *UserSong) setMidiUrl() error {
 // (オーディオファイル)_hls.m3u8というルールになっている
 func (us *UserSong) GetHLSName() string {
 	audio := &us.Audio
-	n := strings.ReplaceAll(audio.Name, ".wav", "")
-	n = strings.ReplaceAll(n, ".mp3", "")
-	n = strings.ReplaceAll(n, ".m4a", "")
-	fmt.Println(n)
+	n := strings.ReplaceAll(audio.Name, filepath.Ext(audio.Name), "")
 	return n + PlaylistSuffix + ".m3u8"
 }
 func (us *UserSong) GetFolderName() string {
@@ -180,18 +172,6 @@ func (us *UserSong) GetFolderName() string {
 }
 
 // 中間テーブルのrelationを削除
-func (us *UserSong) DeleteTagRelations(tags []UserTag) error {
-	if len(tags) == 0 {
-		return nil
-	}
-	//中間テーブルのレコード削除
-	err := DB.Debug().Model(&us).Association("UserTags").Delete(tags)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (us *UserSong) DeleteTagRelation(tag *UserTag) error {
 	if err := DB.Model(us).Association("Tags").Delete(tag); err != nil {
 		return err
