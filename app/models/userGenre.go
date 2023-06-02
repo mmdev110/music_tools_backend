@@ -33,17 +33,17 @@ func (tag *UserGenre) Update() error {
 	return nil
 }
 func (tag *UserGenre) GetById(id uint) error {
-	result := DB.Debug().Preload("UserSongSections").First(tag, id)
+	result := DB.Debug().Preload("UserSongs").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
-// UserSongSectionsも取得する版
+// UserSongsも取得する版
 func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
 	var uls []UserGenre
-	result := DB.Debug().Preload("UserSongSections").Where("user_id=?", uid).Find(&uls)
+	result := DB.Debug().Preload("UserSongs").Where("user_id=?", uid).Find(&uls)
 	if result.Error != nil {
 		return nil, result.Error
 	}

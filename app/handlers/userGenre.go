@@ -27,13 +27,13 @@ func saveGenres(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@saveGenres")
-	var input = []models.UserTag{}
+	var input = []models.UserGenre{}
 
 	json.NewDecoder(r.Body).Decode(&input)
 	//for _, v := range input {
 	//	utils.PrintStruct(v)
 	//}
-	tmp := models.UserTag{}
+	tmp := models.UserGenre{}
 	db, err := tmp.GetAllByUserId(user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, err)
@@ -58,7 +58,7 @@ func getGenres(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("@@@gettags")
 
 	//DBから取得
-	var tag = models.UserTag{}
+	var tag = models.UserGenre{}
 	tags, err := tag.GetAllByUserId(user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, err)

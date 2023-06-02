@@ -50,6 +50,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))
+	mux.HandleFunc("/genres", requireAuth(handlers.GenreHandler))
 	mux.HandleFunc("/song/", requireAuth(handlers.SongHandler))
 	mux.HandleFunc("/delete_song", requireAuth(handlers.DeleteSong))
 	mux.HandleFunc("/hls/", handlers.HLSHandler)
