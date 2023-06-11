@@ -17,6 +17,7 @@ const SQLITE_FILE = "data.db"
 func Init(isTesting bool) error {
 	var err error
 	if isTesting {
+		ClearSQLiteDB()
 		db, err2 := connectSQLite()
 		DB = db
 		err = err2

@@ -200,102 +200,196 @@ func TestUserSong(t *testing.T) {
 }
 
 func TestGetByUserId(t *testing.T) {
-	t.Run("get userSong with search conditions", func(t *testing.T) {
-		err := Init(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer ClearSQLiteDB()
-		prepareData(t)
-		fmt.Println("====get usersong with condition")
-		song := UserSong{}
-		cond := &SongSearchCond{
-			TagIds:      []uint{1, 2, 3},
-			GenreIds:    []uint{2, 3},
-			SectionName: "",
-		}
-		//cond := &SongSearchCond{}
-		songs, _ := song.GetByUserId(9999, cond)
-		for _, v := range songs {
-			utils.PrintStruct(v)
-		}
-	})
-	t.Run("getSongByTagIds", func(t *testing.T) {
-		err := Init(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer ClearSQLiteDB()
-		prepareData(t)
-		fmt.Println("====get usersong with condition")
-		us := UserSong{}
-		tagIds := []uint{1, 2, 3}
-		//cond := &SongSearchCond{}
-		songs, _ := us.getSongByTagIds(9999, tagIds)
-		for _, v := range songs {
-			utils.PrintStruct(v.ID)
-			utils.PrintStruct(v.Tags)
-		}
-	})
+	err := Init(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ClearSQLiteDB()
+	data := prepareData(t)
+	type Suite struct {
+		memo string
+		cond SongSearchCond
+		want []UserSong
+	}
+	suites := []Suite{
+		{
+			memo: "return 2",
+			cond: SongSearchCond{
+				TagIds:      []uint{1},
+				GenreIds:    []uint{1},
+				SectionName: "",
+			},
+			want: []UserSong{data.Songs[0], data.Songs[1]},
+		},
+		{
+			memo: "return 1",
+			cond: SongSearchCond{
+				TagIds:      []uint{2},
+				GenreIds:    []uint{2},
+				SectionName: "",
+			},
+			want: []UserSong{data.Songs[0]},
+		},
+		{
+			memo: "empty condition",
+			cond: SongSearchCond{
+				TagIds:      []uint{},
+				GenreIds:    []uint{},
+				SectionName: "",
+			},
+			want: []UserSong{data.Songs[0], data.Songs[1]},
+		},
+		{
+			memo: "sectionName",
+			cond: SongSearchCond{
+				TagIds:      []uint{},
+				GenreIds:    []uint{},
+				SectionName: "intro1",
+			},
+			want: []UserSong{data.Songs[0], data.Songs[1]},
+		},
+		{
+			memo: "sectionName",
+			cond: SongSearchCond{
+				TagIds:      []uint{},
+				GenreIds:    []uint{},
+				SectionName: "intro2",
+			},
+			want: []UserSong{data.Songs[1]},
+		},
+	}
+	for _, s := range suites {
+		t.Run(s.memo, func(t *testing.T) {
+			us := UserSong{}
+			songs, err := us.GetByUserId(data.uid, s.cond)
+			if err != nil {
+				t.Error(err)
+			}
+			if len(songs) != len(s.want) {
+				t.Errorf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
+			}
+			for i, got := range songs {
+				if got.ID != s.want[i].ID {
+					t.Errorf("want: %v, but got %v", s.want[i], got)
+				}
+			}
+		})
+	}
+
+}
+func TestGetSongByTagIds(t *testing.T) {
+	err := Init(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ClearSQLiteDB()
+	data := prepareData(t)
+	us := UserSong{}
+	type Suite struct {
+		memo   string
+		tagIds []uint
+		want   []UserSong
+	}
+	suites := []Suite{
+		{
+			memo:   "123",
+			tagIds: []uint{1, 2, 3},
+			want:   []UserSong{data.Songs[0], data.Songs[1]},
+		},
+		{memo: "2",
+			tagIds: []uint{2},
+			want:   []UserSong{data.Songs[0]},
+		},
+	}
+	for _, s := range suites {
+		t.Run(s.memo, func(t *testing.T) {
+			songs, err := us.getSongByTagIds(data.uid, s.tagIds)
+			if err != nil {
+				t.Error(err)
+			}
+			if len(songs) != len(s.want) {
+				t.Errorf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
+			}
+			for i, got := range songs {
+				if got.ID != s.want[i].ID {
+					t.Errorf("want: %v, but got %v", s.want[i], got)
+				}
+			}
+		})
+	}
 }
 
-func prepareData(t *testing.T) {
-	uid := uint(9999)
-	tag1 := UserTag{
+type TestData struct {
+	uid    uint
+	Tags   []UserTag
+	Genres []UserGenre
+	Songs  []UserSong
+}
+
+func prepareData(t *testing.T) TestData {
+	var uid = uint(9999)
+	var tag1 = UserTag{
 		UserId:    uid,
 		Name:      "tag1",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
-	if err := tag1.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	tag2 := UserTag{
+
+	var tag2 = UserTag{
 		UserId:    uid,
 		Name:      "tag2",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
-	if err := tag2.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	tag3 := UserTag{
+
+	var tag3 = UserTag{
 		UserId:    uid,
 		Name:      "tag3",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
-	if err := tag3.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	genre1 := UserGenre{
+
+	var genre1 = UserGenre{
 		UserId:    uid,
 		Name:      "genre1",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
-	if err := genre1.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	genre2 := UserGenre{
+
+	var genre2 = UserGenre{
 		UserId:    uid,
 		Name:      "genre2",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
-	if err := genre2.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	genre3 := UserGenre{
+
+	var genre3 = UserGenre{
 		UserId:    uid,
 		Name:      "genre3",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
+
+	fmt.Println("preparing data")
+	if err := tag1.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
+	if err := tag2.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
+	if err := tag3.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
+	if err := genre1.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
+	if err := genre2.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
 	if err := genre3.Create(); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	us1 := UserSong{
+	var us1 = UserSong{
 		UserId: uid,
 		Title:  "title1",
 		Artist: "artist1",
@@ -324,10 +418,7 @@ func prepareData(t *testing.T) {
 			LoopRange:       LoopRange{Start: 30, End: 40},
 		}},
 	}
-	if err := us1.Create(); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	us2 := UserSong{
+	var us2 = UserSong{
 		UserId: uid,
 		Title:  "title1",
 		Artist: "artist1",
@@ -356,8 +447,16 @@ func prepareData(t *testing.T) {
 			LoopRange:       LoopRange{Start: 30, End: 40},
 		}},
 	}
+	if err := us1.Create(); err != nil {
+		t.Errorf("error at create %v", err)
+	}
 	if err := us2.Create(); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-
+	return TestData{
+		uid:    uid,
+		Tags:   []UserTag{tag1, tag2},
+		Genres: []UserGenre{genre1, genre2},
+		Songs:  []UserSong{us1, us2},
+	}
 }

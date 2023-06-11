@@ -62,7 +62,7 @@ type SongSearchCond struct {
 }
 
 // userIdに紐づくsong(検索条件があればそれも考慮する)
-func (us *UserSong) GetByUserId(userId uint, cond *SongSearchCond) ([]UserSong, error) {
+func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB
 	//うまいやり方を考える
@@ -88,8 +88,8 @@ func (us *UserSong) GetByUserId(userId uint, cond *SongSearchCond) ([]UserSong, 
 	//genreIdsを持ってるsongを検索
 	var songIdsWithGenres []uint
 	if isGenreConditionActive {
-		var songWithGenres []UserSong
-		DB.Debug().Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id").Where("user_id=? AND usg.user_genre_id IN ?", userId, cond.GenreIds).Find(&songWithGenres)
+		songWithGenres, _ := us.getSongByGenreIds(userId, cond.GenreIds)
+		//DB.Debug().Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id").Where("user_id=? AND usg.user_genre_id IN ?", userId, cond.GenreIds).Find(&songWithGenres)
 		for _, v := range songWithGenres {
 			songIdsWithGenres = append(songIdsWithGenres, v.ID)
 		}
@@ -262,7 +262,7 @@ func (us *UserSong) getSongByTagIds(userId uint, tagIds []uint) ([]UserSong, err
 func (us *UserSong) getSongByGenreIds(userId uint, genreIds []uint) ([]UserSong, error) {
 	fmt.Println("getSongByGenreIds")
 	var songWithGenres []UserSong
-	result := DB.Debug().Preload("Genres").Joins("INNER JOIN usersongs_genres usg ON user_songs.id=ust.user_song_id AND ust.user_genre_id IN ?", genreIds).Where("user_id=?", userId).Find(&songWithGenres)
+	result := DB.Debug().Preload("Genres").Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id AND usg.user_genre_id IN ?", genreIds).Where("user_id=?", userId).Find(&songWithGenres)
 	if result.RowsAffected == 0 {
 		return nil, nil
 	}
