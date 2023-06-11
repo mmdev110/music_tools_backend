@@ -13,6 +13,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0
 	golang.org/x/crypto v0.3.0
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	gorm.io/driver/mysql v1.4.3
 	gorm.io/driver/sqlite v1.5.1
 	gorm.io/gorm v1.25.0

@@ -66,6 +66,6 @@ func (g *UserGenre) Delete() error {
 	return nil
 }
 
-func (g UserGenre) PrintID() uint {
+func (g UserGenre) GetID() uint {
 	return g.ID
 }

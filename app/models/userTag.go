@@ -66,6 +66,6 @@ func (tag *UserTag) Delete() error {
 	return nil
 }
 
-func (tag UserTag) PrintID() uint {
+func (tag UserTag) GetID() uint {
 	return tag.ID
 }

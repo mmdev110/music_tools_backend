@@ -23,7 +23,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("userid in handler = %d\n", user.ID)
 
 	//検索条件取り出し
-	var condition = models.ULSearchCond{}
+	var condition = &models.SongSearchCond{}
 	json.NewDecoder(r.Body).Decode(&condition)
 	utils.PrintStruct(condition)
 

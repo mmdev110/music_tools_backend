@@ -44,6 +44,6 @@ func (sec *UserSongSection) Delete() error {
 	return nil
 }
 
-func (sec UserSongSection) PrintID() uint {
+func (sec UserSongSection) GetID() uint {
 	return sec.ID
 }

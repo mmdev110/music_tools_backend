@@ -55,21 +55,78 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 	return result
 }
 
-type ULSearchCond struct {
-	TagIds    []uint `json:"tag_ids"`
-	SubString string `json:"substring"`
+type SongSearchCond struct {
+	TagIds      []uint `json:"tag_ids"`
+	GenreIds    []uint `json:"genre_ids"`
+	SectionName string `json:"section_name"`
 }
 
 // userIdに紐づくsong(検索条件があればそれも考慮する)
-func (us *UserSong) GetByUserId(userId uint, condition ULSearchCond) ([]UserSong, error) {
+func (us *UserSong) GetByUserId(userId uint, cond *SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB
 	//うまいやり方を考える
-	if len(condition.TagIds) > 0 {
-		result = DB.Debug().Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
-	} else {
-		result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().Where("user_id=?", userId).Find(&songs)
+	//if len(cond.TagIds) == 0 && len(cond.GenreIds) == 0 && cond.SectionName == "" { //検索条件なし=uidのみで検索
+	//	fmt.Println("no search cond")
+	//	result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().Where("user_id=?", userId).Find(&songs)
+	//} else {
+	//	result = DB.Preload("Audio").Preload("Sections", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ").Preload("Tags", "id IN (?)", cond.TagIds).Preload("Genres", "id IN (?)", cond.GenreIds).Debug().Where("user_id=? AND sec.name=?", userId, cond.SectionName).Find(&songs)
+	//	//result = DB.Debug().Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
+	//}
+	isTagConditonActive := len(cond.TagIds) > 0
+	isGenreConditionActive := len(cond.GenreIds) > 0
+	//tagIdsを持ってるsongを検索
+	var songIdsWithTags []uint
+	if isTagConditonActive {
+		songWithTags, _ := us.getSongByTagIds(userId, cond.TagIds)
+		for _, v := range songWithTags {
+			songIdsWithTags = append(songIdsWithTags, v.ID)
+		}
 	}
+	fmt.Println("songIdsWithTags: ", songIdsWithTags)
+
+	//genreIdsを持ってるsongを検索
+	var songIdsWithGenres []uint
+	if isGenreConditionActive {
+		var songWithGenres []UserSong
+		DB.Debug().Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id").Where("user_id=? AND usg.user_genre_id IN ?", userId, cond.GenreIds).Find(&songWithGenres)
+		for _, v := range songWithGenres {
+			songIdsWithGenres = append(songIdsWithGenres, v.ID)
+		}
+	}
+	fmt.Println("songIdsWithGenres: ", songIdsWithGenres)
+	//両方に含まれるidを抽出
+	var commonIds []uint
+	if isTagConditonActive && isGenreConditionActive {
+		commonIds = utils.Intersect(songIdsWithTags, songIdsWithGenres)
+	} else if !isTagConditonActive {
+		commonIds = songIdsWithGenres
+	} else if !isGenreConditionActive {
+		commonIds = songIdsWithTags
+	}
+	fmt.Println(isTagConditonActive)
+	fmt.Println(isGenreConditionActive)
+	fmt.Println("commonIds: ", commonIds)
+
+	//そのidの中から、sectionNameで絞り込み
+	db := DB.Debug().Preload("Audio").Preload("Tags").Preload("Genres")
+	query := "user_id=?"
+	args := []interface{}{userId}
+
+	if isTagConditonActive || isGenreConditionActive { //タグ、ジャンル検索条件がある場合、userSongId条件追加
+		query += " AND user_songs.id in ?"
+		args = append(args, commonIds)
+	}
+	//sectionName
+	if cond.SectionName != "" { //sectionName指定がある場合
+		db.Preload("Sections", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
+		query += " AND sec.name=?"
+		args = append(args, cond.SectionName)
+	} else {
+		db.Preload("Sections")
+	}
+	result = db.Where(query, args...).Find(&songs)
+
 	if result.RowsAffected == 0 {
 		return nil, nil
 	}
@@ -183,4 +240,36 @@ func (us *UserSong) DeleteGenreRelation(genre *UserGenre) error {
 		return err
 	}
 	return nil
+}
+func (us UserSong) GetID() uint {
+	return us.ID
+}
+
+func (us *UserSong) getSongByTagIds(userId uint, tagIds []uint) ([]UserSong, error) {
+	fmt.Println("getSongByTagIds")
+	var songWithTags []UserSong
+	result := DB.Debug().Preload("Tags").Joins("INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id AND ust.user_tag_id IN ?", tagIds).Where("user_id=?", userId).Find(&songWithTags)
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	//同じsongIdの要素が複数取得されてしまうので、ユニークにする
+	uniq := utils.Uniq(songWithTags)
+	return uniq, nil
+}
+func (us *UserSong) getSongByGenreIds(userId uint, genreIds []uint) ([]UserSong, error) {
+	fmt.Println("getSongByGenreIds")
+	var songWithGenres []UserSong
+	result := DB.Debug().Preload("Genres").Joins("INNER JOIN usersongs_genres usg ON user_songs.id=ust.user_song_id AND ust.user_genre_id IN ?", genreIds).Where("user_id=?", userId).Find(&songWithGenres)
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	//同じsongIdの要素が複数取得されてしまうので、ユニークにする
+	uniq := utils.Uniq(songWithGenres)
+	return uniq, nil
 }
