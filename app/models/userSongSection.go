@@ -16,11 +16,12 @@ type UserSongSection struct {
 	Name string `json:"section"`
 	//コード進行をcsv化したもの
 	//["Am7","","","Dm7"]->"Am7,,,Dm7"
-	ProgressionsCSV string `json:"progressions_csv"`
-	Key             int    `json:"key"`
-	BPM             int    `json:"bpm"`
-	Scale           string `json:"scale"`
-	Memo            string `json:"memo"`
+	ProgressionsCSV string               `json:"progressions_csv"`
+	Instruments     []UserSongInstrument `gorm:"many2many:sections_instruments" json:"instruments"`
+	Key             int                  `json:"key"`
+	BPM             int                  `json:"bpm"`
+	Scale           string               `json:"scale"`
+	Memo            string               `json:"memo"`
 	//オーディオ再生範囲
 	LoopRange `json:"audio_playback_range"`
 	//midiファイル
@@ -36,7 +37,20 @@ type LoopRange struct {
 	End   int `gorm:"not null" json:"end"`
 }
 
+func (sec *UserSongSection) Create() error {
+	//Instrumentsはrelationのみ作成
+	result := DB.Debug().Omit("Instruments.*").Create(&sec)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 func (sec *UserSongSection) Delete() error {
+	//中間テーブルのレコード削除
+	if err := DB.Debug().Model(sec).Association("Instruments").Clear(); err != nil {
+		return err
+	}
 	result := DB.Debug().Delete(sec)
 	if result.Error != nil {
 		return result.Error
@@ -46,4 +60,12 @@ func (sec *UserSongSection) Delete() error {
 
 func (sec UserSongSection) GetID() uint {
 	return sec.ID
+}
+
+// 中間テーブルのrelationを削除
+func (sec *UserSongSection) DeleteInstrumentRelation(inst *UserSongInstrument) error {
+	if err := DB.Model(sec).Association("Instruments").Delete(inst); err != nil {
+		return err
+	}
+	return nil
 }

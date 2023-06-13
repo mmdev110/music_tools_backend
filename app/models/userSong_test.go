@@ -9,94 +9,21 @@ import (
 
 func TestUserSong(t *testing.T) {
 
-	t.Run("save new UserSong with full associations", func(t *testing.T) {
-		t.Skip()
+	t.Run("check prepareData", func(t *testing.T) {
 		err := Init(true)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer ClearSQLiteDB()
+		data := prepareData(t)
 
-		uid := uint(9999)
-		tag1 := UserTag{
-			UserId:    uid,
-			Name:      "tag1",
-			SortOrder: 0,
-			UserSongs: []UserSong{},
+		for _, song := range data.Songs {
+			fmt.Println("====")
+			utils.PrintStruct(song.Instruments)
+			for _, section := range song.Sections {
+				utils.PrintStruct(section.Instruments)
+			}
 		}
-		if err := tag1.Create(); err != nil {
-			t.Errorf("error at create %v", err)
-		}
-		tag2 := UserTag{
-			UserId:    uid,
-			Name:      "tag2",
-			SortOrder: 0,
-			UserSongs: []UserSong{},
-		}
-		if err := tag2.Create(); err != nil {
-			t.Errorf("error at create %v", err)
-		}
-		genre1 := UserGenre{
-			UserId:    uid,
-			Name:      "genre1",
-			SortOrder: 0,
-			UserSongs: []UserSong{},
-		}
-		if err := genre1.Create(); err != nil {
-			t.Errorf("error at create %v", err)
-		}
-		genre2 := UserGenre{
-			UserId:    uid,
-			Name:      "genre2",
-			SortOrder: 0,
-			UserSongs: []UserSong{},
-		}
-		if err := genre2.Create(); err != nil {
-			t.Errorf("error at create %v", err)
-		}
-		us := UserSong{
-			UserId: uid,
-			Title:  "title1",
-			Artist: "artist1",
-			Memo:   "memo1",
-			Genres: []UserGenre{genre1, genre2},
-			Tags:   []UserTag{tag1, tag2},
-			Audio: UserSongAudio{
-				Name: "song1",
-				Url:  Url{Get: "get1", Put: "put1"},
-			},
-			Sections: []UserSongSection{{
-				Name:            "intro1",
-				ProgressionsCSV: "Am7,F,G,C",
-				Key:             1,
-				BPM:             120,
-				Scale:           "メジャー",
-				Memo:            "sectionMemo1",
-				LoopRange:       LoopRange{Start: 10, End: 20},
-			}, {
-				Name:            "intro2",
-				ProgressionsCSV: "Am7,F,G,C",
-				Key:             1,
-				BPM:             140,
-				Scale:           "マイナー",
-				Memo:            "sectionMemo2",
-				LoopRange:       LoopRange{Start: 30, End: 40},
-			}},
-		}
-		if err := us.Create(); err != nil {
-			t.Errorf("error at create %v", err)
-		}
-		utils.PrintStruct(us.Genres)
-
-		fmt.Println("====update genre")
-		song := UserSong{}
-		song.GetByID(us.ID)
-		song.Genres[0].Name = "NewGenre"
-		song.Update()
-		fmt.Println("====check updated genre")
-		song2 := UserSong{}
-		song2.GetByID(song.ID)
-		utils.PrintStruct(song2.Genres)
 	})
 	t.Run("delete tag from UserSong", func(t *testing.T) {
 		t.Skip()
@@ -400,6 +327,20 @@ func prepareData(t *testing.T) TestData {
 			Name: "song1",
 			Url:  Url{Get: "get1", Put: "put1"},
 		},
+		Instruments: []UserSongInstrument{
+			{
+				Name:      "guitar",
+				SortOrder: 0,
+			},
+			{
+				Name:      "piano",
+				SortOrder: 1,
+			},
+			{
+				Name:      "drums",
+				SortOrder: 2,
+			},
+		},
 		Sections: []UserSongSection{{
 			Name:            "intro1",
 			ProgressionsCSV: "Am7,F,G,C",
@@ -408,6 +349,14 @@ func prepareData(t *testing.T) TestData {
 			Scale:           "メジャー",
 			Memo:            "sectionMemo1",
 			LoopRange:       LoopRange{Start: 10, End: 20},
+			Instruments: []UserSongInstrument{
+				{
+					Name: "guitar",
+				},
+				{
+					Name: "drums",
+				},
+			},
 		}, {
 			Name:            "intro3",
 			ProgressionsCSV: "Am7,F,G,C",
@@ -416,6 +365,11 @@ func prepareData(t *testing.T) TestData {
 			Scale:           "マイナー",
 			Memo:            "sectionMemo2",
 			LoopRange:       LoopRange{Start: 30, End: 40},
+			Instruments: []UserSongInstrument{
+				{
+					Name: "piano",
+				},
+			},
 		}},
 	}
 	var us2 = UserSong{
@@ -429,6 +383,20 @@ func prepareData(t *testing.T) TestData {
 			Name: "song1",
 			Url:  Url{Get: "get1", Put: "put1"},
 		},
+		Instruments: []UserSongInstrument{
+			{
+				Name:      "guitar2",
+				SortOrder: 0,
+			},
+			{
+				Name:      "piano2",
+				SortOrder: 1,
+			},
+			{
+				Name:      "drums2",
+				SortOrder: 2,
+			},
+		},
 		Sections: []UserSongSection{{
 			Name:            "intro1",
 			ProgressionsCSV: "Am7,F,G,C",
@@ -437,7 +405,11 @@ func prepareData(t *testing.T) TestData {
 			Scale:           "メジャー",
 			Memo:            "sectionMemo1",
 			LoopRange:       LoopRange{Start: 10, End: 20},
-		}, {
+			Instruments: []UserSongInstrument{
+				{
+					Name: "piano2",
+				},
+			}}, {
 			Name:            "intro2",
 			ProgressionsCSV: "Am7,F,G,C",
 			Key:             1,
@@ -445,8 +417,15 @@ func prepareData(t *testing.T) TestData {
 			Scale:           "マイナー",
 			Memo:            "sectionMemo2",
 			LoopRange:       LoopRange{Start: 30, End: 40},
-		}},
-	}
+			Instruments: []UserSongInstrument{
+				{
+					Name: "piano2",
+				},
+				{
+					Name: "drums2",
+				},
+			}},
+		}}
 	if err := us1.Create(); err != nil {
 		t.Errorf("error at create %v", err)
 	}

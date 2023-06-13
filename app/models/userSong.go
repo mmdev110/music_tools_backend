@@ -27,24 +27,50 @@ type UserSong struct {
 	//ジャンル
 	Genres []UserGenre `gorm:"many2many:usersongs_genres" json:"genres"`
 	//タグ
-	Tags      []UserTag `gorm:"many2many:usersongs_tags" json:"tags"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Tags        []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
+	Instruments []UserSongInstrument `json:"instruments"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 func (us *UserSong) Create() error {
+	//Sections.Instrumentsがsongs.Instrumentsに依存しており、
+	//同時に生成できないため、CREATE文を分ける
+	sections := us.Sections
+	us.Sections = []UserSongSection{}
 	result := DB.Debug().Omit("Tags.*", "Genres.*").Create(&us)
 	if result.Error != nil {
 		return result.Error
 	}
+	//Instrumentsに付与されたIDをsectionsに紐付けてCREATE
+	us.Sections = sections
+	instruments := us.Instruments
+	utils.PrintStruct(instruments)
+	//for地獄
+	for i, sec := range us.Sections {
+		sec.UserSongId = us.ID
+		for j, instSec := range sec.Instruments {
+			for _, inst := range instruments {
+				fmt.Printf("%svs %s\n", inst.Name, instSec.Name)
+				if inst.Name == instSec.Name {
+					instSec.ID = inst.ID
+					instSec.UserSongId = inst.UserSongId
+				}
+			}
+			sec.Instruments[j] = instSec
+		}
+		sec.Create()
+		us.Sections[i] = sec
+	}
+
 	us.SetMediaUrls()
 	return nil
 }
 
 // songを返す
 func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().First(&us, id)
+	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Instruments").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().First(&us, id)
 	if result.RowsAffected == 0 {
 		return result
 	}
@@ -109,7 +135,7 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	fmt.Println("commonIds: ", commonIds)
 
 	//そのidの中から、sectionNameで絞り込み
-	db := DB.Debug().Preload("Audio").Preload("Tags").Preload("Genres")
+	db := DB.Debug().Preload("Audio").Preload("Tags").Preload("Genres").Preload("Instruments")
 	query := "user_id=?"
 	args := []interface{}{userId}
 
