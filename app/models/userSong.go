@@ -183,12 +183,14 @@ func (us *UserSong) setAudioUrl() error {
 
 		//put urlはpresigned URL
 		//get urlはm3u8ファイルを書き換える必要があるためバックエンドを指定する
-		audio.Url.Get = Backend + "/hls/" + strconv.Itoa(int(us.ID))
-		fmt.Println(conf.PRESIGNED_DURATION)
+		get := Backend + "/hls/" + strconv.Itoa(int(us.ID))
+		audio.Url.Get = get
 		put, err := utils.GenerateSignedUrl(us.GetFolderName()+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
 		}
+		fmt.Println("get: ", get)
+		fmt.Println("put: ", put)
 		audio.Url.Put = put
 	}
 	return nil
