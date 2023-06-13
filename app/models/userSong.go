@@ -52,7 +52,6 @@ func (us *UserSong) Create() error {
 		sec.UserSongId = us.ID
 		for j, instSec := range sec.Instruments {
 			for _, inst := range instruments {
-				fmt.Printf("%svs %s\n", inst.Name, instSec.Name)
 				if inst.Name == instSec.Name {
 					instSec.ID = inst.ID
 					instSec.UserSongId = inst.UserSongId
@@ -145,11 +144,11 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	}
 	//sectionName
 	if cond.SectionName != "" { //sectionName指定がある場合
-		db.Preload("Sections", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
+		db.Preload("Sections.Instruments", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
 		query += " AND sec.name=?"
 		args = append(args, cond.SectionName)
 	} else {
-		db.Preload("Sections")
+		db.Preload("Sections.Instruments")
 	}
 	result = db.Where(query, args...).Find(&songs)
 

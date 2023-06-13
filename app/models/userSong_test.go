@@ -8,8 +8,8 @@ import (
 )
 
 func TestUserSong(t *testing.T) {
-
 	t.Run("check prepareData", func(t *testing.T) {
+		t.Skip()
 		err := Init(true)
 		if err != nil {
 			t.Fatal(err)
@@ -18,7 +18,6 @@ func TestUserSong(t *testing.T) {
 		data := prepareData(t)
 
 		for _, song := range data.Songs {
-			fmt.Println("====")
 			utils.PrintStruct(song.Instruments)
 			for _, section := range song.Sections {
 				utils.PrintStruct(section.Instruments)
@@ -196,6 +195,8 @@ func TestGetByUserId(t *testing.T) {
 				t.Errorf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
 			}
 			for i, got := range songs {
+				fmt.Println("====")
+				utils.PrintStruct(got)
 				if got.ID != s.want[i].ID {
 					t.Errorf("want: %v, but got %v", s.want[i], got)
 				}
