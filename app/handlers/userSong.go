@@ -110,11 +110,30 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 			utils.ErrorJSON(w, err)
 		}
 	}
+	//instrumentsの削除
+	removedInstruments := utils.FindRemoved(db.Instruments, us.Instruments)
+	fmt.Println("removed Instruments: ", len(removedInstruments))
+	for _, inst := range removedInstruments {
+		if err := inst.Delete(); err != nil {
+			utils.ErrorJSON(w, err)
+		}
+	}
 	//sectionsの削除
 	removedSections := utils.FindRemoved(db.Sections, us.Sections)
 	for _, sec := range removedSections {
 		if err := sec.Delete(); err != nil {
 			utils.ErrorJSON(w, err)
+		}
+	}
+	//section-instrumentsの中間テーブルの削除
+	for _, sec := range us.Sections {
+		for _, secDB := range db.Sections {
+			if sec.ID == secDB.ID {
+				removedInst := utils.FindRemoved(secDB.Instruments, sec.Instruments)
+				for _, inst := range removedInst {
+					sec.DeleteInstrumentRelation(&inst)
+				}
+			}
 		}
 	}
 	if err := us.Update(); err != nil {

@@ -12,7 +12,7 @@ type UserSongInstrument struct {
 	UserSongId uint              `gorm:"not null" json:"user_song_id"`
 	Name       string            `gorm:"index:idx_inst_uid_name,unique;not null" json:"name"`
 	SortOrder  int               `gorm:"not null;default:0" json:"sort_order"`
-	Sections   []UserSongSection `gorm:"many2many:sections_insts" json:"song_sections"`
+	Sections   []UserSongSection `gorm:"many2many:sections_instruments" json:"song_sections"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`

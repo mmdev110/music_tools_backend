@@ -69,7 +69,7 @@ func (us *UserSong) Create() error {
 
 // songを返す
 func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Instruments").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().First(&us, id)
+	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Instruments").Preload("Sections").Preload("Sections.Midi").Preload("Sections.Instruments").Preload("Tags").Preload("Genres").Debug().First(&us, id)
 	if result.RowsAffected == 0 {
 		return result
 	}
@@ -168,10 +168,34 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 }
 func (us *UserSong) Update() error {
 	fmt.Println("@@@@update")
-	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at").Save(&us)
+	//Sections.InstrumentsとSong.Instrumentsを同時に作成できないため、Sectionsを後で保存する
+	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at", "Sections").Save(&us)
 	if err := result.Error; err != nil {
 		return err
 	}
+	utils.PrintStruct(us.Sections)
+	//song.Instrumentsに付与されたIDをsections.Instrumentsに紐付けてSAVE
+	instruments := us.Instruments
+	utils.PrintStruct(instruments)
+	//for地獄
+	for i, sec := range us.Sections {
+		sec.UserSongId = us.ID
+		for j, instSec := range sec.Instruments {
+			for _, inst := range instruments {
+				if inst.Name == instSec.Name {
+					instSec.ID = inst.ID
+					instSec.UserSongId = inst.UserSongId
+				}
+			}
+			sec.Instruments[j] = instSec
+		}
+		us.Sections[i] = sec
+	}
+	result2 := DB.Debug().Model(&UserSongSection{}).Session(&gorm.Session{FullSaveAssociations: true}).Omit("Instruments.*").Save(&us.Sections)
+	if err := result2.Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 func (us *UserSong) Delete() error {
