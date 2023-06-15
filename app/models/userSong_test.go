@@ -75,7 +75,6 @@ func TestUserSong(t *testing.T) {
 		}
 	})
 	t.Run("append tag to UserSong", func(t *testing.T) {
-		t.Skip()
 		want := 2
 		err := Init(true)
 		if err != nil {

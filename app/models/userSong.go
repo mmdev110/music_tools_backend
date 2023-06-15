@@ -69,7 +69,25 @@ func (us *UserSong) Create() error {
 
 // songを返す
 func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Model(&UserSong{}).Preload("Audio").Preload("Instruments").Preload("Sections").Preload("Sections.Midi").Preload("Sections.Instruments").Preload("Tags").Preload("Genres").Debug().First(&us, id)
+	result := DB.Debug().Model(&UserSong{}).
+		Preload("Audio").
+		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
+		}).
+		Preload("Sections.Midi").
+		Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
+		}).
+		First(&us, id)
 	if result.RowsAffected == 0 {
 		return result
 	}
@@ -90,14 +108,7 @@ type SongSearchCond struct {
 func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB
-	//うまいやり方を考える
-	//if len(cond.TagIds) == 0 && len(cond.GenreIds) == 0 && cond.SectionName == "" { //検索条件なし=uidのみで検索
-	//	fmt.Println("no search cond")
-	//	result = DB.Preload("Audio").Preload("Sections").Preload("Sections.Midi").Preload("Tags").Preload("Genres").Debug().Where("user_id=?", userId).Find(&songs)
-	//} else {
-	//	result = DB.Preload("Audio").Preload("Sections", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ").Preload("Tags", "id IN (?)", cond.TagIds).Preload("Genres", "id IN (?)", cond.GenreIds).Debug().Where("user_id=? AND sec.name=?", userId, cond.SectionName).Find(&songs)
-	//	//result = DB.Debug().Joins("INNER JOIN userloops_tags ult ON user_loops.id=ult.user_loop_id").Joins("INNER JOIN user_loop_tags tags ON tags.id=ult.user_loop_tag_id").Where("user_loops.user_id=? AND tags.id IN ?", userId, condition.TagIds).Find(&songs)
-	//}
+
 	isTagConditonActive := len(cond.TagIds) > 0
 	isGenreConditionActive := len(cond.GenreIds) > 0
 	//tagIdsを持ってるsongを検索
@@ -134,7 +145,16 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	fmt.Println("commonIds: ", commonIds)
 
 	//そのidの中から、sectionNameで絞り込み
-	db := DB.Debug().Preload("Audio").Preload("Tags").Preload("Genres").Preload("Instruments")
+	db := DB.Debug().Preload("Audio").
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
+		}).
+		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		})
 	query := "user_id=?"
 	args := []interface{}{userId}
 
@@ -144,11 +164,16 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	}
 	//sectionName
 	if cond.SectionName != "" { //sectionName指定がある場合
-		db.Preload("Sections.Instruments", "name=?", cond.SectionName).Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
+		db.Preload("Sections.Instruments", "name=?", cond.SectionName, func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+			Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
 		query += " AND sec.name=?"
 		args = append(args, cond.SectionName)
 	} else {
-		db.Preload("Sections.Instruments")
+		db.Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		})
 	}
 	result = db.Where(query, args...).Find(&songs)
 
@@ -299,7 +324,14 @@ func (us UserSong) GetID() uint {
 func (us *UserSong) getSongByTagIds(userId uint, tagIds []uint) ([]UserSong, error) {
 	fmt.Println("getSongByTagIds")
 	var songWithTags []UserSong
-	result := DB.Debug().Preload("Tags").Joins("INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id AND ust.user_tag_id IN ?", tagIds).Where("user_id=?", userId).Find(&songWithTags)
+	result := DB.Debug().
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Joins("INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id AND ust.user_tag_id IN ?", tagIds).
+		Where("user_id=?", userId).
+		Find(&songWithTags)
+
 	if result.RowsAffected == 0 {
 		return nil, nil
 	}
@@ -313,7 +345,13 @@ func (us *UserSong) getSongByTagIds(userId uint, tagIds []uint) ([]UserSong, err
 func (us *UserSong) getSongByGenreIds(userId uint, genreIds []uint) ([]UserSong, error) {
 	fmt.Println("getSongByGenreIds")
 	var songWithGenres []UserSong
-	result := DB.Debug().Preload("Genres").Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id AND usg.user_genre_id IN ?", genreIds).Where("user_id=?", userId).Find(&songWithGenres)
+	result := DB.Debug().
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
+		}).
+		Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id AND usg.user_genre_id IN ?", genreIds).
+		Where("user_id=?", userId).
+		Find(&songWithGenres)
 	if result.RowsAffected == 0 {
 		return nil, nil
 	}

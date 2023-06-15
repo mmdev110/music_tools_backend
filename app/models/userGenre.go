@@ -43,7 +43,11 @@ func (tag *UserGenre) GetById(id uint) error {
 // UserSongsも取得する版
 func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
 	var uls []UserGenre
-	result := DB.Debug().Preload("UserSongs").Where("user_id=?", uid).Find(&uls)
+	result := DB.Debug().
+		Preload("UserSongs").
+		Where("user_id=?", uid).
+		Order("sort_order ASC").
+		Find(&uls)
 	if result.Error != nil {
 		return nil, result.Error
 	}
