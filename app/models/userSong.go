@@ -164,17 +164,20 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	}
 	//sectionName
 	if cond.SectionName != "" { //sectionName指定がある場合
-		db.Preload("Sections.Instruments", "name=?", cond.SectionName, func(db *gorm.DB) *gorm.DB {
-			return db.Order("user_song_instruments.sort_order ASC")
+		db.Preload("Sections", "name=?", cond.SectionName, func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
 		}).
 			Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
 		query += " AND sec.name=?"
 		args = append(args, cond.SectionName)
 	} else {
-		db.Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
-			return db.Order("user_song_instruments.sort_order ASC")
+		db.Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
 		})
 	}
+	db.Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+		return db.Order("user_song_instruments.sort_order ASC")
+	})
 	result = db.Where(query, args...).Find(&songs)
 
 	if result.RowsAffected == 0 {
