@@ -54,7 +54,7 @@ func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
 func (g *UserGenre) Delete() error {
 	utils.PrintStruct(g)
 	//中間テーブルのレコード削除
-	err := DB.Debug().Model(&UserGenre{}).Association("UserSongs").Delete(g)
+	err := DB.Debug().Model(g).Association("UserSongs").Clear()
 	if err != nil {
 		return err
 	}
