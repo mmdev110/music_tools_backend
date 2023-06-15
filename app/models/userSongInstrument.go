@@ -9,7 +9,7 @@ import (
 
 type UserSongInstrument struct {
 	ID         uint              `gorm:"primarykey" json:"id"`
-	UserSongId uint              `gorm:"not null" json:"user_song_id"`
+	UserSongId uint              `gorm:"index:idx_inst_uid_name,unique;not null" json:"user_song_id"`
 	Name       string            `gorm:"index:idx_inst_uid_name,unique;not null" json:"name"`
 	SortOrder  int               `gorm:"not null;default:0" json:"sort_order"`
 	Sections   []UserSongSection `gorm:"many2many:sections_instruments" json:"song_sections"`
