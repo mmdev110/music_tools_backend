@@ -22,6 +22,7 @@ type UserSongSection struct {
 	BPM             int                  `json:"bpm"`
 	Scale           string               `json:"scale"`
 	Memo            string               `json:"memo"`
+	MemoTransition  string               `json:"memo_transition"`
 	//オーディオ再生範囲
 	LoopRange `json:"audio_playback_range"`
 	//midiファイル
