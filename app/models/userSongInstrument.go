@@ -14,6 +14,7 @@ type UserSongInstrument struct {
 	SortOrder  int               `gorm:"not null;default:0" json:"sort_order"`
 	Sections   []UserSongSection `gorm:"many2many:sections_instruments" json:"song_sections"`
 	Category   string            `gorm:"not null" json:"category"`
+	Memo       string            `json:"memo"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
