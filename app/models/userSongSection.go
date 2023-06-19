@@ -20,6 +20,7 @@ type UserSongSection struct {
 	Instruments     []UserSongInstrument `gorm:"many2many:sections_instruments" json:"instruments"`
 	Key             int                  `json:"key"`
 	BPM             int                  `json:"bpm"`
+	BarLength       int                  `json:"bar_length"`
 	Scale           string               `json:"scale"`
 	Memo            string               `json:"memo"`
 	MemoTransition  string               `json:"memo_transition"`
