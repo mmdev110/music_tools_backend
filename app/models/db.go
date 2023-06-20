@@ -57,6 +57,7 @@ func migrateModels(db *gorm.DB) {
 	//db.AutoMigrate(&UserSongSection{})
 	db.AutoMigrate(&UserSongAudio{})
 	db.AutoMigrate(&UserSectionMidi{})
+	db.AutoMigrate(&UserAudioRange{})
 }
 func ClearSQLiteDB() {
 	os.Remove(SQLITE_FILE)

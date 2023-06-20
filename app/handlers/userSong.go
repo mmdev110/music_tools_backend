@@ -118,6 +118,19 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 			utils.ErrorJSON(w, err)
 		}
 	}
+	//audioRangeの削除
+	for _, sec := range us.Sections {
+		for _, secDB := range db.Sections {
+			if sec.ID == secDB.ID {
+				removedRange := utils.FindRemoved(secDB.AudioRanges, sec.AudioRanges)
+				for _, r := range removedRange {
+					if err := r.Delete(); err != nil {
+						utils.ErrorJSON(w, err)
+					}
+				}
+			}
+		}
+	}
 	//sectionsの削除
 	removedSections := utils.FindRemoved(db.Sections, us.Sections)
 	for _, sec := range removedSections {

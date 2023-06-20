@@ -348,7 +348,7 @@ func prepareData(t *testing.T) TestData {
 			BPM:             120,
 			Scale:           "メジャー",
 			Memo:            "sectionMemo1",
-			LoopRange:       LoopRange{Start: 10, End: 20},
+			AudioRanges:     []UserAudioRange{{Name: "full", Start: 10, End: 20}},
 			Instruments: []UserSongInstrument{
 				{
 					Name: "guitar",
@@ -364,7 +364,7 @@ func prepareData(t *testing.T) TestData {
 			BPM:             140,
 			Scale:           "マイナー",
 			Memo:            "sectionMemo2",
-			LoopRange:       LoopRange{Start: 30, End: 40},
+			AudioRanges:     []UserAudioRange{{Name: "full", Start: 10, End: 20}},
 			Instruments: []UserSongInstrument{
 				{
 					Name: "piano",
@@ -404,7 +404,7 @@ func prepareData(t *testing.T) TestData {
 			BPM:             120,
 			Scale:           "メジャー",
 			Memo:            "sectionMemo1",
-			LoopRange:       LoopRange{Start: 10, End: 20},
+			AudioRanges:     []UserAudioRange{{Name: "full", Start: 10, End: 20}},
 			Instruments: []UserSongInstrument{
 				{
 					Name: "piano2",
@@ -416,7 +416,7 @@ func prepareData(t *testing.T) TestData {
 			BPM:             140,
 			Scale:           "マイナー",
 			Memo:            "sectionMemo2",
-			LoopRange:       LoopRange{Start: 30, End: 40},
+			AudioRanges:     []UserAudioRange{{Name: "full", Start: 10, End: 20}},
 			Instruments: []UserSongInstrument{
 				{
 					Name: "piano2",

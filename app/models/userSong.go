@@ -77,6 +77,9 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 		Preload("Sections", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_sections.sort_order ASC")
 		}).
+		Preload("Sections.AudioRanges", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_audio_ranges.sort_order ASC")
+		}).
 		Preload("Sections.Midi").
 		Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
@@ -175,7 +178,9 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 			return db.Order("user_song_sections.sort_order ASC")
 		})
 	}
-	db.Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+	db.Preload("Sections.AudioRanges", func(db *gorm.DB) *gorm.DB {
+		return db.Order("user_audio_ranges.sort_order ASC")
+	}).Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
 		return db.Order("user_song_instruments.sort_order ASC")
 	})
 	result = db.Where(query, args...).Find(&songs)

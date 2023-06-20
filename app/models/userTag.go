@@ -33,7 +33,7 @@ func (tag *UserTag) Update() error {
 	return nil
 }
 func (tag *UserTag) GetById(id uint) error {
-	result := DB.Debug().Preload("UserSongSections").First(tag, id)
+	result := DB.Debug().Preload("UserSongs").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}

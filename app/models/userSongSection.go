@@ -25,7 +25,7 @@ type UserSongSection struct {
 	Memo            string               `json:"memo"`
 	MemoTransition  string               `json:"memo_transition"`
 	//オーディオ再生範囲
-	LoopRange `json:"audio_playback_range"`
+	AudioRanges []UserAudioRange `json:"audio_ranges"`
 	//midiファイル
 	Midi      UserSectionMidi `json:"midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
