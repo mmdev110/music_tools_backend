@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"example.com/app/utils"
+	"github.com/google/uuid"
 )
 
 func TestUserSong(t *testing.T) {
 	t.Run("check prepareData", func(t *testing.T) {
-		t.Skip()
 		err := Init(true)
 		if err != nil {
 			t.Fatal(err)
@@ -17,7 +17,9 @@ func TestUserSong(t *testing.T) {
 		defer ClearSQLiteDB()
 		data := prepareData(t)
 
+		fmt.Println("@@check")
 		for _, song := range data.Songs {
+			fmt.Printf("id = %d, uuid = %s\n", song.ID, song.UUID)
 			utils.PrintStruct(song.Instruments)
 			for _, section := range song.Sections {
 				utils.PrintStruct(section.Instruments)
@@ -318,6 +320,7 @@ func prepareData(t *testing.T) TestData {
 	}
 	var us1 = UserSong{
 		UserId: uid,
+		UUID:   uuid.NewString(),
 		Title:  "title1",
 		Artist: "artist1",
 		Memo:   "memo1",
@@ -374,6 +377,7 @@ func prepareData(t *testing.T) TestData {
 	}
 	var us2 = UserSong{
 		UserId: uid,
+		UUID:   uuid.NewString(),
 		Title:  "title1",
 		Artist: "artist1",
 		Memo:   "memo1",

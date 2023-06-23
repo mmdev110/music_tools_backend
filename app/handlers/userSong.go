@@ -10,6 +10,8 @@ import (
 
 	"example.com/app/models"
 	"example.com/app/utils"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // userSongの一覧
@@ -53,9 +55,10 @@ func SongHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == http.MethodGet {
 		//取得
-		uid, _ := strconv.Atoi(param)
-		userSongId := uint(uid)
-		getSong(w, r, user, userSongId)
+		//uid, _ := strconv.Atoi(param)
+		//userSongId := uint(uid)
+		uuid := param
+		getSong(w, r, user, uuid)
 	} else {
 		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
 		return
@@ -70,8 +73,20 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 
 	//create
 	us.UserId = user.ID
-	if err := us.Create(); err != nil {
-		utils.ErrorJSON(w, err)
+	//uuid付与
+	us.UUID = uuid.NewString()
+	for {
+		err := us.Create()
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			//uuidが衝突してるので更新して再実行
+			us.UUID = uuid.NewString()
+			continue
+		}
+		if err != nil {
+			utils.ErrorJSON(w, err)
+			break
+		}
+		break
 	}
 
 	fmt.Println("@@@@CreateSong response")
@@ -168,11 +183,12 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 }
 
 // songIdに対応するsongを返す
-func getSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
+func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid string) {
 
 	//DBから取得
 	var us = models.UserSong{}
-	result := us.GetByID(userSongId)
+	//result := us.GetByID(userSongId)
+	result := us.GetByUUID(uuid)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, errors.New("Song not found"))
 		return

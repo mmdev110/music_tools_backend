@@ -17,6 +17,7 @@ import (
 // song情報
 type UserSong struct {
 	ID       uint              `gorm:"primarykey" json:"id"`
+	UUID     string            `gorm:"index:idx_uuid,unique;not null" json:"uuid"` //ユーザー表示用のid
 	UserId   uint              `gorm:"not null" json:"user_id"`
 	Title    string            `json:"title"`
 	Artist   string            `json:"artist"`
@@ -91,6 +92,41 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 			return db.Order("user_genres.sort_order ASC")
 		}).
 		First(&us, id)
+	if result.RowsAffected == 0 {
+		return result
+	}
+	err := us.SetMediaUrls()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return result
+}
+
+// songを返す
+func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
+	result := DB.Debug().Model(&UserSong{}).
+		Preload("Audio").
+		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
+		}).
+		Preload("Sections.AudioRanges", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_audio_ranges.sort_order ASC")
+		}).
+		Preload("Sections.Midi").
+		Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
+		}).
+		Where("uuid = ?", uuid).
+		First(&us)
 	if result.RowsAffected == 0 {
 		return result
 	}

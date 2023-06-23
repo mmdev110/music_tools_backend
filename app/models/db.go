@@ -44,11 +44,11 @@ func connectMySQL() (*gorm.DB, error) {
 	//"gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8&parseTime=True&loc=Local", // data source name
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN: dsn,
-	}), &gorm.Config{})
+	}), &gorm.Config{TranslateError: true})
 	return db, err
 }
 func connectSQLite() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open(SQLITE_FILE), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(SQLITE_FILE), &gorm.Config{TranslateError: true})
 	return db, err
 }
 func migrateModels(db *gorm.DB) {
