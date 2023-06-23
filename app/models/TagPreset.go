@@ -10,7 +10,7 @@ import (
 // ユーザーは自分でtagを入力するか、ここから文字列をコピーして使用することができる
 type TagPreset struct {
 	ID        uint   `gorm:"primarykey" json:"id"`
-	Name      string `gorm:"index:unique;not null" json:"name"`
+	Name      string `gorm:"not null" json:"name"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
