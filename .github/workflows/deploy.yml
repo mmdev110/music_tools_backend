@@ -22,11 +22,17 @@ jobs:
         with:
           role-to-assume: ${{secrets.AWS_ROLE_ARN}}
           aws-region: ap-northeast-1
+      - name: set env
+        run: |
+          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/backend/ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/backend/ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
       - name: docker login
-        run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 138767642386.dkr.ecr.ap-northeast-1.amazonaws.com
+        run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REGISTRY_URL
       - name: Build the Docker image
         run: docker build -t music_tools_backend . --file ./Dockerfile.prod
       - name: add tag to image
-        run: docker tag music_tools_backend:latest 138767642386.dkr.ecr.ap-northeast-1.amazonaws.com/music_tools_backend:latest
+        run: docker tag music_tools_backend:latest $REPOSITORY_URL:latest
       - name: push to repository
-        run: docker push 138767642386.dkr.ecr.ap-northeast-1.amazonaws.com/music_tools_backend:latest
+        run: docker push $REPOSITORY_URL:latest
+      - name: update ecs
+        run: echo "update ecs !!"
