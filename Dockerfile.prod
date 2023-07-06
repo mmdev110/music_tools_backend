@@ -1,0 +1,17 @@
+# ビルド用
+
+#stage1
+FROM golang:1.19.2
+
+WORKDIR /go/src/
+ADD . /go/src/
+RUN go mod tidy
+WORKDIR /go/src/app/
+RUN go build -o /output
+
+#stage2
+FROM ubuntu:latest
+WORKDIR /
+COPY --from=0 /output /output
+EXPOSE 5000
+CMD ["/output"]
