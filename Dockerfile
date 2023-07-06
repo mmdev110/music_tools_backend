@@ -1,3 +1,4 @@
+#開発用
 FROM golang:1.19.2
 
 #install gopls for auto-formatting
