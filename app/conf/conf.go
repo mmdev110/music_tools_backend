@@ -25,6 +25,7 @@ var MYSQL_DATABASE = os.Getenv("MYSQL_DATABASE")
 var MYSQL_USER = os.Getenv("MYSQL_USER")
 var MYSQL_PASSWORD = os.Getenv("MYSQL_PASSWORD")
 var MYSQL_PORT = os.Getenv("MYSQL_PORT")
+var MYSQL_HOST = os.Getenv("MYSQL_HOST")
 
 // AWS
 var AWS_REGION = os.Getenv("AWS_REGION")
