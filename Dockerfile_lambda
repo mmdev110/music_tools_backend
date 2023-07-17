@@ -1,0 +1,15 @@
+# ビルド用
+
+#stage1
+FROM golang:1.19.2
+
+WORKDIR /go/src/
+ADD . /go/src/
+RUN go mod tidy
+WORKDIR /go/src/app/lambda/
+RUN GOOS=linux GOARCH=amd64 go build -o /main
+
+#stage2
+FROM public.ecr.aws/lambda/go
+COPY --from=0 /main ${LAMBDA_TASK_ROOT}
+CMD ["main"]

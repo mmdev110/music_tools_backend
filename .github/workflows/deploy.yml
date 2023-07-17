@@ -7,9 +7,8 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  build:
+  build_backend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: branch check (main only)
@@ -24,14 +23,42 @@ jobs:
           aws-region: ap-northeast-1
       - name: set env
         run: |
-          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/backend/ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
-          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/backend/ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/backend_ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/backend_ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
       - name: docker login
         run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REGISTRY_URL
       - name: Build the Docker image
         run: docker build -t music_tools_backend . --file ./Dockerfile.prod
       - name: add tag to image
         run: docker tag music_tools_backend:latest $REPOSITORY_URL:latest
+      - name: push to repository
+        run: docker push $REPOSITORY_URL:latest
+      - name: update ecs
+        run: echo "update ecs !!"
+  build_lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: branch check (main only)
+        if: github.ref!='refs/heads/main'
+        run: |
+          echo "terraform apply runs on main branch only !"
+          exit 1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{secrets.AWS_ROLE_ARN}}
+          aws-region: ap-northeast-1
+      - name: set env
+        run: |
+          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
+      - name: docker login
+        run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REGISTRY_URL
+      - name: Build the Docker image
+        run: docker build -t music_tools_lambda_convert_prod . --file ./Dockerfile_lambda
+      - name: add tag to image
+        run: docker tag music_tools_lambda_convert_prod:latest $REPOSITORY_URL:latest
       - name: push to repository
         run: docker push $REPOSITORY_URL:latest
       - name: update ecs

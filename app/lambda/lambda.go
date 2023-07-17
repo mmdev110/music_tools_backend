@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
-	"example.com/app/conf"
 	"github.com/aws/aws-lambda-go/events"
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,7 +15,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/mediaconvert/types"
 )
 
-var Region = "ap-northeast-1"
+var REGION = os.Getenv("REGION")                                    //"ap-northeast-1"
+var JOB_TEMPLATE_NAME = os.Getenv("MEDIACONVERT_JOB_TEMPLATE_NAME") //"audio-to-hls"
+var JOB_ROLE_ARN = os.Getenv("MEDIACONVERT_JOB_ROLE_ARN")           //"arn:aws:iam::138767642386:role/service-role/MediaConvert_Default_Role"
+var ENDPOINT = os.Getenv("MEDIACONVERT_ENDPOINT")
 
 func callLambda(ctx context.Context, event events.S3Event) (string, error) {
 	//endpoint取得してから、clientを再作成する
@@ -25,11 +28,11 @@ func callLambda(ctx context.Context, event events.S3Event) (string, error) {
 	//endpoints, _ := client.DescribeEndpoints(context.TODO(), &mediaconvert.DescribeEndpointsInput{})
 	//fmt.Println(endpoints)
 	var customResolver = aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		if service == mediaconvert.ServiceID && region == Region {
+		if service == mediaconvert.ServiceID && region == REGION {
 			return aws.Endpoint{
 				PartitionID:       "aws",
-				URL:               conf.AWS_MEDIACONVERT_ENDPOINT,
-				SigningRegion:     Region,
+				URL:               ENDPOINT,
+				SigningRegion:     REGION,
 				HostnameImmutable: true,
 			}, nil
 		}
@@ -74,8 +77,8 @@ func main() {
 func createParams(ctx context.Context, event events.S3Event) *mediaconvert.CreateJobInput {
 	//ジョブテンプレートに加えてIAMRole、inputのオーディオのarn、output先を指定
 	s3 := event.Records[0].S3
-	tmplName := "audio-to-hls"
-	role := "arn:aws:iam::138767642386:role/service-role/MediaConvert_Default_Role"
+	tmplName := JOB_TEMPLATE_NAME
+	role := JOB_ROLE_ARN
 	bucket := s3.Bucket.Name
 	key := s3.Object.URLDecodedKey
 	folder := filepath.Dir(key)
