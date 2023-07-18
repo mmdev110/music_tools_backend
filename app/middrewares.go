@@ -59,6 +59,7 @@ func enableCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("path = %s. method = %s\n", r.URL.Path, r.Method)
+		fmt.Println(r.Header)
 		w.Header().Set("Access-Control-Allow-Origin", conf.FRONTEND_URL)
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, X-CSRF-Token, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
