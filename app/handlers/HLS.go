@@ -37,10 +37,13 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	presignedUrl, err := utils.GenerateSignedUrl(us.GetFolderName()+us.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
 	if err != nil {
 		utils.ErrorJSON(w, err)
+		return
 	}
+	fmt.Println(presignedUrl)
 	resp, err := http.Get(presignedUrl)
 	if err != nil {
 		utils.ErrorJSON(w, err)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -64,5 +67,4 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/x-mpegURL")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(newHLS))
-	return
 }
