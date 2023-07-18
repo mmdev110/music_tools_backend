@@ -12,6 +12,7 @@ RUN go build -o /output
 #stage2
 FROM ubuntu:latest
 WORKDIR /
+RUN apt-get update && apt-get install -y ca-certificates
 COPY --from=0 /output /output
 EXPOSE 5000
 CMD ["/output"]
