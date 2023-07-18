@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -26,5 +27,6 @@ func ErrorJSON(w http.ResponseWriter, err error, statuses ...int) {
 	payload := struct {
 		Message string `json:"message"`
 	}{err.Error()}
+	log.Println(err.Error())
 	ResponseJSON(w, payload, status)
 }
