@@ -14,8 +14,8 @@ func GetSessionCookie(sessionString string, duration time.Duration) *http.Cookie
 		Value:    sessionString,
 		Expires:  time.Now().Add(duration),
 		MaxAge:   int(duration.Seconds()),
-		SameSite: http.SameSiteStrictMode,
-		Domain:   conf.COOKIE_DOMAIN, //環境変数から読み込む
+		SameSite: http.SameSiteNoneMode,
+		//Domain:   conf.COOKIE_DOMAIN, //環境変数から読み込む
 		HttpOnly: true,
 		Secure:   true,
 	}
