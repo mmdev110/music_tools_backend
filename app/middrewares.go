@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"example.com/app/conf"
+	"example.com/app/customError"
 	"example.com/app/utils"
 )
 
@@ -24,7 +25,7 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		//}
 		if err != nil {
 			//w.WriteHeader(http.StatusUnauthorized)
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			return
 
 		}
@@ -45,7 +46,7 @@ func requirePasswordResetAuth(next http.HandlerFunc) http.HandlerFunc {
 		//}
 		if err != nil {
 			//w.WriteHeader(http.StatusUnauthorized)
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			return
 		}
 		userId := claim.UserId

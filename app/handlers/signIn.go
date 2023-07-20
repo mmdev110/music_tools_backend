@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"example.com/app/conf"
+	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("signIn")
 	if r.Method != http.MethodPost {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed for signin", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for signin", r.Method))
 		return
 	}
 	type Form struct {
@@ -28,17 +29,17 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	//getUserByEmail
 	user := models.GetUserByEmail(form.Email)
 	if user == nil {
-		utils.ErrorJSON(w, fmt.Errorf("user not found for %s", form.Email))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("user not found for %s", form.Email))
 		return
 	}
 	if !user.IsConfirmed {
-		utils.ErrorJSON(w, fmt.Errorf("address %s found, but not confirmed yet.", form.Email))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("address %s found, but not confirmed yet.", form.Email))
 		return
 	}
 	//check password
 	ok := user.ComparePassword(form.Password)
 	if !ok {
-		utils.ErrorJSON(w, errors.New("password mismatch"))
+		utils.ErrorJSON(w, customError.Others, errors.New("password mismatch"))
 		return
 	}
 	//generate jwt

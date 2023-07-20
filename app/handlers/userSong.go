@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
 	"github.com/google/uuid"
@@ -17,7 +18,7 @@ import (
 // userSongの一覧
 func ListHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
 	fmt.Println("listhandler")
@@ -60,7 +61,7 @@ func SongHandler(w http.ResponseWriter, r *http.Request) {
 		uuid := param
 		getSong(w, r, user, uuid)
 	} else {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
 
@@ -83,7 +84,7 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 			continue
 		}
 		if err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			break
 		}
 		break
@@ -105,24 +106,24 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	var db = models.UserSong{}
 	result := db.GetByID(userSongId)
 	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, errors.New("Song not found"))
+		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 	}
 	if result.Error != nil {
-		utils.ErrorJSON(w, result.Error)
+		utils.ErrorJSON(w, customError.Others, result.Error)
 	}
 
 	//タグの中間テーブルの削除
 	removedTags := utils.FindRemoved(db.Tags, us.Tags)
 	for _, tag := range removedTags {
 		if err := db.DeleteTagRelation(&tag); err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 		}
 	}
 	//ジャンルの中間テーブルの削除
 	removedGenres := utils.FindRemoved(db.Genres, us.Genres)
 	for _, genre := range removedGenres {
 		if err := db.DeleteGenreRelation(&genre); err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 		}
 	}
 	//instrumentsの削除
@@ -130,7 +131,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	fmt.Println("removed Instruments: ", len(removedInstruments))
 	for _, inst := range removedInstruments {
 		if err := inst.Delete(); err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 		}
 	}
 	//audioRangeの削除
@@ -140,7 +141,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 				removedRange := utils.FindRemoved(secDB.AudioRanges, sec.AudioRanges)
 				for _, r := range removedRange {
 					if err := r.Delete(); err != nil {
-						utils.ErrorJSON(w, err)
+						utils.ErrorJSON(w, customError.Others, err)
 					}
 				}
 			}
@@ -150,7 +151,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	removedSections := utils.FindRemoved(db.Sections, us.Sections)
 	for _, sec := range removedSections {
 		if err := sec.Delete(); err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 		}
 	}
 	//section-instrumentsの中間テーブルの削除
@@ -165,7 +166,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		}
 	}
 	if err := us.Update(); err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 
@@ -174,7 +175,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 
 	//presignedURLセット
 	if err := us.SetMediaUrls(); err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 	}
 
 	fmt.Println("@@@@UpdateSong response")
@@ -190,22 +191,22 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//result := us.GetByID(userSongId)
 	result := us.GetByUUID(uuid)
 	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, errors.New("Song not found"))
+		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
 	if result.Error != nil {
-		utils.ErrorJSON(w, result.Error)
+		utils.ErrorJSON(w, customError.Others, result.Error)
 		return
 	}
 	//他人のデータは取得不可
 	if us.UserId != user.ID {
-		utils.ErrorJSON(w, errors.New("you cannot get this Song"))
+		utils.ErrorJSON(w, customError.Others, errors.New("you cannot get this Song"))
 	}
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
 func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
 	user := getUserFromContext(r.Context())
@@ -220,12 +221,12 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	us := &models.UserSong{}
 	result := us.GetByID(req.ID)
 	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, errors.New("Song not found"))
+		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
 	err := us.Delete()
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 	type Res struct {
