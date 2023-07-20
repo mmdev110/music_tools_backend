@@ -60,9 +60,9 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 	//メール送信
 	body := "パスワードリセット用のリンクをお送りいたします。\n" +
 		"30分以内に下記のリンクより新しいパスワードを設定してください。\n" +
-		"パスワードリセットに心当たりがない場合はこのメールを無視してください。\n" +
+		"上記の内容に心当たりがない場合はこのメールを無視してください。\n" +
 		link
-	utils.SendEmail(user.Email, "Password Reset", body)
+	utils.SendEmail(user.Email, "Password Reset(music_tools)", body)
 	//
 	type Response struct {
 		Message string `json:"message"`

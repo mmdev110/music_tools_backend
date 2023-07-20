@@ -10,8 +10,9 @@ import (
 )
 
 type User struct {
-	ID    uint   `gorm:"primarykey" json:"user_id"`
-	Email string `gorm:"unique;not null" json:"email"`
+	ID          uint   `gorm:"primarykey" json:"user_id"`
+	Email       string `gorm:"unique;not null" json:"email"`
+	IsConfirmed bool   `gorm:"not null;default:0" json:"is_confirmed"`
 	//トークン類はユーザーに返さない
 	Password     string      `gorm:"not null" json:"-"`
 	AccessToken  string      `json:"-"`
@@ -31,8 +32,9 @@ type Tokens struct {
 
 func CreateUser(email, password string) (User, error) {
 	user := User{
-		Email:    email,
-		Password: encrypt(password),
+		Email:       email,
+		Password:    encrypt(password),
+		IsConfirmed: false,
 		//Token:    utils.GenerateJwt(email),
 	}
 	DB.Create(&user)
@@ -55,8 +57,12 @@ func GetUserByEmail(email string) *User {
 	}
 	return &user
 }
-func (user *User) Update() {
-	DB.Model(&user).Debug().Updates(user)
+func (user *User) Update() error {
+	result := DB.Model(&user).Debug().Updates(user)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 func (user *User) delete() {
 	DB.Delete(&user, user.ID)
@@ -77,7 +83,7 @@ func (user *User) ComparePassword(input string) bool {
 	return err == nil
 }
 func (user *User) GenerateToken(tokenType string, duration time.Duration) (string, error) {
-	AllowedTokenTypes := []string{"access", "reset", "refresh"}
+	AllowedTokenTypes := []string{"access", "reset", "refresh", "email_confirm"}
 	isAllowed := false
 	for _, v := range AllowedTokenTypes {
 		if tokenType == v {

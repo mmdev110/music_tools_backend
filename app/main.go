@@ -47,6 +47,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/signup", handlers.SignUpHandler)
 	mux.HandleFunc("/refresh", handlers.RefreshHandler)
 	mux.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
+	mux.HandleFunc("/email_confirm", handlers.EmailConfirmationHandler)
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))

@@ -31,6 +31,10 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, fmt.Errorf("user not found for %s", form.Email))
 		return
 	}
+	if !user.IsConfirmed {
+		utils.ErrorJSON(w, fmt.Errorf("address %s found, but not confirmed yet.", form.Email))
+		return
+	}
 	//check password
 	ok := user.ComparePassword(form.Password)
 	if !ok {
