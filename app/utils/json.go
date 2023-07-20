@@ -33,7 +33,7 @@ func ResponseJSON(w http.ResponseWriter, payload interface{}, status int) {
 //	ResponseJSON(w, payload, status)
 //}
 
-// add err to customize message
+// add err to overwrite message
 func ErrorJSON(w http.ResponseWriter, customError customError.CustomError, err ...error) {
 	status := http.StatusBadRequest
 	if len(err) > 0 {
