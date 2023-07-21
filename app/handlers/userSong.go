@@ -41,6 +41,12 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
+	//audioのget情報のみ付与
+	for _, v := range userSongs {
+		if err := v.SetAudioUrlGet(); err != nil {
+			utils.ErrorJSON(w, customError.Others, err)
+		}
+	}
 	fmt.Println("list handler response")
 	utils.PrintStruct(userSongs)
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
@@ -97,6 +103,10 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 			break
 		}
 		break
+	}
+	//presignedurlセット
+	if err := us.SetMediaUrls(); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 	}
 
 	fmt.Println("@@@@CreateSong response")
@@ -210,6 +220,12 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//他人のデータは取得不可
 	if us.UserId != user.ID {
 		utils.ErrorJSON(w, customError.Others, errors.New("you cannot get this Song"))
+	}
+
+	//presignedurlセット
+	//audioのgetのみ
+	if err := us.SetAudioUrlGet(); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 	}
 	utils.ResponseJSON(w, us, http.StatusOK)
 }

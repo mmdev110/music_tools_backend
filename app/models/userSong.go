@@ -64,8 +64,6 @@ func (us *UserSong) Create() error {
 		sec.Create()
 		us.Sections[i] = sec
 	}
-
-	us.SetMediaUrls()
 	return nil
 }
 
@@ -96,10 +94,6 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 	if result.RowsAffected == 0 {
 		return result
 	}
-	err := us.SetMediaUrls()
-	if err != nil {
-		fmt.Println(err)
-	}
 	return result
 }
 func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
@@ -128,10 +122,6 @@ func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
 		First(&us)
 	if result.RowsAffected == 0 {
 		return result
-	}
-	err := us.SetMediaUrls()
-	if err != nil {
-		fmt.Println(err)
 	}
 	return result
 }
@@ -164,12 +154,6 @@ func (us *UserSong) GetByUserId(userId uint) ([]UserSong, error) {
 		Find(&songs)
 	if result.Error != nil {
 		return nil, result.Error
-	}
-	for i := range songs {
-		err := songs[i].SetMediaUrls()
-		if err != nil {
-			fmt.Println(err)
-		}
 	}
 	return songs, nil
 }
@@ -258,12 +242,6 @@ func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	for i := range songs {
-		err := songs[i].SetMediaUrls()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
 	return songs, nil
 }
 
@@ -351,27 +329,36 @@ var PlaylistSuffix = "_hls"
 func (us *UserSong) SetMediaUrls() error {
 
 	//audio
-	if err := us.setAudioUrl(); err != nil {
+	if err := us.SetAudioUrlGet(); err != nil {
+		return err
+	}
+	if err := us.SetAudioUrlPut(); err != nil {
 		return err
 	}
 	//midi
-	if err := us.setMidiUrl(); err != nil {
+	if err := us.SetMidiUrlGet(); err != nil {
+		return err
+	}
+	if err := us.SetMidiUrlPut(); err != nil {
 		return err
 	}
 	return nil
 }
-func (us *UserSong) setAudioUrl() error {
+func (us *UserSong) SetAudioUrlGet() error {
 	Backend := conf.BACKEND_URL
-	fmt.Println("@@@@setmediaurl")
-	//fmt.Println(us.Audio)
-	//audio
+	fmt.Println("@@@@SetAudioUrlGet")
 	if us.Audio.Name != "" {
 		audio := &us.Audio
-
-		//put urlはpresigned URL
 		//get urlはm3u8ファイルを書き換える必要があるためバックエンドを指定する
 		get := Backend + "/hls/" + strconv.Itoa(int(us.ID))
 		audio.Url.Get = get
+	}
+	return nil
+}
+func (us *UserSong) SetAudioUrlPut() error {
+	fmt.Println("@@@@SetAudioUrlPut")
+	if us.Audio.Name != "" {
+		audio := &us.Audio
 		put, err := utils.GenerateSignedUrl(us.GetFolderName()+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
@@ -383,20 +370,29 @@ func (us *UserSong) setAudioUrl() error {
 
 // midiファイルの格納場所
 // presigned urlを返す
-func (us *UserSong) setMidiUrl() error {
+func (us *UserSong) SetMidiUrlGet() error {
 	for _, section := range us.Sections {
 		if section.Midi.Name != "" {
 			midi := &section.Midi
-			path := strconv.Itoa(int(us.UserId)) + "/" + strconv.Itoa(int(section.ID)) + "/" + midi.Name
+			path := us.GetFolderName() + midi.Name
 			get, err := utils.GenerateSignedUrl(path, http.MethodGet, conf.PRESIGNED_DURATION)
 			if err != nil {
 				return err
 			}
+			midi.Url.Get = get
+		}
+	}
+	return nil
+}
+func (us *UserSong) SetMidiUrlPut() error {
+	for _, section := range us.Sections {
+		if section.Midi.Name != "" {
+			midi := &section.Midi
+			path := us.GetFolderName() + midi.Name
 			put, err2 := utils.GenerateSignedUrl(path, http.MethodPut, conf.PRESIGNED_DURATION)
-			if err != nil {
+			if err2 != nil {
 				return err2
 			}
-			midi.Url.Get = get
 			midi.Url.Put = put
 		}
 	}
