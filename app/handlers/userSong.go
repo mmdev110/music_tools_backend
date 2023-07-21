@@ -30,8 +30,17 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&condition)
 	utils.PrintStruct(condition)
 
+	//自分のuserId以外は検索禁止
+	if ids := condition.UserIds; !(len(ids) == 1 && ids[0] == user.ID) {
+		utils.ErrorJSON(w, customError.OperationNotAllowed, errors.New("invalid user_id condition"))
+		return
+	}
 	var us = models.UserSong{}
-	userSongs, _ := us.GetByUserId(user.ID, condition)
+	userSongs, err := us.Search(condition)
+	if err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
 	fmt.Println("list handler response")
 	utils.PrintStruct(userSongs)
 	utils.ResponseJSON(w, userSongs, http.StatusOK)

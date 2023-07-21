@@ -135,15 +135,15 @@ func TestSearch(t *testing.T) {
 	fmt.Println("@@@TestSearch")
 	type Suite struct {
 		memo string
-		cond SongSearchCond2
+		cond SongSearchCond
 		want []UserSong
 	}
 	uid := uint(9999)
 	suites := []Suite{
 		{
 			memo: "return 2",
-			cond: SongSearchCond2{
-				UIds:        []uint{uid},
+			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{1},
 				GenreIds:    []uint{1},
 				SectionName: "",
@@ -154,8 +154,8 @@ func TestSearch(t *testing.T) {
 		},
 		{
 			memo: "return 1",
-			cond: SongSearchCond2{
-				UIds:        []uint{uid},
+			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{2},
 				GenreIds:    []uint{2},
 				SectionName: "",
@@ -166,8 +166,8 @@ func TestSearch(t *testing.T) {
 		},
 		{
 			memo: "empty condition",
-			cond: SongSearchCond2{
-				UIds:        []uint{uid},
+			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "",
@@ -178,8 +178,8 @@ func TestSearch(t *testing.T) {
 		},
 		{
 			memo: "sectionName",
-			cond: SongSearchCond2{
-				UIds:        []uint{uid},
+			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "intro1",
@@ -190,8 +190,8 @@ func TestSearch(t *testing.T) {
 		},
 		{
 			memo: "sectionName2",
-			cond: SongSearchCond2{
-				UIds:        []uint{uid},
+			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "intro2",

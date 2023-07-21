@@ -102,6 +102,39 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 	}
 	return result
 }
+func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
+	result := DB.Debug().Model(&UserSong{}).
+		Preload("Audio").
+		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
+		}).
+		Preload("Sections.AudioRanges", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_audio_ranges.sort_order ASC")
+		}).
+		Preload("Sections.Midi").
+		Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
+		}).
+		Where("uuid = ?", uuid).
+		First(&us)
+	if result.RowsAffected == 0 {
+		return result
+	}
+	err := us.SetMediaUrls()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return result
+}
 
 // songを返す
 func (us *UserSong) GetByUserId(userId uint) ([]UserSong, error) {
@@ -141,8 +174,8 @@ func (us *UserSong) GetByUserId(userId uint) ([]UserSong, error) {
 	return songs, nil
 }
 
-type SongSearchCond2 struct {
-	UIds        []uint `json:"user_ids"`
+type SongSearchCond struct {
+	UserIds     []uint `json:"user_ids"`
 	TagIds      []uint `json:"tag_ids"`
 	GenreIds    []uint `json:"genre_ids"`
 	SectionName string `json:"section_name"`
@@ -151,7 +184,7 @@ type SongSearchCond2 struct {
 }
 
 // ORDER句の引数を生成(create_at ASCなど)
-func (cond SongSearchCond2) buildOrderArg() string {
+func (cond SongSearchCond) buildOrderArg() string {
 	order := "ASC"
 	orderColumn := "created_at"
 	if cond.OrderBy == "created_at" {
@@ -172,13 +205,13 @@ func (cond SongSearchCond2) buildOrderArg() string {
 }
 
 // userIdに紐づくsong(検索条件があればそれも考慮する)
-func (us *UserSong) Search(cond SongSearchCond2) ([]UserSong, error) {
+func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB
 
 	//tag, genreからsong_idを絞る
 	var songIds []uint
-	tmpSongs, _ := us.preSearchByUIdTagIdsAndGenreIds(cond.UIds, cond.TagIds, cond.GenreIds)
+	tmpSongs, _ := us.preSearchByUIdTagIdsAndGenreIds(cond.UserIds, cond.TagIds, cond.GenreIds)
 	for _, v := range tmpSongs {
 		songIds = append(songIds, v.ID)
 	}
@@ -186,7 +219,7 @@ func (us *UserSong) Search(cond SongSearchCond2) ([]UserSong, error) {
 
 	//songIdsとsectionNameで再検索
 	query := "id IN(?) AND user_id IN (?)"
-	args := []interface{}{songIds, cond.UIds}
+	args := []interface{}{songIds, cond.UserIds}
 	orderArg := cond.buildOrderArg() //"created_at DESC"
 
 	db := DB.Debug().Preload("Audio").
@@ -343,8 +376,6 @@ func (us *UserSong) setAudioUrl() error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("get: ", get)
-		fmt.Println("put: ", put)
 		audio.Url.Put = put
 	}
 	return nil
