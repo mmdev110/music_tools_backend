@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,7 +25,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	fmt.Println("signUp")
 	if r.Method != http.MethodPost {
-		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for SignUp", r.Method))
+		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for SignUp", r.Method))
 		return
 	}
 	type Form struct {
@@ -93,17 +92,17 @@ func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 	//tokenのチェック
 	claims, err := utils.ParseJwt(req.Token)
 	if err != nil {
-		utils.ErrorJSON(w, customError.Others, err)
+		utils.ErrorJSON(w, customError.InvalidToken, err)
 		return
 	}
 	//user取得
 	user := models.GetUserByID(claims.UserId)
 	if user == nil {
-		utils.ErrorJSON(w, customError.Others, errors.New("user not found"))
+		utils.ErrorJSON(w, customError.UserNotFound)
 		return
 	}
 	if user.IsConfirmed {
-		utils.ErrorJSON(w, customError.Others, errors.New("address is already confirmed"))
+		utils.ErrorJSON(w, customError.AddressAlreadyConfirmed)
 		return
 	}
 	//確認完了
