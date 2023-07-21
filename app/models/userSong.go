@@ -30,7 +30,7 @@ type UserSong struct {
 	//タグ
 	Tags        []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
 	Instruments []UserSongInstrument `json:"instruments"`
-	ViewTimes   []uint               `gorm:"not null" json:"view_times"`
+	ViewTimes   uint                 `gorm:"not null" json:"view_times"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
