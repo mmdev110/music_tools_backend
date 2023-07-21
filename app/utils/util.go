@@ -1,13 +1,18 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/exp/slices"
 )
 
 func PrintStruct(struc interface{}) {
-	fmt.Printf("%+v\n", struc)
+	js, err := json.MarshalIndent(struc, "", "\t")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(js))
 }
 
 // タグの削除

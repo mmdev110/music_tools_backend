@@ -65,7 +65,7 @@ func ParseJwt(tokenString string) (*MyCustomClaims, error) {
 		if claims.Audience[0] != conf.FRONTEND_URL {
 			return nil, errors.New("invalid token audience")
 		}
-		fmt.Println("OK")
+		//fmt.Println("OK")
 		return claims, nil
 	}
 	return nil, errors.New("invalid token")

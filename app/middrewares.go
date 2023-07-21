@@ -12,9 +12,9 @@ import (
 func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("auth middreware")
-		fmt.Println("cookies")
-		fmt.Println(r.Cookies())
+		fmt.Println("auth")
+		//fmt.Println("cookies")
+		//fmt.Println(r.Cookies())
 		for _, cookie := range r.Cookies() {
 			fmt.Printf("name: %s, value: %s\n", cookie.Name, cookie.Value)
 		}
@@ -30,7 +30,7 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		}
 		userId := claim.UserId
-		fmt.Println(userId)
+		//fmt.Println(userId)
 		ctx := utils.SetUIDInContext(r.Context(), userId)
 		next(w, r.WithContext(ctx))
 	}
