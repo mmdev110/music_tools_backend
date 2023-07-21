@@ -15,10 +15,10 @@ type UserSectionMidi struct {
 	Url               Url    `gorm:"-:all" json:"url"`
 	//midiファイル内でルートとなるノートのindexをcsv化したもの
 	//[1,2,3,4]->"1,2,3,4"
-	MidiRootsCSV string `json:"midi_roots_csv"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	MidiRootsCSV string         `json:"midi_roots_csv"`
+	CreatedAt    time.Time      `json:"-"`
+	UpdatedAt    time.Time      `json:"-"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // GET用のURLとPUT用のURL

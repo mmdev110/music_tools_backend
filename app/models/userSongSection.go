@@ -29,9 +29,9 @@ type UserSongSection struct {
 	//midiファイル
 	Midi      UserSectionMidi `json:"midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time       `json:"-"`
+	UpdatedAt time.Time       `json:"-"`
+	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
 type LoopRange struct {

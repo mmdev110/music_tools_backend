@@ -7,13 +7,13 @@ import (
 )
 
 type Session struct {
-	ID            uint   `gorm:"primarykey"`
-	SessionString string `gorm:"unique;not null"`
-	UserId        uint   `gorm:"unique;not null"`
-	RefreshToken  string `gorm:"not null"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt `gorm:"index"`
+	ID            uint           `gorm:"primarykey"`
+	SessionString string         `gorm:"unique;not null"`
+	UserId        uint           `gorm:"unique;not null"`
+	RefreshToken  string         `gorm:"not null"`
+	CreatedAt     time.Time      `json:"-"`
+	UpdatedAt     time.Time      `json:"-"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (s *Session) Create(refreshToken string) (*Session, error) {

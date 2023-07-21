@@ -15,9 +15,9 @@ type UserSongInstrument struct {
 	Sections   []UserSongSection `gorm:"many2many:sections_instruments" json:"song_sections"`
 	Category   string            `gorm:"not null" json:"category"`
 	Memo       string            `json:"memo"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
+	CreatedAt  time.Time         `json:"-"`
+	UpdatedAt  time.Time         `json:"-"`
+	DeletedAt  gorm.DeletedAt    `gorm:"index" json:"-"`
 }
 
 func (inst *UserSongInstrument) Create() error {

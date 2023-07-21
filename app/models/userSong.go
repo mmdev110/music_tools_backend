@@ -31,9 +31,9 @@ type UserSong struct {
 	Tags        []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
 	Instruments []UserSongInstrument `json:"instruments"`
 	ViewTimes   uint                 `gorm:"not null" json:"view_times"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	CreatedAt   time.Time            `json:"-"`
+	UpdatedAt   time.Time            `json:"-"`
+	DeletedAt   gorm.DeletedAt       `gorm:"index" json:"-"`
 }
 
 func (us *UserSong) Create() error {
