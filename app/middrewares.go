@@ -5,15 +5,16 @@ import (
 	"net/http"
 
 	"example.com/app/conf"
+	"example.com/app/customError"
 	"example.com/app/utils"
 )
 
 func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("auth middreware")
-		fmt.Println("cookies")
-		fmt.Println(r.Cookies())
+		fmt.Println("auth")
+		//fmt.Println("cookies")
+		//fmt.Println(r.Cookies())
 		for _, cookie := range r.Cookies() {
 			fmt.Printf("name: %s, value: %s\n", cookie.Name, cookie.Value)
 		}
@@ -24,12 +25,12 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		//}
 		if err != nil {
 			//w.WriteHeader(http.StatusUnauthorized)
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			return
 
 		}
 		userId := claim.UserId
-		fmt.Println(userId)
+		//fmt.Println(userId)
 		ctx := utils.SetUIDInContext(r.Context(), userId)
 		next(w, r.WithContext(ctx))
 	}
@@ -45,7 +46,7 @@ func requirePasswordResetAuth(next http.HandlerFunc) http.HandlerFunc {
 		//}
 		if err != nil {
 			//w.WriteHeader(http.StatusUnauthorized)
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			return
 		}
 		userId := claim.UserId
@@ -59,7 +60,7 @@ func enableCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("path = %s. method = %s\n", r.URL.Path, r.Method)
-		fmt.Println(r.Header)
+		//fmt.Println(r.Header)
 		w.Header().Set("Access-Control-Allow-Origin", conf.FRONTEND_URL)
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, X-CSRF-Token, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")

@@ -28,11 +28,16 @@ type UserSong struct {
 	//ジャンル
 	Genres []UserGenre `gorm:"many2many:usersongs_genres" json:"genres"`
 	//タグ
-	Tags        []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
-	Instruments []UserSongInstrument `json:"instruments"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	Tags           []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
+	Instruments    []UserSongInstrument `json:"instruments"`
+	ViewTimes      uint                 `gorm:"not null" json:"view_times"`
+	LastModifiedAt time.Time            `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	//current_timestamp(3)について
+	//https://github.com/go-gorm/mysql/issues/58
+	LastViewedAt time.Time      `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	CreatedAt    time.Time      `json:"-"`
+	UpdatedAt    time.Time      `json:"-"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (us *UserSong) Create() error {
@@ -63,8 +68,6 @@ func (us *UserSong) Create() error {
 		sec.Create()
 		us.Sections[i] = sec
 	}
-
-	us.SetMediaUrls()
 	return nil
 }
 
@@ -95,14 +98,8 @@ func (us *UserSong) GetByID(id uint) *gorm.DB {
 	if result.RowsAffected == 0 {
 		return result
 	}
-	err := us.SetMediaUrls()
-	if err != nil {
-		fmt.Println(err)
-	}
 	return result
 }
-
-// songを返す
 func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
 	result := DB.Debug().Model(&UserSong{}).
 		Preload("Audio").
@@ -130,85 +127,103 @@ func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
 	if result.RowsAffected == 0 {
 		return result
 	}
-	err := us.SetMediaUrls()
-	if err != nil {
-		fmt.Println(err)
-	}
 	return result
 }
 
-type SongSearchCond struct {
-	TagIds      []uint `json:"tag_ids"`
-	GenreIds    []uint `json:"genre_ids"`
-	SectionName string `json:"section_name"`
-}
-
-// userIdに紐づくsong(検索条件があればそれも考慮する)
-func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, error) {
+// songを返す
+func (us *UserSong) GetByUserId(userId uint) ([]UserSong, error) {
 	var songs []UserSong
-	var result *gorm.DB
-
-	isTagConditonActive := len(cond.TagIds) > 0
-	isGenreConditionActive := len(cond.GenreIds) > 0
-	//tagIdsを持ってるsongを検索
-	var songIdsWithTags []uint
-	if isTagConditonActive {
-		songWithTags, _ := us.getSongByTagIds(userId, cond.TagIds)
-		for _, v := range songWithTags {
-			songIdsWithTags = append(songIdsWithTags, v.ID)
-		}
-	}
-	fmt.Println("songIdsWithTags: ", songIdsWithTags)
-
-	//genreIdsを持ってるsongを検索
-	var songIdsWithGenres []uint
-	if isGenreConditionActive {
-		songWithGenres, _ := us.getSongByGenreIds(userId, cond.GenreIds)
-		//DB.Debug().Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id").Where("user_id=? AND usg.user_genre_id IN ?", userId, cond.GenreIds).Find(&songWithGenres)
-		for _, v := range songWithGenres {
-			songIdsWithGenres = append(songIdsWithGenres, v.ID)
-		}
-	}
-	fmt.Println("songIdsWithGenres: ", songIdsWithGenres)
-	//両方に含まれるidを抽出
-	var commonIds []uint
-	if isTagConditonActive && isGenreConditionActive {
-		commonIds = utils.Intersect(songIdsWithTags, songIdsWithGenres)
-	} else if !isTagConditonActive {
-		commonIds = songIdsWithGenres
-	} else if !isGenreConditionActive {
-		commonIds = songIdsWithTags
-	}
-	fmt.Println(isTagConditonActive)
-	fmt.Println(isGenreConditionActive)
-	fmt.Println("commonIds: ", commonIds)
-
-	//そのidの中から、sectionNameで絞り込み
-	db := DB.Debug().Preload("Audio").
+	result := DB.Debug().Model(&UserSong{}).
+		Preload("Audio").
+		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
+		}).
+		Preload("Sections.AudioRanges", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_audio_ranges.sort_order ASC")
+		}).
+		Preload("Sections.Midi").
+		Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_instruments.sort_order ASC")
+		}).
 		Preload("Tags", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_tags.sort_order ASC")
 		}).
 		Preload("Genres", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_genres.sort_order ASC")
 		}).
+		Where("user_id = ?", userId).
+		Find(&songs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return songs, nil
+}
+
+type SongSearchCond struct {
+	UserIds     []uint `json:"user_ids"`
+	TagIds      []uint `json:"tag_ids"`
+	GenreIds    []uint `json:"genre_ids"`
+	SectionName string `json:"section_name"`
+	OrderBy     string `json:"order_by"`
+	Ascending   bool   `json:"ascending"`
+}
+
+// ORDER句の引数を生成(create_at ASCなど)
+func (cond SongSearchCond) buildOrderArg() string {
+	order := "ASC"
+	orderColumn := cond.OrderBy
+	if cond.OrderBy == "" {
+		orderColumn = "created_at"
+	}
+
+	if cond.Ascending {
+		order = "ASC"
+	} else {
+		order = "DESC"
+	}
+	orderArg := orderColumn + " " + order //"created_at DESC"
+	return orderArg
+}
+
+// 検索
+func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
+	var songs []UserSong
+	var result *gorm.DB
+
+	//tag, genreからsong_idを絞る
+	var songIds []uint
+	tmpSongs, _ := us.preSearchByUIdTagIdsAndGenreIds(cond.UserIds, cond.TagIds, cond.GenreIds)
+	for _, v := range tmpSongs {
+		songIds = append(songIds, v.ID)
+	}
+	fmt.Println("songIds = ", songIds)
+
+	//songIdsとsectionNameで再検索
+	query := "id IN(?) AND user_id IN (?)"
+	args := []interface{}{songIds, cond.UserIds}
+	orderArg := cond.buildOrderArg() //"created_at DESC"
+
+	db := DB.Debug().Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
+		}).
+		Preload("Sections", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_song_sections.sort_order ASC")
+		}).
+		Preload("Sections.Midi").
+		Preload("Tags", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_tags.sort_order ASC")
+		}).
+		Preload("Genres", func(db *gorm.DB) *gorm.DB {
+			return db.Order("user_genres.sort_order ASC")
 		})
-	query := "user_id=?"
-	args := []interface{}{userId}
-
-	if isTagConditonActive || isGenreConditionActive { //タグ、ジャンル検索条件がある場合、userSongId条件追加
-		query += " AND user_songs.id in ?"
-		args = append(args, commonIds)
-	}
-	//sectionName
 	if cond.SectionName != "" { //sectionName指定がある場合
 		db.Preload("Sections", "name=?", cond.SectionName, func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_sections.sort_order ASC")
-		}).
-			Joins("INNER JOIN user_song_sections sec ON sec.user_song_id=user_songs.id ")
-		query += " AND sec.name=?"
-		args = append(args, cond.SectionName)
+		})
 	} else {
 		db.Preload("Sections", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_sections.sort_order ASC")
@@ -219,7 +234,7 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	}).Preload("Sections.Instruments", func(db *gorm.DB) *gorm.DB {
 		return db.Order("user_song_instruments.sort_order ASC")
 	})
-	result = db.Where(query, args...).Find(&songs)
+	result = db.Where(query, args...).Order(orderArg).Find(&songs)
 
 	if result.RowsAffected == 0 {
 		return nil, nil
@@ -227,15 +242,50 @@ func (us *UserSong) GetByUserId(userId uint, cond SongSearchCond) ([]UserSong, e
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	for i := range songs {
-		err := songs[i].SetMediaUrls()
-		if err != nil {
-			fmt.Println(err)
-		}
+	return songs, nil
+}
+
+// Searchのための処理
+func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(userIds []uint, tagIds []uint, genreIds []uint) ([]UserSong, error) {
+	var songs []UserSong
+	//var song *UserSong
+	var result *gorm.DB
+
+	isTagConditonActive := len(tagIds) > 0
+	isGenreConditionActive := len(genreIds) > 0
+
+	//tag, genreからsong_idを絞る
+	query := "user_songs.user_id IN (?)"
+	args := []interface{}{userIds}
+	db := DB.Debug().Model(&UserSong{}).Distinct("user_songs.id")
+	if isTagConditonActive {
+		db.Joins(
+			"INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id " +
+				"INNER JOIN user_tags tags ON ust.user_tag_id=tags.id")
+		query += " AND tags.id IN(?)"
+		args = append(args, tagIds)
+	}
+	if isGenreConditionActive {
+		db.Joins(
+			"INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id " +
+				"INNER JOIN user_genres genres ON usg.user_genre_id=genres.id")
+		query += " AND genres.id IN(?)"
+		args = append(args, genreIds)
+	}
+
+	result = db.Where(query, args...).Find(&songs)
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
 	}
 	return songs, nil
 }
-func (us *UserSong) Update() error {
+func (us *UserSong) Update(db *gorm.DB) error {
+	if db == nil {
+		db = DB
+	}
 	fmt.Println("@@@@update")
 	//Sections.InstrumentsとSong.Instrumentsを同時に作成できないため、Sectionsを後で保存する
 	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at", "Sections").Save(&us)
@@ -282,33 +332,40 @@ var PlaylistSuffix = "_hls"
 func (us *UserSong) SetMediaUrls() error {
 
 	//audio
-	if err := us.setAudioUrl(); err != nil {
+	if err := us.SetAudioUrlGet(); err != nil {
+		return err
+	}
+	if err := us.SetAudioUrlPut(); err != nil {
 		return err
 	}
 	//midi
-	if err := us.setMidiUrl(); err != nil {
+	if err := us.SetMidiUrlGet(); err != nil {
+		return err
+	}
+	if err := us.SetMidiUrlPut(); err != nil {
 		return err
 	}
 	return nil
 }
-func (us *UserSong) setAudioUrl() error {
+func (us *UserSong) SetAudioUrlGet() error {
 	Backend := conf.BACKEND_URL
-	fmt.Println("@@@@setmediaurl")
-	//fmt.Println(us.Audio)
-	//audio
+	fmt.Println("@@@@SetAudioUrlGet")
 	if us.Audio.Name != "" {
 		audio := &us.Audio
-
-		//put urlはpresigned URL
 		//get urlはm3u8ファイルを書き換える必要があるためバックエンドを指定する
 		get := Backend + "/hls/" + strconv.Itoa(int(us.ID))
 		audio.Url.Get = get
+	}
+	return nil
+}
+func (us *UserSong) SetAudioUrlPut() error {
+	fmt.Println("@@@@SetAudioUrlPut")
+	if us.Audio.Name != "" {
+		audio := &us.Audio
 		put, err := utils.GenerateSignedUrl(us.GetFolderName()+audio.Name, http.MethodPut, conf.PRESIGNED_DURATION)
 		if err != nil {
 			return err
 		}
-		fmt.Println("get: ", get)
-		fmt.Println("put: ", put)
 		audio.Url.Put = put
 	}
 	return nil
@@ -316,20 +373,29 @@ func (us *UserSong) setAudioUrl() error {
 
 // midiファイルの格納場所
 // presigned urlを返す
-func (us *UserSong) setMidiUrl() error {
+func (us *UserSong) SetMidiUrlGet() error {
 	for _, section := range us.Sections {
 		if section.Midi.Name != "" {
 			midi := &section.Midi
-			path := strconv.Itoa(int(us.UserId)) + "/" + strconv.Itoa(int(section.ID)) + "/" + midi.Name
+			path := us.GetFolderName() + midi.Name
 			get, err := utils.GenerateSignedUrl(path, http.MethodGet, conf.PRESIGNED_DURATION)
 			if err != nil {
 				return err
 			}
+			midi.Url.Get = get
+		}
+	}
+	return nil
+}
+func (us *UserSong) SetMidiUrlPut() error {
+	for _, section := range us.Sections {
+		if section.Midi.Name != "" {
+			midi := &section.Midi
+			path := us.GetFolderName() + midi.Name
 			put, err2 := utils.GenerateSignedUrl(path, http.MethodPut, conf.PRESIGNED_DURATION)
-			if err != nil {
+			if err2 != nil {
 				return err2
 			}
-			midi.Url.Get = get
 			midi.Url.Put = put
 		}
 	}
@@ -349,13 +415,19 @@ func (us *UserSong) GetFolderName() string {
 }
 
 // 中間テーブルのrelationを削除
-func (us *UserSong) DeleteTagRelation(tag *UserTag) error {
-	if err := DB.Model(us).Association("Tags").Delete(tag); err != nil {
+func (us *UserSong) DeleteTagRelation(db *gorm.DB, tag *UserTag) error {
+	if db == nil {
+		db = DB
+	}
+	if err := db.Model(us).Association("Tags").Delete(tag); err != nil {
 		return err
 	}
 	return nil
 }
-func (us *UserSong) DeleteGenreRelation(genre *UserGenre) error {
+func (us *UserSong) DeleteGenreRelation(db *gorm.DB, genre *UserGenre) error {
+	if db == nil {
+		db = DB
+	}
 	if err := DB.Model(us).Association("Genres").Delete(genre); err != nil {
 		return err
 	}
@@ -363,46 +435,4 @@ func (us *UserSong) DeleteGenreRelation(genre *UserGenre) error {
 }
 func (us UserSong) GetID() uint {
 	return us.ID
-}
-
-func (us *UserSong) getSongByTagIds(userId uint, tagIds []uint) ([]UserSong, error) {
-	fmt.Println("getSongByTagIds")
-	var songWithTags []UserSong
-	result := DB.Debug().
-		Preload("Tags", func(db *gorm.DB) *gorm.DB {
-			return db.Order("user_tags.sort_order ASC")
-		}).
-		Joins("INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id AND ust.user_tag_id IN ?", tagIds).
-		Where("user_id=?", userId).
-		Find(&songWithTags)
-
-	if result.RowsAffected == 0 {
-		return nil, nil
-	}
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	//同じsongIdの要素が複数取得されてしまうので、ユニークにする
-	uniq := utils.Uniq(songWithTags)
-	return uniq, nil
-}
-func (us *UserSong) getSongByGenreIds(userId uint, genreIds []uint) ([]UserSong, error) {
-	fmt.Println("getSongByGenreIds")
-	var songWithGenres []UserSong
-	result := DB.Debug().
-		Preload("Genres", func(db *gorm.DB) *gorm.DB {
-			return db.Order("user_genres.sort_order ASC")
-		}).
-		Joins("INNER JOIN usersongs_genres usg ON user_songs.id=usg.user_song_id AND usg.user_genre_id IN ?", genreIds).
-		Where("user_id=?", userId).
-		Find(&songWithGenres)
-	if result.RowsAffected == 0 {
-		return nil, nil
-	}
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	//同じsongIdの要素が複数取得されてしまうので、ユニークにする
-	uniq := utils.Uniq(songWithGenres)
-	return uniq, nil
 }

@@ -29,9 +29,9 @@ type UserSongSection struct {
 	//midiファイル
 	Midi      UserSectionMidi `json:"midi"`
 	SortOrder int             `gorm:"not null;default:0" json:"sort_order"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time       `json:"-"`
+	UpdatedAt time.Time       `json:"-"`
+	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
 type LoopRange struct {
@@ -48,7 +48,10 @@ func (sec *UserSongSection) Create() error {
 	return nil
 }
 
-func (sec *UserSongSection) Delete() error {
+func (sec *UserSongSection) Delete(db *gorm.DB) error {
+	if db == nil {
+		db = DB
+	}
 	//中間テーブルのレコード削除
 	if err := DB.Debug().Model(sec).Association("Instruments").Clear(); err != nil {
 		return err
@@ -65,7 +68,10 @@ func (sec UserSongSection) GetID() uint {
 }
 
 // 中間テーブルのrelationを削除
-func (sec *UserSongSection) DeleteInstrumentRelation(inst *UserSongInstrument) error {
+func (sec *UserSongSection) DeleteInstrumentRelation(db *gorm.DB, inst *UserSongInstrument) error {
+	if db == nil {
+		db = DB
+	}
 	if err := DB.Model(sec).Association("Instruments").Delete(inst); err != nil {
 		return err
 	}

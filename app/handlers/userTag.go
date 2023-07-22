@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
 )
@@ -18,7 +19,7 @@ func TagHandler(w http.ResponseWriter, r *http.Request) {
 		//タグ一覧の取得
 		getTags(w, r)
 	} else {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 	}
 
 }
@@ -36,7 +37,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	tmp := models.UserTag{}
 	db, err := tmp.GetAllByUserId(user.ID)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 
@@ -44,7 +45,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	removedTags := utils.FindRemoved(db, input)
 	for _, t := range removedTags {
 		if err := t.Delete(); err != nil {
-			utils.ErrorJSON(w, err)
+			utils.ErrorJSON(w, customError.Others, err)
 			return
 		}
 	}
@@ -61,7 +62,7 @@ func getTags(w http.ResponseWriter, r *http.Request) {
 	var tag = models.UserTag{}
 	tags, err := tag.GetAllByUserId(user.ID)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 	}
 
 	utils.ResponseJSON(w, tags, http.StatusOK)

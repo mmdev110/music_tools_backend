@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"example.com/app/conf"
+	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
 )
@@ -31,18 +32,18 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	var us = models.UserSong{}
 	us.GetByID(userSongId)
 	//if us.UserId != user.ID {
-	//	utils.ErrorJSON(w, errors.New("user mismatch"))
+	//	utils.ErrorJSON(w, customError.Others, errors.New("user mismatch"))
 	//}
 	fmt.Println(us.GetFolderName() + us.GetHLSName())
 	presignedUrl, err := utils.GenerateSignedUrl(us.GetFolderName()+us.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 	fmt.Println(presignedUrl)
 	resp, err := http.Get(presignedUrl)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 	defer resp.Body.Close()

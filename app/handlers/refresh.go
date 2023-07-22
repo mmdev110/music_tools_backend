@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"example.com/app/conf"
+	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
 	"github.com/google/uuid"
@@ -14,12 +15,12 @@ import (
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("refresh")
 	if r.Method != http.MethodPost {
-		utils.ErrorJSON(w, fmt.Errorf("method %s not allowed for refresh", r.Method))
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for refresh", r.Method))
 		return
 	}
 	cookie, err := r.Cookie(conf.SESSION_ID_KEY)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("session_id not found"))
+		utils.ErrorJSON(w, customError.Others, errors.New("session_id not found"))
 		return
 	}
 	sessionId := cookie.Value
@@ -28,20 +29,20 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	session := &models.Session{}
 	sessionResult := session.GetBySessionID(sessionId)
 	if sessionResult.RowsAffected == 0 {
-		utils.ErrorJSON(w, errors.New("session not found"))
+		utils.ErrorJSON(w, customError.Others, errors.New("session not found"))
 		return
 	} else if sessionResult.Error != nil {
-		utils.ErrorJSON(w, sessionResult.Error)
+		utils.ErrorJSON(w, customError.Others, sessionResult.Error)
 		return
 	}
 	//refreshTokenを検証
 	claim, err := utils.Authenticate(session.RefreshToken, "refresh")
 	if err != nil {
-		utils.ErrorJSON(w, sessionResult.Error)
+		utils.ErrorJSON(w, customError.Others, sessionResult.Error)
 		return
 	}
 	if claim.TokenType != "refresh" {
-		utils.ErrorJSON(w, errors.New("invalid tokentype"))
+		utils.ErrorJSON(w, customError.Others, errors.New("invalid tokentype"))
 		return
 	}
 	userId := claim.UserId
@@ -60,7 +61,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("new_refreshToken= ", session.RefreshToken)
 
 	if err := session.Update(); err != nil {
-		utils.ErrorJSON(w, errors.New("session save failed"))
+		utils.ErrorJSON(w, customError.Others, errors.New("session save failed"))
 		return
 	}
 

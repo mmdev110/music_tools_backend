@@ -8,14 +8,14 @@ import (
 )
 
 type UserTag struct {
-	ID        uint       `gorm:"primarykey" json:"id"`
-	UserId    uint       `gorm:"index:idx_tag_uid_name,unique;not null" json:"user_id"`
-	Name      string     `gorm:"index:idx_tag_uid_name,unique;not null" json:"name"`
-	SortOrder int        `gorm:"not null;default:0" json:"sort_order"`
-	UserSongs []UserSong `gorm:"many2many:usersongs_tags" json:"user_songs"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID        uint           `gorm:"primarykey" json:"id"`
+	UserId    uint           `gorm:"index:idx_tag_uid_name,unique;not null" json:"user_id"`
+	Name      string         `gorm:"index:idx_tag_uid_name,unique;not null" json:"name"`
+	SortOrder int            `gorm:"not null;default:0" json:"sort_order"`
+	UserSongs []UserSong     `gorm:"many2many:usersongs_tags" json:"user_songs"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (tag *UserTag) Create() error {

@@ -34,5 +34,5 @@ var AWS_SECRET_ACCESS_KEY = os.Getenv("AWS_SECRET_ACCESS_KEY")
 var AWS_BUCKET_NAME = os.Getenv("AWS_BUCKET_NAME")
 var AWS_MEDIACONVERT_ENDPOINT = os.Getenv("AWS_MEDIACONVERT_ENDPOINT")
 var AWS_CLOUDFRONT_DOMAIN = os.Getenv("AWS_CLOUDFRONT_DOMAIN")
-var SUPPORT_EMAIL = "support@loopanalyzer.tk"
+var SUPPORT_EMAIL = "support@" + os.Getenv("SUPPORT_EMAIL_DOMAIN")
 var PRESIGNED_DURATION = time.Duration(15 * time.Minute)

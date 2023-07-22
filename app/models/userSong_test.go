@@ -65,10 +65,10 @@ func TestUserSong(t *testing.T) {
 		song := UserSong{}
 		song.GetByID(us.ID)
 		//tagのリレーション削除
-		song.DeleteTagRelation(&song.Tags[1])
+		song.DeleteTagRelation(nil, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update()
+		song.Update(nil)
 
 		song2 := UserSong{}
 		song2.GetByID(song.ID)
@@ -115,7 +115,7 @@ func TestUserSong(t *testing.T) {
 		song.GetByID(us.ID)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update()
+		song.Update(nil)
 
 		song2 := UserSong{}
 		song2.GetByID(song.ID)
@@ -125,62 +125,78 @@ func TestUserSong(t *testing.T) {
 	})
 
 }
-
-func TestGetByUserId(t *testing.T) {
+func TestSearch(t *testing.T) {
 	err := Init(true)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer ClearSQLiteDB()
 	data := prepareData(t)
+	fmt.Println("@@@TestSearch")
 	type Suite struct {
 		memo string
 		cond SongSearchCond
 		want []UserSong
 	}
+	uid := uint(9999)
 	suites := []Suite{
 		{
 			memo: "return 2",
 			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{1},
 				GenreIds:    []uint{1},
 				SectionName: "",
+				OrderBy:     "",
+				Ascending:   true,
 			},
 			want: []UserSong{data.Songs[0], data.Songs[1]},
 		},
 		{
 			memo: "return 1",
 			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{2},
 				GenreIds:    []uint{2},
 				SectionName: "",
+				OrderBy:     "",
+				Ascending:   true,
 			},
 			want: []UserSong{data.Songs[0]},
 		},
 		{
 			memo: "empty condition",
 			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "",
+				OrderBy:     "",
+				Ascending:   true,
 			},
 			want: []UserSong{data.Songs[0], data.Songs[1]},
 		},
 		{
 			memo: "sectionName",
 			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "intro1",
+				OrderBy:     "",
+				Ascending:   true,
 			},
 			want: []UserSong{data.Songs[0], data.Songs[1]},
 		},
 		{
-			memo: "sectionName",
+			memo: "sectionName2",
 			cond: SongSearchCond{
+				UserIds:     []uint{uid},
 				TagIds:      []uint{},
 				GenreIds:    []uint{},
 				SectionName: "intro2",
+				OrderBy:     "",
+				Ascending:   true,
 			},
 			want: []UserSong{data.Songs[1]},
 		},
@@ -188,64 +204,23 @@ func TestGetByUserId(t *testing.T) {
 	for _, s := range suites {
 		t.Run(s.memo, func(t *testing.T) {
 			us := UserSong{}
-			songs, err := us.GetByUserId(data.uid, s.cond)
+			songs, err := us.Search(s.cond)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			if len(songs) != len(s.want) {
-				t.Errorf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
+				t.Fatalf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
 			}
 			for i, got := range songs {
 				fmt.Println("====")
-				utils.PrintStruct(got)
+				//utils.PrintStruct(got)
 				if got.ID != s.want[i].ID {
-					t.Errorf("want: %v, but got %v", s.want[i], got)
+					t.Fatalf("want: %v, but got %v", s.want[i], got)
 				}
 			}
 		})
 	}
 
-}
-func TestGetSongByTagIds(t *testing.T) {
-	err := Init(true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ClearSQLiteDB()
-	data := prepareData(t)
-	us := UserSong{}
-	type Suite struct {
-		memo   string
-		tagIds []uint
-		want   []UserSong
-	}
-	suites := []Suite{
-		{
-			memo:   "123",
-			tagIds: []uint{1, 2, 3},
-			want:   []UserSong{data.Songs[0], data.Songs[1]},
-		},
-		{memo: "2",
-			tagIds: []uint{2},
-			want:   []UserSong{data.Songs[0]},
-		},
-	}
-	for _, s := range suites {
-		t.Run(s.memo, func(t *testing.T) {
-			songs, err := us.getSongByTagIds(data.uid, s.tagIds)
-			if err != nil {
-				t.Error(err)
-			}
-			if len(songs) != len(s.want) {
-				t.Errorf("length mismatch. want: %d, but got %d", len(s.want), len(songs))
-			}
-			for i, got := range songs {
-				if got.ID != s.want[i].ID {
-					t.Errorf("want: %v, but got %v", s.want[i], got)
-				}
-			}
-		})
-	}
 }
 
 type TestData struct {

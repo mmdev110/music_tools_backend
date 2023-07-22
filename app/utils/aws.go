@@ -60,7 +60,7 @@ func GenerateSignedUrl(path string, method string, duration time.Duration) (stri
 }
 
 func SendEmail(to, title, body string) {
-	fmt.Println("email")
+	fmt.Println("email from: ", conf.SUPPORT_EMAIL)
 	cfg, loadErr := config.LoadDefaultConfig(context.TODO())
 	if loadErr != nil {
 		log.Fatalf("failed to load configuration, %v", loadErr)
