@@ -65,10 +65,10 @@ func TestUserSong(t *testing.T) {
 		song := UserSong{}
 		song.GetByID(us.ID)
 		//tagのリレーション削除
-		song.DeleteTagRelation(&song.Tags[1])
+		song.DeleteTagRelation(nil, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update()
+		song.Update(nil)
 
 		song2 := UserSong{}
 		song2.GetByID(song.ID)
@@ -115,7 +115,7 @@ func TestUserSong(t *testing.T) {
 		song.GetByID(us.ID)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update()
+		song.Update(nil)
 
 		song2 := UserSong{}
 		song2.GetByID(song.ID)

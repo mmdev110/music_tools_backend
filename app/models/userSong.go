@@ -31,11 +31,13 @@ type UserSong struct {
 	Tags           []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
 	Instruments    []UserSongInstrument `json:"instruments"`
 	ViewTimes      uint                 `gorm:"not null" json:"view_times"`
-	LastModifiedAt time.Time            `gorm:"not null;default:current_timestamp" json:"-"`
-	LastViewedAt   time.Time            `gorm:"not null;default:current_timestamp" json:"-"`
-	CreatedAt      time.Time            `json:"-"`
-	UpdatedAt      time.Time            `json:"-"`
-	DeletedAt      gorm.DeletedAt       `gorm:"index" json:"-"`
+	LastModifiedAt time.Time            `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	//current_timestamp(3)について
+	//https://github.com/go-gorm/mysql/issues/58
+	LastViewedAt time.Time      `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	CreatedAt    time.Time      `json:"-"`
+	UpdatedAt    time.Time      `json:"-"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (us *UserSong) Create() error {
@@ -280,7 +282,10 @@ func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(userIds []uint, tagIds []uin
 	}
 	return songs, nil
 }
-func (us *UserSong) Update() error {
+func (us *UserSong) Update(db *gorm.DB) error {
+	if db == nil {
+		db = DB
+	}
 	fmt.Println("@@@@update")
 	//Sections.InstrumentsとSong.Instrumentsを同時に作成できないため、Sectionsを後で保存する
 	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at", "Sections").Save(&us)
@@ -410,13 +415,19 @@ func (us *UserSong) GetFolderName() string {
 }
 
 // 中間テーブルのrelationを削除
-func (us *UserSong) DeleteTagRelation(tag *UserTag) error {
-	if err := DB.Model(us).Association("Tags").Delete(tag); err != nil {
+func (us *UserSong) DeleteTagRelation(db *gorm.DB, tag *UserTag) error {
+	if db == nil {
+		db = DB
+	}
+	if err := db.Model(us).Association("Tags").Delete(tag); err != nil {
 		return err
 	}
 	return nil
 }
-func (us *UserSong) DeleteGenreRelation(genre *UserGenre) error {
+func (us *UserSong) DeleteGenreRelation(db *gorm.DB, genre *UserGenre) error {
+	if db == nil {
+		db = DB
+	}
 	if err := DB.Model(us).Association("Genres").Delete(genre); err != nil {
 		return err
 	}

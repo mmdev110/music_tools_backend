@@ -135,61 +135,70 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		utils.ErrorJSON(w, customError.Others, result.Error)
 	}
 
-	//タグの中間テーブルの削除
-	removedTags := utils.FindRemoved(db.Tags, us.Tags)
-	for _, tag := range removedTags {
-		if err := db.DeleteTagRelation(&tag); err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
+	err := models.DB.Debug().Transaction(func(tx *gorm.DB) error {
+		//タグの中間テーブルの削除
+		removedTags := utils.FindRemoved(db.Tags, us.Tags)
+		for _, tag := range removedTags {
+			if err := db.DeleteTagRelation(tx, &tag); err != nil {
+				return err
+			}
 		}
-	}
-	//ジャンルの中間テーブルの削除
-	removedGenres := utils.FindRemoved(db.Genres, us.Genres)
-	for _, genre := range removedGenres {
-		if err := db.DeleteGenreRelation(&genre); err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
+		//ジャンルの中間テーブルの削除
+		removedGenres := utils.FindRemoved(db.Genres, us.Genres)
+		for _, genre := range removedGenres {
+			if err := db.DeleteGenreRelation(tx, &genre); err != nil {
+				return err
+			}
 		}
-	}
-	//instrumentsの削除
-	removedInstruments := utils.FindRemoved(db.Instruments, us.Instruments)
-	fmt.Println("removed Instruments: ", len(removedInstruments))
-	for _, inst := range removedInstruments {
-		if err := inst.Delete(); err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
+		//instrumentsの削除
+		removedInstruments := utils.FindRemoved(db.Instruments, us.Instruments)
+		fmt.Println("removed Instruments: ", len(removedInstruments))
+		for _, inst := range removedInstruments {
+			if err := inst.Delete(tx); err != nil {
+				return err
+			}
 		}
-	}
-	//audioRangeの削除
-	for _, sec := range us.Sections {
-		for _, secDB := range db.Sections {
-			if sec.ID == secDB.ID {
-				removedRange := utils.FindRemoved(secDB.AudioRanges, sec.AudioRanges)
-				for _, r := range removedRange {
-					if err := r.Delete(); err != nil {
-						utils.ErrorJSON(w, customError.Others, err)
+		//audioRangeの削除
+		for _, sec := range us.Sections {
+			for _, secDB := range db.Sections {
+				if sec.ID == secDB.ID {
+					removedRange := utils.FindRemoved(secDB.AudioRanges, sec.AudioRanges)
+					for _, r := range removedRange {
+						if err := r.Delete(tx); err != nil {
+							return err
+						}
 					}
 				}
 			}
 		}
-	}
-	//sectionsの削除
-	removedSections := utils.FindRemoved(db.Sections, us.Sections)
-	for _, sec := range removedSections {
-		if err := sec.Delete(); err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
+		//sectionsの削除
+		removedSections := utils.FindRemoved(db.Sections, us.Sections)
+		for _, sec := range removedSections {
+			if err := sec.Delete(tx); err != nil {
+				return err
+			}
 		}
-	}
-	//section-instrumentsの中間テーブルの削除
-	for _, sec := range us.Sections {
-		for _, secDB := range db.Sections {
-			if sec.ID == secDB.ID {
-				removedInst := utils.FindRemoved(secDB.Instruments, sec.Instruments)
-				for _, inst := range removedInst {
-					sec.DeleteInstrumentRelation(&inst)
+		//section-instrumentsの中間テーブルの削除
+		for _, sec := range us.Sections {
+			for _, secDB := range db.Sections {
+				if sec.ID == secDB.ID {
+					removedInst := utils.FindRemoved(secDB.Instruments, sec.Instruments)
+					for _, inst := range removedInst {
+						if err := sec.DeleteInstrumentRelation(tx, &inst); err != nil {
+							return err
+						}
+					}
 				}
 			}
 		}
-	}
-	us.LastModifiedAt = time.Now()
-	if err := us.Update(); err != nil {
+		us.LastModifiedAt = time.Now()
+		us.LastViewedAt = db.LastViewedAt
+		if err := us.Update(tx); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
@@ -200,6 +209,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	//presignedURLセット
 	if err := us.SetMediaUrls(); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
+		return
 	}
 
 	fmt.Println("@@@@UpdateSong response")
@@ -229,7 +239,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//閲覧回数の更新
 	us.ViewTimes += 1
 	us.LastViewedAt = time.Now()
-	if err := us.Update(); err != nil {
+	if err := us.Update(nil); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}

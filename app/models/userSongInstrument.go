@@ -36,7 +36,10 @@ func (inst *UserSongInstrument) Update() error {
 }
 
 // instと中間テーブルのrelationを削除
-func (inst *UserSongInstrument) Delete() error {
+func (inst *UserSongInstrument) Delete(db *gorm.DB) error {
+	if db == nil {
+		db = DB
+	}
 	utils.PrintStruct(inst)
 	//中間テーブルのレコード削除
 	err := DB.Debug().Model(inst).Association("Sections").Clear()
