@@ -25,6 +25,14 @@ var AddressAlreadyConfirmed = CustomError{
 	Code:    3,
 	Message: "email address is already confirmed",
 }
+var AddressNotConfirmed = CustomError{
+	Code:    4,
+	Message: "email address is not confirmed",
+}
+var IncorrectPassword = CustomError{
+	Code:    5,
+	Message: "password mismatch",
+}
 
 var OperationNotAllowed = CustomError{
 	Code:    100,
