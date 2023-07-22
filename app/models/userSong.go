@@ -28,12 +28,14 @@ type UserSong struct {
 	//ジャンル
 	Genres []UserGenre `gorm:"many2many:usersongs_genres" json:"genres"`
 	//タグ
-	Tags        []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
-	Instruments []UserSongInstrument `json:"instruments"`
-	ViewTimes   uint                 `gorm:"not null" json:"view_times"`
-	CreatedAt   time.Time            `json:"-"`
-	UpdatedAt   time.Time            `json:"-"`
-	DeletedAt   gorm.DeletedAt       `gorm:"index" json:"-"`
+	Tags           []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
+	Instruments    []UserSongInstrument `json:"instruments"`
+	ViewTimes      uint                 `gorm:"not null" json:"view_times"`
+	LastModifiedAt time.Time            `gorm:"not null;default:current_timestamp" json:"-"`
+	LastViewedAt   time.Time            `gorm:"not null;default:current_timestamp" json:"-"`
+	CreatedAt      time.Time            `json:"-"`
+	UpdatedAt      time.Time            `json:"-"`
+	DeletedAt      gorm.DeletedAt       `gorm:"index" json:"-"`
 }
 
 func (us *UserSong) Create() error {
@@ -170,12 +172,8 @@ type SongSearchCond struct {
 // ORDER句の引数を生成(create_at ASCなど)
 func (cond SongSearchCond) buildOrderArg() string {
 	order := "ASC"
-	orderColumn := "created_at"
-	if cond.OrderBy == "created_at" {
-		orderColumn = "created_at"
-	} else if cond.OrderBy == "view_times" {
-		orderColumn = "view_times"
-	} else {
+	orderColumn := cond.OrderBy
+	if cond.OrderBy == "" {
 		orderColumn = "created_at"
 	}
 
@@ -188,7 +186,7 @@ func (cond SongSearchCond) buildOrderArg() string {
 	return orderArg
 }
 
-// userIdに紐づくsong(検索条件があればそれも考慮する)
+// 検索
 func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB

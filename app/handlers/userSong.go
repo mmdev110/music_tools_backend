@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"example.com/app/customError"
 	"example.com/app/models"
@@ -91,6 +92,9 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	us.UserId = user.ID
 	//uuid付与
 	us.UUID = uuid.NewString()
+
+	us.LastModifiedAt = time.Now()
+	us.LastViewedAt = time.Now()
 	for {
 		err := us.Create()
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -184,6 +188,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 			}
 		}
 	}
+	us.LastModifiedAt = time.Now()
 	if err := us.Update(); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
@@ -221,12 +226,19 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	if us.UserId != user.ID {
 		utils.ErrorJSON(w, customError.Others, errors.New("you cannot get this Song"))
 	}
-
+	//閲覧回数の更新
+	us.ViewTimes += 1
+	us.LastViewedAt = time.Now()
+	if err := us.Update(); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
 	//presignedurlセット
 	//audioのgetのみ
 	if err := us.SetAudioUrlGet(); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 	}
+
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
 func DeleteSong(w http.ResponseWriter, r *http.Request) {
