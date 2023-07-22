@@ -12,8 +12,8 @@ import (
 func ResponseJSON(w http.ResponseWriter, payload interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	fmt.Println("payload:")
-	PrintStruct(payload)
+	//fmt.Println("payload:")
+	//PrintStruct(payload)
 	js, err := json.MarshalIndent(payload, "", "\t")
 	if err != nil {
 		fmt.Println(err)
