@@ -12,6 +12,7 @@ import (
 	"example.com/app/utils"
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // song情報
@@ -71,8 +72,15 @@ func (us *UserSong) Create() error {
 }
 
 // songを返す
-func (us *UserSong) GetByID(id uint) *gorm.DB {
-	result := DB.Debug().Model(&UserSong{}).
+func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
+	if db != nil {
+		db = DB
+	}
+	if lock {
+		fmt.Println("lock!")
+		db.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	result := db.Debug().Model(&UserSong{}).
 		Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")

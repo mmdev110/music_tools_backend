@@ -122,15 +122,16 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 
 	//update
 	var db = models.UserSong{}
-	result := db.GetByID(userSongId)
-	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
-	}
-	if result.Error != nil {
-		utils.ErrorJSON(w, customError.Others, result.Error)
-	}
 
 	err := models.DB.Debug().Transaction(func(tx *gorm.DB) error {
+		//for update
+		result := db.GetByID(tx, userSongId, true)
+		if result.RowsAffected == 0 {
+			return errors.New("Song not found")
+		}
+		if result.Error != nil {
+			return result.Error
+		}
 		//タグの中間テーブルの削除
 		removedTags := utils.FindRemoved(db.Tags, us.Tags)
 		for _, tag := range removedTags {
@@ -260,7 +261,7 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 
 	us := &models.UserSong{}
-	result := us.GetByID(req.ID)
+	result := us.GetByID(nil, req.ID, false)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return

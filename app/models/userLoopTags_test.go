@@ -46,7 +46,7 @@ func TestUserTag(t *testing.T) {
 		//usersongからtagが消えてることを確認
 		want := 0
 		us := UserSong{}
-		us.GetByID(us1.ID)
+		us.GetByID(nil, us1.ID, false)
 		if l := len(us.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
