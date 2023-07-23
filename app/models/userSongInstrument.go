@@ -19,15 +19,15 @@ type UserSongInstrument struct {
 	DeletedAt  gorm.DeletedAt    `gorm:"index" json:"-"`
 }
 
-func (inst *UserSongInstrument) Create() error {
-	result := DB.Create(&inst)
+func (inst *UserSongInstrument) Create(db *gorm.DB) error {
+	result := db.Create(&inst)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (inst *UserSongInstrument) Update() error {
-	result := DB.Save(&inst)
+func (inst *UserSongInstrument) Update(db *gorm.DB) error {
+	result := db.Save(&inst)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -36,16 +36,13 @@ func (inst *UserSongInstrument) Update() error {
 
 // instと中間テーブルのrelationを削除
 func (inst *UserSongInstrument) Delete(db *gorm.DB) error {
-	if db == nil {
-		db = DB
-	}
 	//中間テーブルのレコード削除
-	err := DB.Debug().Model(inst).Association("Sections").Clear()
+	err := db.Debug().Model(inst).Association("Sections").Clear()
 	if err != nil {
 		return err
 	}
 	//inst自体の削除
-	result := DB.Debug().Delete(inst)
+	result := db.Debug().Delete(inst)
 	if result.Error != nil {
 		return result.Error
 	}

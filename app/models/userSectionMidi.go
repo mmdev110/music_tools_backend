@@ -27,37 +27,37 @@ type Url struct {
 	Put string `json:"put"`
 }
 
-func (midi *UserSectionMidi) Create() error {
-	result := DB.Create(&midi)
+func (midi *UserSectionMidi) Create(db *gorm.DB) error {
+	result := db.Create(&midi)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (midi *UserSectionMidi) GetByID(id uint) error {
-	result := DB.First(&midi, id)
+func (midi *UserSectionMidi) GetByID(db *gorm.DB, id uint) error {
+	result := db.First(&midi, id)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return nil
 }
-func (midi *UserSectionMidi) GetAllByUserId(userId uint) []UserSongSection {
+func (midi *UserSectionMidi) GetAllByUserId(db *gorm.DB, userId uint) []UserSongSection {
 	var loops []UserSongSection
-	result := DB.Where("user_id = ?", userId).Find(&loops)
+	result := db.Where("user_id = ?", userId).Find(&loops)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return loops
 }
-func (midi *UserSectionMidi) Update() error {
-	result := DB.Model(&midi).Debug().Updates(midi)
+func (midi *UserSectionMidi) Update(db *gorm.DB) error {
+	result := db.Model(&midi).Debug().Updates(midi)
 	if err := result.Error; err != nil {
 		return err
 	}
 	return nil
 }
-func (midi *UserSectionMidi) delete() {
-	DB.Delete(&midi, midi.ID)
+func (midi *UserSectionMidi) delete(db *gorm.DB) {
+	db.Delete(&midi, midi.ID)
 }
 
 func (midi *UserSectionMidi) SetPlaylistName(str string) {

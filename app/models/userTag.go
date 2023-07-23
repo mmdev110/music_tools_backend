@@ -17,22 +17,22 @@ type UserTag struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (tag *UserTag) Create() error {
-	result := DB.Create(&tag)
+func (tag *UserTag) Create(db *gorm.DB) error {
+	result := db.Create(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserTag) Update() error {
-	result := DB.Save(&tag)
+func (tag *UserTag) Update(db *gorm.DB) error {
+	result := db.Save(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserTag) GetById(id uint) error {
-	result := DB.Debug().Preload("UserSongs").First(tag, id)
+func (tag *UserTag) GetById(db *gorm.DB, id uint) error {
+	result := db.Debug().Preload("UserSongs").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -40,9 +40,9 @@ func (tag *UserTag) GetById(id uint) error {
 }
 
 // UserSongsも取得する版
-func (tag *UserTag) GetAllByUserId(uid uint) ([]UserTag, error) {
+func (tag *UserTag) GetAllByUserId(db *gorm.DB, uid uint) ([]UserTag, error) {
 	var uls []UserTag
-	result := DB.Debug().
+	result := db.Debug().
 		Preload("UserSongs").
 		Where("user_id=?", uid).
 		Order("sort_order ASC").
@@ -54,14 +54,14 @@ func (tag *UserTag) GetAllByUserId(uid uint) ([]UserTag, error) {
 }
 
 // tagと中間テーブルのrelationを削除
-func (tag *UserTag) Delete() error {
+func (tag *UserTag) Delete(db *gorm.DB) error {
 	//中間テーブルのレコード削除
-	err := DB.Debug().Model(tag).Association("UserSongs").Clear()
+	err := db.Debug().Model(tag).Association("UserSongs").Clear()
 	if err != nil {
 		return err
 	}
 	//tag自体の削除
-	result := DB.Debug().Delete(tag)
+	result := db.Debug().Delete(tag)
 	if result.Error != nil {
 		return result.Error
 	}

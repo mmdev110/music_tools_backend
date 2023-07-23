@@ -32,21 +32,21 @@ type UserSong struct {
 	Tags           []UserTag            `gorm:"many2many:usersongs_tags" json:"tags"`
 	Instruments    []UserSongInstrument `json:"instruments"`
 	ViewTimes      uint                 `gorm:"not null" json:"view_times"`
-	LastModifiedAt time.Time            `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	LastModifiedAt time.Time            `json:"-"`
 	//current_timestamp(3)について
 	//https://github.com/go-gorm/mysql/issues/58
-	LastViewedAt time.Time      `gorm:"not null;default:current_timestamp(3)" json:"-"`
+	LastViewedAt time.Time      `json:"-"`
 	CreatedAt    time.Time      `json:"-"`
 	UpdatedAt    time.Time      `json:"-"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (us *UserSong) Create() error {
+func (us *UserSong) Create(db *gorm.DB) error {
 	//Sections.Instrumentsがsongs.Instrumentsに依存しており、
 	//同時に生成できないため、CREATE文を分ける
 	sections := us.Sections
 	us.Sections = []UserSongSection{}
-	result := DB.Debug().Omit("Tags.*", "Genres.*").Create(&us)
+	result := db.Debug().Omit("Tags.*", "Genres.*").Create(&us)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -65,7 +65,7 @@ func (us *UserSong) Create() error {
 			}
 			sec.Instruments[j] = instSec
 		}
-		sec.Create()
+		sec.Create(db)
 		us.Sections[i] = sec
 	}
 	return nil
@@ -73,9 +73,6 @@ func (us *UserSong) Create() error {
 
 // songを返す
 func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
-	if db != nil {
-		db = DB
-	}
 	if lock {
 		fmt.Println("lock!")
 		db.Clauses(clause.Locking{Strength: "UPDATE"})
@@ -107,8 +104,8 @@ func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
 	}
 	return result
 }
-func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
-	result := DB.Debug().Model(&UserSong{}).
+func (us *UserSong) GetByUUID(db *gorm.DB, uuid string) *gorm.DB {
+	result := db.Debug().Model(&UserSong{}).
 		Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
@@ -138,9 +135,9 @@ func (us *UserSong) GetByUUID(uuid string) *gorm.DB {
 }
 
 // songを返す
-func (us *UserSong) GetByUserId(userId uint) ([]UserSong, error) {
+func (us *UserSong) GetByUserId(db *gorm.DB, userId uint) ([]UserSong, error) {
 	var songs []UserSong
-	result := DB.Debug().Model(&UserSong{}).
+	result := db.Debug().Model(&UserSong{}).
 		Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
@@ -196,13 +193,13 @@ func (cond SongSearchCond) buildOrderArg() string {
 }
 
 // 検索
-func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
+func (us *UserSong) Search(db *gorm.DB, cond SongSearchCond) ([]UserSong, error) {
 	var songs []UserSong
 	var result *gorm.DB
 
 	//tag, genreからsong_idを絞る
 	var songIds []uint
-	tmpSongs, _ := us.preSearchByUIdTagIdsAndGenreIds(cond.UserIds, cond.TagIds, cond.GenreIds)
+	tmpSongs, _ := us.preSearchByUIdTagIdsAndGenreIds(db, cond.UserIds, cond.TagIds, cond.GenreIds)
 	for _, v := range tmpSongs {
 		songIds = append(songIds, v.ID)
 	}
@@ -213,7 +210,7 @@ func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
 	args := []interface{}{songIds, cond.UserIds}
 	orderArg := cond.buildOrderArg() //"created_at DESC"
 
-	db := DB.Debug().Preload("Audio").
+	db.Debug().Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
 		}).
@@ -253,7 +250,7 @@ func (us *UserSong) Search(cond SongSearchCond) ([]UserSong, error) {
 }
 
 // Searchのための処理
-func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(userIds []uint, tagIds []uint, genreIds []uint) ([]UserSong, error) {
+func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(db *gorm.DB, userIds []uint, tagIds []uint, genreIds []uint) ([]UserSong, error) {
 	var songs []UserSong
 	//var song *UserSong
 	var result *gorm.DB
@@ -264,7 +261,7 @@ func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(userIds []uint, tagIds []uin
 	//tag, genreからsong_idを絞る
 	query := "user_songs.user_id IN (?)"
 	args := []interface{}{userIds}
-	db := DB.Debug().Model(&UserSong{}).Distinct("user_songs.id")
+	db.Debug().Model(&UserSong{}).Distinct("user_songs.id")
 	if isTagConditonActive {
 		db.Joins(
 			"INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id " +
@@ -290,12 +287,9 @@ func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(userIds []uint, tagIds []uin
 	return songs, nil
 }
 func (us *UserSong) Update(db *gorm.DB) error {
-	if db == nil {
-		db = DB
-	}
 	fmt.Println("@@@@update")
 	//Sections.InstrumentsとSong.Instrumentsを同時に作成できないため、Sectionsを後で保存する
-	result := DB.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at", "Sections").Save(&us)
+	result := db.Debug().Session(&gorm.Session{FullSaveAssociations: true}).Omit("Tags.*", "Genres.*", "created_at", "Sections").Save(&us)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -315,16 +309,16 @@ func (us *UserSong) Update(db *gorm.DB) error {
 		}
 		us.Sections[i] = sec
 	}
-	result2 := DB.Debug().Model(&UserSongSection{}).Session(&gorm.Session{FullSaveAssociations: true}).Omit("Instruments.*").Save(&us.Sections)
+	result2 := db.Debug().Model(&UserSongSection{}).Session(&gorm.Session{FullSaveAssociations: true}).Omit("Instruments.*").Save(&us.Sections)
 	if err := result2.Error; err != nil {
 		return err
 	}
 
 	return nil
 }
-func (us *UserSong) Delete() error {
+func (us *UserSong) Delete(db *gorm.DB) error {
 	//audio,midiもまとめて削除
-	result := DB.Debug().Omit("Tags.*", "Genres.*").Delete(&us)
+	result := db.Debug().Omit("Tags.*", "Genres.*").Delete(&us)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -421,19 +415,13 @@ func (us *UserSong) GetFolderName() string {
 
 // 中間テーブルのrelationを削除
 func (us *UserSong) DeleteTagRelation(db *gorm.DB, tag *UserTag) error {
-	if db == nil {
-		db = DB
-	}
 	if err := db.Model(us).Association("Tags").Delete(tag); err != nil {
 		return err
 	}
 	return nil
 }
 func (us *UserSong) DeleteGenreRelation(db *gorm.DB, genre *UserGenre) error {
-	if db == nil {
-		db = DB
-	}
-	if err := DB.Model(us).Association("Genres").Delete(genre); err != nil {
+	if err := db.Model(us).Association("Genres").Delete(genre); err != nil {
 		return err
 	}
 	return nil

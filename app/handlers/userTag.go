@@ -35,7 +35,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	//	utils.PrintStruct(v)
 	//}
 	tmp := models.UserTag{}
-	db, err := tmp.GetAllByUserId(user.ID)
+	db, err := tmp.GetAllByUserId(DB, user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
@@ -44,13 +44,13 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 	//DBにあって、リクエストにないタグを削除
 	removedTags := utils.FindRemoved(db, input)
 	for _, t := range removedTags {
-		if err := t.Delete(); err != nil {
+		if err := t.Delete(DB); err != nil {
 			utils.ErrorJSON(w, customError.Others, err)
 			return
 		}
 	}
 	//タグ追加、更新
-	models.DB.Debug().Save(&input)
+	DB.Debug().Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
 func getTags(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func getTags(w http.ResponseWriter, r *http.Request) {
 
 	//DBから取得
 	var tag = models.UserTag{}
-	tags, err := tag.GetAllByUserId(user.ID)
+	tags, err := tag.GetAllByUserId(DB, user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 	}

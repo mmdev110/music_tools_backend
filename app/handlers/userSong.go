@@ -36,7 +36,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var us = models.UserSong{}
-	userSongs, err := us.Search(condition)
+	userSongs, err := us.Search(DB, condition)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
@@ -93,7 +93,7 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	us.LastModifiedAt = time.Now()
 	us.LastViewedAt = time.Now()
 	for {
-		err := us.Create()
+		err := us.Create(DB)
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			//uuidが衝突してるので更新して再実行
 			us.UUID = uuid.NewString()
@@ -123,7 +123,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	//update
 	var db = models.UserSong{}
 
-	err := models.DB.Debug().Transaction(func(tx *gorm.DB) error {
+	err := DB.Debug().Transaction(func(tx *gorm.DB) error {
 		//for update
 		result := db.GetByID(tx, userSongId, true)
 		if result.RowsAffected == 0 {
@@ -218,7 +218,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(uuid)
+	result := us.GetByUUID(DB, uuid)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
@@ -266,7 +266,7 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
-	err := us.Delete()
+	err := us.Delete(DB)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return

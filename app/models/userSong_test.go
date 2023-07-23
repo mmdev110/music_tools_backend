@@ -42,7 +42,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(); err != nil {
+		if err := tag1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -51,7 +51,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(); err != nil {
+		if err := tag2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -59,7 +59,7 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1, tag2},
 		}
-		if err := us.Create(); err != nil {
+		if err := us.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
@@ -91,7 +91,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(); err != nil {
+		if err := tag1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -100,7 +100,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(); err != nil {
+		if err := tag2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -108,7 +108,7 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us.Create(); err != nil {
+		if err := us.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
@@ -204,7 +204,7 @@ func TestSearch(t *testing.T) {
 	for _, s := range suites {
 		t.Run(s.memo, func(t *testing.T) {
 			us := UserSong{}
-			songs, err := us.Search(s.cond)
+			songs, err := us.Search(DB, s.cond)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -275,22 +275,22 @@ func prepareData(t *testing.T) TestData {
 	}
 
 	fmt.Println("preparing data")
-	if err := tag1.Create(); err != nil {
+	if err := tag1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag2.Create(); err != nil {
+	if err := tag2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag3.Create(); err != nil {
+	if err := tag3.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre1.Create(); err != nil {
+	if err := genre1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre2.Create(); err != nil {
+	if err := genre2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre3.Create(); err != nil {
+	if err := genre3.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	var us1 = UserSong{
@@ -405,10 +405,10 @@ func prepareData(t *testing.T) TestData {
 				},
 			}},
 		}}
-	if err := us1.Create(); err != nil {
+	if err := us1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := us2.Create(); err != nil {
+	if err := us2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	return TestData{

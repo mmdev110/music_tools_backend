@@ -19,7 +19,7 @@ func TestUserTag(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(); err != nil {
+		if err := tag1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us1 := UserSong{
@@ -28,7 +28,7 @@ func TestUserTag(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us1.Create(); err != nil {
+		if err := us1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us2 := UserSong{
@@ -37,10 +37,10 @@ func TestUserTag(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us2.Create(); err != nil {
+		if err := us2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
-		if err = tag1.Delete(); err != nil {
+		if err = tag1.Delete(DB); err != nil {
 			t.Errorf("error at delete tag %v", err)
 		}
 		//usersongからtagが消えてることを確認
