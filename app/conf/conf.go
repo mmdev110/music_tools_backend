@@ -36,3 +36,12 @@ var AWS_MEDIACONVERT_ENDPOINT = os.Getenv("AWS_MEDIACONVERT_ENDPOINT")
 var AWS_CLOUDFRONT_DOMAIN = os.Getenv("AWS_CLOUDFRONT_DOMAIN")
 var SUPPORT_EMAIL = "support@" + os.Getenv("SUPPORT_EMAIL_DOMAIN")
 var PRESIGNED_DURATION = time.Duration(15 * time.Minute)
+
+func OverRideVarsByENV() {
+	if os.Getenv("ENV") == "local" {
+		TOKEN_DURATION = 1 * time.Minute
+
+		// リフレッシュトークン有効期間
+		REFRESH_DURATION = 10 * time.Minute
+	}
+}
