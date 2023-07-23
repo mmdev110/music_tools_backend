@@ -63,15 +63,15 @@ func TestUserSong(t *testing.T) {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(nil, us.ID, false)
+		song.GetByID(DB, us.ID, false)
 		//tagのリレーション削除
-		song.DeleteTagRelation(nil, &song.Tags[1])
+		song.DeleteTagRelation(DB, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update(nil)
+		song.Update(DB)
 
 		song2 := UserSong{}
-		song2.GetByID(nil, song.ID, false)
+		song2.GetByID(DB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
@@ -112,13 +112,13 @@ func TestUserSong(t *testing.T) {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(nil, us.ID, false)
+		song.GetByID(DB, us.ID, false)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update(nil)
+		song.Update(DB)
 
 		song2 := UserSong{}
-		song2.GetByID(nil, song.ID, false)
+		song2.GetByID(DB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
