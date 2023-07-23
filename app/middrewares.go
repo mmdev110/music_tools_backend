@@ -50,7 +50,6 @@ func requirePasswordResetAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		userId := claim.UserId
-		fmt.Println(userId)
 		ctx := utils.SetUIDInContext(r.Context(), userId)
 		next(w, r.WithContext(ctx))
 	}

@@ -52,7 +52,6 @@ func (us *UserSong) Create() error {
 	//Instrumentsに付与されたIDをsectionsに紐付けてCREATE
 	us.Sections = sections
 	instruments := us.Instruments
-	utils.PrintStruct(instruments)
 	//for地獄
 	for i, sec := range us.Sections {
 		sec.UserSongId = us.ID
@@ -292,10 +291,8 @@ func (us *UserSong) Update(db *gorm.DB) error {
 	if err := result.Error; err != nil {
 		return err
 	}
-	utils.PrintStruct(us.Sections)
 	//song.Instrumentsに付与されたIDをsections.Instrumentsに紐付けてSAVE
 	instruments := us.Instruments
-	utils.PrintStruct(instruments)
 	//for地獄
 	for i, sec := range us.Sections {
 		sec.UserSongId = us.ID

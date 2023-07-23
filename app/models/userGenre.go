@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"example.com/app/utils"
 	"gorm.io/gorm"
 )
 
@@ -56,7 +55,6 @@ func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
 
 // tagと中間テーブルのrelationを削除
 func (g *UserGenre) Delete() error {
-	utils.PrintStruct(g)
 	//中間テーブルのレコード削除
 	err := DB.Debug().Model(g).Association("UserSongs").Clear()
 	if err != nil {

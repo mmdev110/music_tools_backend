@@ -12,7 +12,6 @@ import (
 func TestHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
-	fmt.Println(r.Cookies())
 	cookie := &http.Cookie{
 		Name: "originalcookie",
 		//Path:    "/",

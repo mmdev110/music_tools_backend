@@ -18,7 +18,6 @@ func TestJwt(t *testing.T) {
 		t.Fatalf("error found at ParseJwt: %v", err2)
 	}
 	fmt.Println(jwt)
-	PrintStruct(parsedClaims)
 	got := parsedClaims.UserId
 	want := userId
 	if got != want {

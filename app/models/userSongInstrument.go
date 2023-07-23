@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"example.com/app/utils"
 	"gorm.io/gorm"
 )
 
@@ -40,7 +39,6 @@ func (inst *UserSongInstrument) Delete(db *gorm.DB) error {
 	if db == nil {
 		db = DB
 	}
-	utils.PrintStruct(inst)
 	//中間テーブルのレコード削除
 	err := DB.Debug().Model(inst).Association("Sections").Clear()
 	if err != nil {

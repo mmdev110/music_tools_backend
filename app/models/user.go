@@ -43,7 +43,6 @@ func CreateUser(email, password string) (User, error) {
 func GetUserByID(id uint) *User {
 	var user User
 	result := DB.First(&user, id)
-	utils.PrintStruct(user)
 	if result.RowsAffected == 0 {
 		return nil
 	}

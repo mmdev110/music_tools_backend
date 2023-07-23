@@ -29,7 +29,6 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	//検索条件取り出し
 	var condition = models.SongSearchCond{}
 	json.NewDecoder(r.Body).Decode(&condition)
-	utils.PrintStruct(condition)
 
 	//自分のuserId以外は検索禁止
 	if ids := condition.UserIds; !(len(ids) == 1 && ids[0] == user.ID) {
@@ -49,7 +48,6 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fmt.Println("list handler response")
-	utils.PrintStruct(userSongs)
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
 }
 
@@ -86,7 +84,6 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	fmt.Println("@@@@Create Song")
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
-	utils.PrintStruct(us)
 
 	//create
 	us.UserId = user.ID
@@ -114,7 +111,6 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	}
 
 	fmt.Println("@@@@CreateSong response")
-	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 
 }
@@ -123,7 +119,6 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
-	utils.PrintStruct(us)
 
 	//update
 	var db = models.UserSong{}
@@ -213,7 +208,6 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	}
 
 	fmt.Println("@@@@UpdateSong response")
-	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
 

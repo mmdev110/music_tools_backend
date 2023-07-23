@@ -55,10 +55,10 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	user.Update()
 
 	//sessionの更新
-	fmt.Println("old_refreshToken= ", session.RefreshToken)
+	//fmt.Println("old_refreshToken= ", session.RefreshToken)
 	session.SessionString = uuid.NewString()
 	session.RefreshToken = "Bearer " + refreshToken
-	fmt.Println("new_refreshToken= ", session.RefreshToken)
+	//fmt.Println("new_refreshToken= ", session.RefreshToken)
 
 	if err := session.Update(); err != nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("session save failed"))

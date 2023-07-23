@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bufio"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -34,13 +33,13 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	//if us.UserId != user.ID {
 	//	utils.ErrorJSON(w, customError.Others, errors.New("user mismatch"))
 	//}
-	fmt.Println(us.GetFolderName() + us.GetHLSName())
+	//fmt.Println(us.GetFolderName() + us.GetHLSName())
 	presignedUrl, err := utils.GenerateSignedUrl(us.GetFolderName()+us.GetHLSName(), http.MethodGet, conf.PRESIGNED_DURATION)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
-	fmt.Println(presignedUrl)
+	//fmt.Println(presignedUrl)
 	resp, err := http.Get(presignedUrl)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
@@ -64,7 +63,7 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		newHLS = newHLS + "\n"
 	}
-	fmt.Println(newHLS)
+	//fmt.Println(newHLS)
 	w.Header().Set("Content-Type", "application/x-mpegURL")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(newHLS))
