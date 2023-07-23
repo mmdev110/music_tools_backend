@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	"example.com/app/conf"
 	"example.com/app/utils"
+	"github.com/google/uuid"
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -44,12 +46,27 @@ type UserSong struct {
 func (us *UserSong) Create(db *gorm.DB) error {
 	//Sections.Instrumentsがsongs.Instrumentsに依存しており、
 	//同時に生成できないため、CREATE文を分ける
+	//CREATE UserSong
 	sections := us.Sections
-	us.Sections = []UserSongSection{}
-	result := db.Debug().Omit("Tags.*", "Genres.*").Create(&us)
-	if result.Error != nil {
-		return result.Error
+	us.Sections = []UserSongSection{} //一旦Sectionsを空にする
+	//uuid付与
+	us.UUID = uuid.NewString()
+	us.LastModifiedAt = time.Now()
+	us.LastViewedAt = time.Now()
+	for {
+		result := db.Debug().Omit("Tags.*", "Genres.*").Create(&us)
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			//uuidが衝突してるので更新して再実行
+			us.UUID = uuid.NewString()
+			continue
+		}
+		if result.Error != nil { //その他のエラー
+			return result.Error
+		}
+		break
 	}
+
+	//CREATE Sections
 	//Instrumentsに付与されたIDをsectionsに紐付けてCREATE
 	us.Sections = sections
 	instruments := us.Instruments
@@ -261,7 +278,7 @@ func (us *UserSong) preSearchByUIdTagIdsAndGenreIds(db *gorm.DB, userIds []uint,
 	//tag, genreからsong_idを絞る
 	query := "user_songs.user_id IN (?)"
 	args := []interface{}{userIds}
-	db.Debug().Model(&UserSong{}).Distinct("user_songs.id")
+	db = db.Debug().Model(&UserSong{}).Distinct("user_songs.id")
 	if isTagConditonActive {
 		db.Joins(
 			"INNER JOIN usersongs_tags ust ON user_songs.id=ust.user_song_id " +

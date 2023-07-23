@@ -12,7 +12,6 @@ import (
 	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -87,24 +86,11 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 
 	//create
 	us.UserId = user.ID
-	//uuid付与
-	us.UUID = uuid.NewString()
 
-	us.LastModifiedAt = time.Now()
-	us.LastViewedAt = time.Now()
-	for {
-		err := us.Create(DB)
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			//uuidが衝突してるので更新して再実行
-			us.UUID = uuid.NewString()
-			continue
-		}
-		if err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
-			break
-		}
-		break
+	if err := us.Create(DB); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 	}
+
 	//presignedurlセット
 	if err := us.SetMediaUrls(); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
@@ -234,7 +220,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//閲覧回数の更新
 	us.ViewTimes += 1
 	us.LastViewedAt = time.Now()
-	if err := us.Update(nil); err != nil {
+	if err := us.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
@@ -261,7 +247,7 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 
 	us := &models.UserSong{}
-	result := us.GetByID(nil, req.ID, false)
+	result := us.GetByID(DB, req.ID, false)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return

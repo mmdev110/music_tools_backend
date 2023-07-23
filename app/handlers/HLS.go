@@ -29,7 +29,7 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	userSongId := uint(int)
 
 	var us = models.UserSong{}
-	us.GetByID(nil, userSongId, false)
+	us.GetByID(DB, userSongId, false)
 	//if us.UserId != user.ID {
 	//	utils.ErrorJSON(w, customError.Others, errors.New("user mismatch"))
 	//}
