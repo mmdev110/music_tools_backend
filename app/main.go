@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"example.com/app/conf"
 	"example.com/app/handlers"
 	"example.com/app/models"
 
@@ -28,6 +29,7 @@ func web_server() {
 
 	//ハンドラ登録
 	mux := registerHandlers()
+	conf.OverRideVarsByENV()
 	//サーバー起動
 	server := &http.Server{
 		Addr:           ":5000",
@@ -49,6 +51,7 @@ func registerHandlers() http.Handler {
 	mux.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
 	mux.HandleFunc("/email_confirm", handlers.EmailConfirmationHandler)
 	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
+	mux.HandleFunc("/signin_with_token", requireAuth(handlers.SignInWithTokenHandler))
 	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
 	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))
 	mux.HandleFunc("/genres", requireAuth(handlers.GenreHandler))
