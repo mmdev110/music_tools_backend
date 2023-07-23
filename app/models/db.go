@@ -40,7 +40,7 @@ func connectMySQL() (*gorm.DB, error) {
 	db_name := conf.MYSQL_DATABASE
 	db_host := conf.MYSQL_HOST + ":" + conf.MYSQL_PORT
 	dsn := user + ":" + password + "@tcp(" + db_host + ")/" + db_name + "?charset=utf8mb4&parseTime=True"
-	fmt.Printf("DSN = %s\n", dsn)
+	//fmt.Printf("DSN = %s\n", dsn)
 	//"gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8&parseTime=True&loc=Local", // data source name
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN: dsn,
