@@ -258,10 +258,10 @@ func (us *UserSong) Search(db *gorm.DB, cond SongSearchCond) ([]UserSong, error)
 	result = db.Where(query, args...).Order(orderArg).Find(&songs)
 
 	if result.RowsAffected == 0 {
-		return nil, nil
+		return []UserSong{}, nil
 	}
 	if result.Error != nil {
-		return nil, result.Error
+		return []UserSong{}, result.Error
 	}
 	return songs, nil
 }
