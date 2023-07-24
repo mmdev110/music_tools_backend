@@ -92,7 +92,7 @@ func (us *UserSong) Create(db *gorm.DB) error {
 func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
 	if lock {
 		fmt.Println("lock!")
-		db.Clauses(clause.Locking{Strength: "UPDATE"})
+		db = db.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
 	result := db.Debug().Model(&UserSong{}).
 		Preload("Audio").
@@ -227,7 +227,7 @@ func (us *UserSong) Search(db *gorm.DB, cond SongSearchCond) ([]UserSong, error)
 	args := []interface{}{songIds, cond.UserIds}
 	orderArg := cond.buildOrderArg() //"created_at DESC"
 
-	db.Debug().Preload("Audio").
+	db = db.Debug().Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("user_song_instruments.sort_order ASC")
 		}).
@@ -310,27 +310,28 @@ func (us *UserSong) Update(db *gorm.DB) error {
 	if err := result.Error; err != nil {
 		return err
 	}
-	//song.Instrumentsに付与されたIDをsections.Instrumentsに紐付けてSAVE
-	instruments := us.Instruments
-	//for地獄
-	for i, sec := range us.Sections {
-		sec.UserSongId = us.ID
-		for j, instSec := range sec.Instruments {
-			for _, inst := range instruments {
-				if inst.Name == instSec.Name {
-					instSec.ID = inst.ID
-					instSec.UserSongId = inst.UserSongId
+	if len(us.Sections) > 0 {
+		//song.Instrumentsに付与されたIDをsections.Instrumentsに紐付けてSAVE
+		instruments := us.Instruments
+		//for地獄
+		for i, sec := range us.Sections {
+			sec.UserSongId = us.ID
+			for j, instSec := range sec.Instruments {
+				for _, inst := range instruments {
+					if inst.Name == instSec.Name {
+						instSec.ID = inst.ID
+						instSec.UserSongId = inst.UserSongId
+					}
 				}
+				sec.Instruments[j] = instSec
 			}
-			sec.Instruments[j] = instSec
+			us.Sections[i] = sec
 		}
-		us.Sections[i] = sec
+		result2 := db.Debug().Model(&UserSongSection{}).Session(&gorm.Session{FullSaveAssociations: true}).Omit("Instruments.*").Save(&us.Sections)
+		if err := result2.Error; err != nil {
+			return err
+		}
 	}
-	result2 := db.Debug().Model(&UserSongSection{}).Session(&gorm.Session{FullSaveAssociations: true}).Omit("Instruments.*").Save(&us.Sections)
-	if err := result2.Error; err != nil {
-		return err
-	}
-
 	return nil
 }
 func (us *UserSong) Delete(db *gorm.DB) error {
