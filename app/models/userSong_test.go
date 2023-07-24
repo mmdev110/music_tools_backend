@@ -1,11 +1,13 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"example.com/app/utils"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func TestUserSong(t *testing.T) {
@@ -123,6 +125,54 @@ func TestUserSong(t *testing.T) {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
 	})
+
+}
+
+// transaction, lockの挙動確認
+func TestTransaction(t *testing.T) {
+	err := Init(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ClearSQLiteDB()
+	us := UserSong{}
+	us.Title = "BEFORE"
+	//データ作成
+	if err := us.Create(DB); err != nil {
+		t.Fatal(err)
+	}
+	t.Run("If an error happened in transaction, it should rollback", func(t *testing.T) {
+		us := UserSong{}
+		us.Title = "BEFORE"
+		//データ作成
+		if err := us.Create(DB); err != nil {
+			t.Fatal(err)
+		}
+		err := DB.Debug().Transaction(func(tx *gorm.DB) error {
+			song := UserSong{}
+			res := tx.Debug().Model(UserSong{}).First(&song)
+			if res.RowsAffected == 0 {
+				return errors.New("test data not found")
+			}
+			song.Title = "AFTER"
+			if err := song.Update(tx); err != nil {
+				return err
+			}
+			//最後にエラーを返してtransactionを失敗させる
+			return errors.New("intentional")
+		})
+		if err.Error() != "intentional" { //意図してないエラーなのでfail
+			t.Fatal(err)
+		}
+		//再取得してtitleを確認
+		after := UserSong{}
+		DB.Debug().Model(UserSong{}).First(&after)
+		fmt.Println(after.Title)
+		if after.Title == "AFTER" { //更新されてるのでfail
+			t.Fatal(errors.New("transaction not working"))
+		}
+	})
+	t.Run("lock success", func(t *testing.T) {})
 
 }
 func TestSearch(t *testing.T) {
