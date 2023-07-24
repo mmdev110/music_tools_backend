@@ -43,6 +43,7 @@ func web_server() {
 	log.Fatal(server.ListenAndServe())
 }
 func registerHandlers() http.Handler {
+	handlers.DB = models.DB
 	mux := http.NewServeMux()
 	mux.HandleFunc("/_chk", handlers.ChkHandler)
 	mux.HandleFunc("/signin", handlers.SignInHandler)
