@@ -12,7 +12,6 @@ import (
 	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +28,6 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	//検索条件取り出し
 	var condition = models.SongSearchCond{}
 	json.NewDecoder(r.Body).Decode(&condition)
-	utils.PrintStruct(condition)
 
 	//自分のuserId以外は検索禁止
 	if ids := condition.UserIds; !(len(ids) == 1 && ids[0] == user.ID) {
@@ -37,7 +35,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var us = models.UserSong{}
-	userSongs, err := us.Search(condition)
+	userSongs, err := us.Search(DB, condition)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
@@ -49,7 +47,6 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fmt.Println("list handler response")
-	utils.PrintStruct(userSongs)
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
 }
 
@@ -86,35 +83,20 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	fmt.Println("@@@@Create Song")
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
-	utils.PrintStruct(us)
 
 	//create
 	us.UserId = user.ID
-	//uuid付与
-	us.UUID = uuid.NewString()
 
-	us.LastModifiedAt = time.Now()
-	us.LastViewedAt = time.Now()
-	for {
-		err := us.Create()
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			//uuidが衝突してるので更新して再実行
-			us.UUID = uuid.NewString()
-			continue
-		}
-		if err != nil {
-			utils.ErrorJSON(w, customError.Others, err)
-			break
-		}
-		break
+	if err := us.Create(DB); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 	}
+
 	//presignedurlセット
 	if err := us.SetMediaUrls(); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 	}
 
 	fmt.Println("@@@@CreateSong response")
-	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 
 }
@@ -123,19 +105,19 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
-	utils.PrintStruct(us)
 
 	//update
 	var db = models.UserSong{}
-	result := db.GetByID(userSongId)
-	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
-	}
-	if result.Error != nil {
-		utils.ErrorJSON(w, customError.Others, result.Error)
-	}
 
-	err := models.DB.Debug().Transaction(func(tx *gorm.DB) error {
+	err := DB.Debug().Transaction(func(tx *gorm.DB) error {
+		//for update
+		result := db.GetByID(tx, userSongId, true)
+		if result.RowsAffected == 0 {
+			return errors.New("Song not found")
+		}
+		if result.Error != nil {
+			return result.Error
+		}
 		//タグの中間テーブルの削除
 		removedTags := utils.FindRemoved(db.Tags, us.Tags)
 		for _, tag := range removedTags {
@@ -213,7 +195,6 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	}
 
 	fmt.Println("@@@@UpdateSong response")
-	utils.PrintStruct(us)
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
 
@@ -223,7 +204,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(uuid)
+	result := us.GetByUUID(DB, uuid)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
@@ -239,7 +220,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//閲覧回数の更新
 	us.ViewTimes += 1
 	us.LastViewedAt = time.Now()
-	if err := us.Update(nil); err != nil {
+	if err := us.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
@@ -266,12 +247,12 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 
 	us := &models.UserSong{}
-	result := us.GetByID(req.ID)
+	result := us.GetByID(DB, req.ID, false)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
-	err := us.Delete()
+	err := us.Delete(DB)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return

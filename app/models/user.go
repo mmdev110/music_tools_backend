@@ -30,42 +30,41 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func CreateUser(email, password string) (User, error) {
+func CreateUser(db *gorm.DB, email, password string) (User, error) {
 	user := User{
 		Email:       email,
 		Password:    encrypt(password),
 		IsConfirmed: false,
 		//Token:    utils.GenerateJwt(email),
 	}
-	DB.Create(&user)
+	db.Create(&user)
 	return user, nil
 }
-func GetUserByID(id uint) *User {
+func GetUserByID(db *gorm.DB, id uint) *User {
 	var user User
-	result := DB.First(&user, id)
-	utils.PrintStruct(user)
+	result := db.First(&user, id)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return &user
 }
-func GetUserByEmail(email string) *User {
+func GetUserByEmail(db *gorm.DB, email string) *User {
 	var user User
-	result := DB.First(&user, "Email = ?", email)
+	result := db.First(&user, "Email = ?", email)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return &user
 }
-func (user *User) Update() error {
-	result := DB.Model(&user).Debug().Updates(user)
+func (user *User) Update(db *gorm.DB) error {
+	result := db.Model(&user).Debug().Updates(user)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (user *User) delete() {
-	DB.Delete(&user, user.ID)
+func (user *User) delete(db *gorm.DB) {
+	db.Delete(&user, user.ID)
 }
 
 func encrypt(password string) string {

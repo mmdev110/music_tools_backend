@@ -27,7 +27,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	//sessionIdでsession取得
 	session := &models.Session{}
-	sessionResult := session.GetBySessionID(sessionId)
+	sessionResult := session.GetBySessionID(DB, sessionId)
 	if sessionResult.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("session not found"))
 		return
@@ -46,21 +46,21 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userId := claim.UserId
-	user := models.GetUserByID(userId)
+	user := models.GetUserByID(DB, userId)
 
 	//regenerate jwt
 	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
 	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
 	user.AccessToken = accessToken
-	user.Update()
+	user.Update(DB)
 
 	//sessionの更新
-	fmt.Println("old_refreshToken= ", session.RefreshToken)
+	//fmt.Println("old_refreshToken= ", session.RefreshToken)
 	session.SessionString = uuid.NewString()
 	session.RefreshToken = "Bearer " + refreshToken
-	fmt.Println("new_refreshToken= ", session.RefreshToken)
+	//fmt.Println("new_refreshToken= ", session.RefreshToken)
 
-	if err := session.Update(); err != nil {
+	if err := session.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("session save failed"))
 		return
 	}

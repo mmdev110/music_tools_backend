@@ -39,9 +39,9 @@ type LoopRange struct {
 	End   int `gorm:"not null" json:"end"`
 }
 
-func (sec *UserSongSection) Create() error {
+func (sec *UserSongSection) Create(db *gorm.DB) error {
 	//Instrumentsはrelationのみ作成
-	result := DB.Debug().Omit("Instruments.*").Create(&sec)
+	result := db.Debug().Omit("Instruments.*").Create(&sec)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -49,14 +49,11 @@ func (sec *UserSongSection) Create() error {
 }
 
 func (sec *UserSongSection) Delete(db *gorm.DB) error {
-	if db == nil {
-		db = DB
-	}
 	//中間テーブルのレコード削除
-	if err := DB.Debug().Model(sec).Association("Instruments").Clear(); err != nil {
+	if err := db.Debug().Model(sec).Association("Instruments").Clear(); err != nil {
 		return err
 	}
-	result := DB.Debug().Delete(sec)
+	result := db.Debug().Delete(sec)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -69,10 +66,7 @@ func (sec UserSongSection) GetID() uint {
 
 // 中間テーブルのrelationを削除
 func (sec *UserSongSection) DeleteInstrumentRelation(db *gorm.DB, inst *UserSongInstrument) error {
-	if db == nil {
-		db = DB
-	}
-	if err := DB.Model(sec).Association("Instruments").Delete(inst); err != nil {
+	if err := db.Model(sec).Association("Instruments").Delete(inst); err != nil {
 		return err
 	}
 	return nil

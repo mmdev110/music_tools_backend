@@ -16,22 +16,22 @@ type Session struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (s *Session) Create(refreshToken string) (*Session, error) {
-	result := DB.Create(s)
+func (s *Session) Create(db *gorm.DB, refreshToken string) (*Session, error) {
+	result := db.Create(s)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return s, nil
 }
-func (s *Session) GetByUserID(uid uint) *gorm.DB {
-	result := DB.Model(&Session{}).Where("user_id=?", uid).First(s)
+func (s *Session) GetByUserID(db *gorm.DB, uid uint) *gorm.DB {
+	result := db.Model(&Session{}).Where("user_id=?", uid).First(s)
 	return result
 }
-func (s *Session) GetBySessionID(sessionString string) *gorm.DB {
-	result := DB.Model(&Session{}).Where("session_string=?", sessionString).First(s)
+func (s *Session) GetBySessionID(db *gorm.DB, sessionString string) *gorm.DB {
+	result := db.Model(&Session{}).Where("session_string=?", sessionString).First(s)
 	return result
 }
-func (s *Session) Update() error {
-	result := DB.Save(&s)
+func (s *Session) Update(db *gorm.DB) error {
+	result := db.Save(&s)
 	return result.Error
 }

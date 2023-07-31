@@ -19,35 +19,35 @@ type UserSongAudio struct {
 }
 
 // UserSongSection経由で取得、更新するのでメソッド全て不要？
-func (audio *UserSongAudio) Create() error {
-	result := DB.Create(&audio)
+func (audio *UserSongAudio) Create(db *gorm.DB) error {
+	result := db.Create(&audio)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (audio *UserSongAudio) GetByID(id uint) error {
-	result := DB.First(&audio, id)
+func (audio *UserSongAudio) GetByID(db *gorm.DB, id uint) error {
+	result := db.First(&audio, id)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return nil
 }
-func (audio *UserSongAudio) GetAllByUserId(userId uint) []UserSongSection {
+func (audio *UserSongAudio) GetAllByUserId(db *gorm.DB, userId uint) []UserSongSection {
 	var loops []UserSongSection
-	result := DB.Where("user_id = ?", userId).Find(&loops)
+	result := db.Where("user_id = ?", userId).Find(&loops)
 	if result.RowsAffected == 0 {
 		return nil
 	}
 	return loops
 }
-func (audio *UserSongAudio) Update() error {
-	result := DB.Model(&audio).Debug().Save(audio)
+func (audio *UserSongAudio) Update(db *gorm.DB) error {
+	result := db.Model(&audio).Debug().Save(audio)
 	if err := result.Error; err != nil {
 		return err
 	}
 	return nil
 }
-func (audio *UserSongAudio) delete() {
-	DB.Delete(&audio, audio.ID)
+func (audio *UserSongAudio) delete(db *gorm.DB) {
+	db.Delete(&audio, audio.ID)
 }

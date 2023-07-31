@@ -9,6 +9,6 @@ import (
 
 func getUserFromContext(ctx context.Context) *models.User {
 	userId := utils.GetUidFromContext(ctx)
-	user := models.GetUserByID(userId)
+	user := models.GetUserByID(DB, userId)
 	return user
 }

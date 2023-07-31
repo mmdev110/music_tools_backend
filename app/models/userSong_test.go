@@ -1,11 +1,13 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"example.com/app/utils"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func TestUserSong(t *testing.T) {
@@ -42,7 +44,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(); err != nil {
+		if err := tag1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -51,7 +53,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(); err != nil {
+		if err := tag2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -59,19 +61,19 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1, tag2},
 		}
-		if err := us.Create(); err != nil {
+		if err := us.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(us.ID)
+		song.GetByID(DB, us.ID, false)
 		//tagのリレーション削除
-		song.DeleteTagRelation(nil, &song.Tags[1])
+		song.DeleteTagRelation(DB, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update(nil)
+		song.Update(DB)
 
 		song2 := UserSong{}
-		song2.GetByID(song.ID)
+		song2.GetByID(DB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
@@ -91,7 +93,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(); err != nil {
+		if err := tag1.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -100,7 +102,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(); err != nil {
+		if err := tag2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -108,21 +110,69 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us.Create(); err != nil {
+		if err := us.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(us.ID)
+		song.GetByID(DB, us.ID, false)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update(nil)
+		song.Update(DB)
 
 		song2 := UserSong{}
-		song2.GetByID(song.ID)
+		song2.GetByID(DB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
 	})
+
+}
+
+// transaction, lockの挙動確認
+func TestTransaction(t *testing.T) {
+	err := Init(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ClearSQLiteDB()
+	us := UserSong{}
+	us.Title = "BEFORE"
+	//データ作成
+	if err := us.Create(DB); err != nil {
+		t.Fatal(err)
+	}
+	t.Run("If an error happened in transaction, it should rollback", func(t *testing.T) {
+		us := UserSong{}
+		us.Title = "BEFORE"
+		//データ作成
+		if err := us.Create(DB); err != nil {
+			t.Fatal(err)
+		}
+		err := DB.Debug().Transaction(func(tx *gorm.DB) error {
+			song := UserSong{}
+			res := tx.Debug().Model(UserSong{}).First(&song)
+			if res.RowsAffected == 0 {
+				return errors.New("test data not found")
+			}
+			song.Title = "AFTER"
+			if err := song.Update(tx); err != nil {
+				return err
+			}
+			//最後にエラーを返してtransactionを失敗させる
+			return errors.New("intentional")
+		})
+		if err.Error() != "intentional" { //意図してないエラーなのでfail
+			t.Fatal(err)
+		}
+		//再取得してtitleを確認
+		after := UserSong{}
+		DB.Debug().Model(UserSong{}).First(&after)
+		fmt.Println(after.Title)
+		if after.Title == "AFTER" { //更新されてるのでfail
+			t.Fatal(errors.New("transaction not working"))
+		}
+	})
+	t.Run("lock success", func(t *testing.T) {})
 
 }
 func TestSearch(t *testing.T) {
@@ -204,7 +254,7 @@ func TestSearch(t *testing.T) {
 	for _, s := range suites {
 		t.Run(s.memo, func(t *testing.T) {
 			us := UserSong{}
-			songs, err := us.Search(s.cond)
+			songs, err := us.Search(DB, s.cond)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -275,22 +325,22 @@ func prepareData(t *testing.T) TestData {
 	}
 
 	fmt.Println("preparing data")
-	if err := tag1.Create(); err != nil {
+	if err := tag1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag2.Create(); err != nil {
+	if err := tag2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag3.Create(); err != nil {
+	if err := tag3.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre1.Create(); err != nil {
+	if err := genre1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre2.Create(); err != nil {
+	if err := genre2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre3.Create(); err != nil {
+	if err := genre3.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	var us1 = UserSong{
@@ -405,10 +455,10 @@ func prepareData(t *testing.T) TestData {
 				},
 			}},
 		}}
-	if err := us1.Create(); err != nil {
+	if err := us1.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := us2.Create(); err != nil {
+	if err := us2.Create(DB); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	return TestData{

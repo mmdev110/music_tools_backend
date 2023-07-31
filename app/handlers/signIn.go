@@ -27,7 +27,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&form)
 
 	//getUserByEmail
-	user := models.GetUserByEmail(form.Email)
+	user := models.GetUserByEmail(DB, form.Email)
 	if user == nil {
 		utils.ErrorJSON(w, customError.UserNotFound, fmt.Errorf("user not found for %s", form.Email))
 		return
@@ -46,20 +46,59 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
 	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
 	user.AccessToken = accessToken
-	if err := user.Update(); err != nil {
+	if err := user.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 
 	//session生成
 	session := models.Session{}
-	result := session.GetByUserID(user.ID)
+	result := session.GetByUserID(DB, user.ID)
 	if result.RowsAffected == 0 {
 		session.UserId = user.ID
 	}
 	session.SessionString = uuid.NewString()
 	session.RefreshToken = "Bearer " + refreshToken
-	if err := session.Update(); err != nil {
+	if err := session.Update(DB); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
+	//sessionIdをクッキーにセットさせる
+	//httponly, secure, samesite
+	cookie := utils.GetSessionCookie(session.SessionString, conf.REFRESH_DURATION)
+	http.SetCookie(w, cookie)
+
+	type Response = struct {
+		User        *models.User `json:"user"`
+		AccessToken string       `json:"access_token"`
+	}
+	utils.ResponseJSON(w, &Response{user, accessToken}, http.StatusOK)
+}
+
+// accesss_tokenによる認証
+// UserHandlerにtoken更新をつけたもの
+func SignInWithTokenHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r.Context())
+	fmt.Printf("userid in handler = %d\n", user.ID)
+
+	//generate jwt
+	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
+	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
+	user.AccessToken = accessToken
+	if err := user.Update(DB); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
+
+	//session生成
+	session := models.Session{}
+	result := session.GetByUserID(DB, user.ID)
+	if result.RowsAffected == 0 {
+		session.UserId = user.ID
+	}
+	session.SessionString = uuid.NewString()
+	session.RefreshToken = "Bearer " + refreshToken
+	if err := session.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}

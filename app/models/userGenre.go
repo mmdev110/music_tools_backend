@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"example.com/app/utils"
 	"gorm.io/gorm"
 )
 
@@ -18,22 +17,22 @@ type UserGenre struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (genre *UserGenre) Create() error {
-	result := DB.Create(genre)
+func (genre *UserGenre) Create(db *gorm.DB) error {
+	result := db.Create(genre)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserGenre) Update() error {
-	result := DB.Save(&tag)
+func (tag *UserGenre) Update(db *gorm.DB) error {
+	result := db.Save(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-func (tag *UserGenre) GetById(id uint) error {
-	result := DB.Debug().Preload("UserSongs").First(tag, id)
+func (tag *UserGenre) GetById(db *gorm.DB, id uint) error {
+	result := db.Debug().Preload("UserSongs").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -41,9 +40,9 @@ func (tag *UserGenre) GetById(id uint) error {
 }
 
 // UserSongsも取得する版
-func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
+func (tag *UserGenre) GetAllByUserId(db *gorm.DB, uid uint) ([]UserGenre, error) {
 	var uls []UserGenre
-	result := DB.Debug().
+	result := db.Debug().
 		Preload("UserSongs").
 		Where("user_id=?", uid).
 		Order("sort_order ASC").
@@ -55,15 +54,14 @@ func (tag *UserGenre) GetAllByUserId(uid uint) ([]UserGenre, error) {
 }
 
 // tagと中間テーブルのrelationを削除
-func (g *UserGenre) Delete() error {
-	utils.PrintStruct(g)
+func (g *UserGenre) Delete(db *gorm.DB) error {
 	//中間テーブルのレコード削除
-	err := DB.Debug().Model(g).Association("UserSongs").Clear()
+	err := db.Debug().Model(g).Association("UserSongs").Clear()
 	if err != nil {
 		return err
 	}
 	//tagの削除
-	result := DB.Debug().Model(&UserGenre{}).Delete(g)
+	result := db.Debug().Model(&UserGenre{}).Delete(g)
 	if result.Error != nil {
 		return result.Error
 	}

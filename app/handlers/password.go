@@ -40,7 +40,7 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 	var form Form
 	json.NewDecoder(r.Body).Decode(&form)
 	//emailを持ったユーザーがいるか確認
-	user := models.GetUserByEmail(form.Email)
+	user := models.GetUserByEmail(DB, form.Email)
 	if user == nil {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("user not found for %s", form.Email))
 		return
@@ -87,7 +87,7 @@ func PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//user取得
-	user := models.GetUserByID(claims.UserId)
+	user := models.GetUserByID(DB, claims.UserId)
 	if user == nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("user not found"))
 		return
@@ -98,7 +98,7 @@ func PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, customError.Others, err3)
 		return
 	}
-	user.Update()
+	user.Update(DB)
 	//user更新
 
 	utils.ResponseJSON(w, user, http.StatusOK)

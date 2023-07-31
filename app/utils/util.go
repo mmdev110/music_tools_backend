@@ -3,16 +3,19 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"golang.org/x/exp/slices"
 )
 
 func PrintStruct(struc interface{}) {
-	js, err := json.MarshalIndent(struc, "", "\t")
-	if err != nil {
-		fmt.Println(err)
+	if os.Getenv("ENV") == "local" {
+		js, err := json.MarshalIndent(struc, "", "\t")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(js))
 	}
-	fmt.Println(string(js))
 }
 
 // タグの削除
