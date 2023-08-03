@@ -121,7 +121,11 @@ func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
 	}
 	return result
 }
-func (us *UserSong) GetByUUID(db *gorm.DB, uuid string) *gorm.DB {
+func (us *UserSong) GetByUUID(db *gorm.DB, uuid string, lock bool) *gorm.DB {
+	if lock {
+		fmt.Println("lock!")
+		db = db.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
 	result := db.Debug().Model(&UserSong{}).
 		Preload("Audio").
 		Preload("Instruments", func(db *gorm.DB) *gorm.DB {

@@ -194,7 +194,6 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		return
 	}
 
-	fmt.Println("@@@@UpdateSong response")
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
 
@@ -204,7 +203,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(DB, uuid)
+	result := us.GetByUUID(DB, uuid, true)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
