@@ -12,7 +12,7 @@ var TOKEN_DURATION = 1 * time.Minute
 // リフレッシュトークン有効期間
 var REFRESH_DURATION = 10 * time.Minute
 var COOKIE_DOMAIN = "localhost"
-var SESSION_ID_KEY = "session_id"
+var SESSION_ID_KEY = "_session_id"
 var BACKEND_URL = os.Getenv("BACKEND_URL")
 var FRONTEND_URL = os.Getenv("FRONTEND_URL")
 
