@@ -20,3 +20,18 @@ func GetSessionCookie(sessionString string, duration time.Duration) *http.Cookie
 		Secure:   true,
 	}
 }
+
+// 無効なクッキー
+func GetInvalidCookie() *http.Cookie {
+	return &http.Cookie{
+		Name:     conf.SESSION_ID_KEY,
+		Path:     "/",
+		Value:    "",
+		Expires:  time.Now(),
+		MaxAge:   -1,
+		SameSite: http.SameSiteNoneMode,
+		//Domain:   conf.COOKIE_DOMAIN, //環境変数から読み込む
+		HttpOnly: true,
+		Secure:   true,
+	}
+}
