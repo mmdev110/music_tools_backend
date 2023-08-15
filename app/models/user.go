@@ -57,7 +57,7 @@ func GetUserByEmail(db *gorm.DB, email string) *User {
 	return &user
 }
 func (user *User) Update(db *gorm.DB) error {
-	result := db.Model(&user).Debug().Updates(user)
+	result := db.Model(&user).Updates(user)
 	if result.Error != nil {
 		return result.Error
 	}

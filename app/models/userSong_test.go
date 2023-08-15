@@ -147,9 +147,9 @@ func TestTransaction(t *testing.T) {
 		if err := us.Create(DB); err != nil {
 			t.Fatal(err)
 		}
-		err := DB.Debug().Transaction(func(tx *gorm.DB) error {
+		err := DB.Transaction(func(tx *gorm.DB) error {
 			song := UserSong{}
-			res := tx.Debug().Model(UserSong{}).First(&song)
+			res := tx.Model(UserSong{}).First(&song)
 			if res.RowsAffected == 0 {
 				return errors.New("test data not found")
 			}
@@ -165,7 +165,7 @@ func TestTransaction(t *testing.T) {
 		}
 		//再取得してtitleを確認
 		after := UserSong{}
-		DB.Debug().Model(UserSong{}).First(&after)
+		DB.Model(UserSong{}).First(&after)
 		fmt.Println(after.Title)
 		if after.Title == "AFTER" { //更新されてるのでfail
 			t.Fatal(errors.New("transaction not working"))

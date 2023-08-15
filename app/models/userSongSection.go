@@ -41,7 +41,7 @@ type LoopRange struct {
 
 func (sec *UserSongSection) Create(db *gorm.DB) error {
 	//Instrumentsはrelationのみ作成
-	result := db.Debug().Omit("Instruments.*").Create(&sec)
+	result := db.Omit("Instruments.*").Create(&sec)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -50,10 +50,10 @@ func (sec *UserSongSection) Create(db *gorm.DB) error {
 
 func (sec *UserSongSection) Delete(db *gorm.DB) error {
 	//中間テーブルのレコード削除
-	if err := db.Debug().Model(sec).Association("Instruments").Clear(); err != nil {
+	if err := db.Model(sec).Association("Instruments").Clear(); err != nil {
 		return err
 	}
-	result := db.Debug().Delete(sec)
+	result := db.Delete(sec)
 	if result.Error != nil {
 		return result.Error
 	}

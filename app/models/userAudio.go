@@ -42,7 +42,7 @@ func (audio *UserSongAudio) GetAllByUserId(db *gorm.DB, userId uint) []UserSongS
 	return loops
 }
 func (audio *UserSongAudio) Update(db *gorm.DB) error {
-	result := db.Model(&audio).Debug().Save(audio)
+	result := db.Model(&audio).Save(audio)
 	if err := result.Error; err != nil {
 		return err
 	}
