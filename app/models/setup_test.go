@@ -19,13 +19,7 @@ func TestMain(m *testing.M) {
 	ClearTestDB(DB)
 	os.Exit(m.Run())
 }
-func Test_DEBUG(t *testing.T) {
-	fmt.Println("HIHIHI")
 
-	t.Run("test test", func(t *testing.T) {
-
-	})
-}
 func InitTestDB() error {
 	//docker-composeのtest_db参照
 	user := "testuser"
@@ -51,19 +45,20 @@ func ClearTestDB(db *gorm.DB) {
 	if !connectedToTestDB {
 		return
 	}
-	db.Exec("DELETE FROM usersongs_genres")
-	db.Exec("DELETE FROM usersongs_tags")
-	db.Exec("DELETE FROM user_tags")
-	db.Exec("DELETE FROM user_genres")
-	db.Exec("DELETE FROM user_audio_ranges")
-	db.Exec("DELETE FROM user_section_midis")
-	db.Exec("DELETE FROM sections_instruments")
-	db.Exec("DELETE FROM user_song_instruments")
-	db.Exec("DELETE FROM user_song_audios")
-	db.Exec("DELETE FROM sessions")
-	db.Exec("DELETE FROM user_song_sections")
-	db.Exec("DELETE FROM user_songs")
-	db.Exec("DELETE FROM users")
+	db.Exec("DROP TABLE usersongs_genres")
+	db.Exec("DROP TABLE usersongs_tags")
+	db.Exec("DROP TABLE user_tags")
+	db.Exec("DROP TABLE user_genres")
+	db.Exec("DROP TABLE user_audio_ranges")
+	db.Exec("DROP TABLE user_section_midis")
+	db.Exec("DROP TABLE sections_instruments")
+	db.Exec("DROP TABLE user_song_instruments")
+	db.Exec("DROP TABLE user_song_audios")
+	db.Exec("DROP TABLE sessions")
+	db.Exec("DROP TABLE user_song_sections")
+	db.Exec("DROP TABLE user_songs")
+	db.Exec("DROP TABLE users")
+	migrateModels(db)
 }
 
 type TestData struct {
@@ -71,6 +66,16 @@ type TestData struct {
 	Tags   []UserTag
 	Genres []UserGenre
 	Songs  []UserSong
+}
+
+func prepareTestUserOnly() (*User, error) {
+	uid := uint(9999)
+	user := User{ID: uid}
+	result := DB.Create(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
 }
 
 func prepareTestData(t *testing.T) TestData {
