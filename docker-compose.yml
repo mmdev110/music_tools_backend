@@ -21,6 +21,21 @@ services:
       - "3306:3306"
     env_file:
       - ./env/db.env
+  #テスト用のDB
+  test_db:
+    image: arm64v8/mysql
+    #platform: linux/x86_64
+    #volumes:
+    #  - data:/var/lib/mysql
+    restart: always
+    ports:
+      - "3307:3307"
+    environment:
+     - MYSQL_ROOT_PASSWORD=test
+     - MYSQL_DATABASE=test_db
+     - MYSQL_USER=testuser
+     - MYSQL_PASSWORD=testpassword
+     - MYSQL_TCP_PORT=3307
 
 volumes:
   data:
