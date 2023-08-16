@@ -109,7 +109,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	//update
 	var db = models.UserSong{}
 
-	err := DB.Debug().Transaction(func(tx *gorm.DB) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
 		//for update
 		result := db.GetByID(tx, userSongId, true)
 		if result.RowsAffected == 0 {

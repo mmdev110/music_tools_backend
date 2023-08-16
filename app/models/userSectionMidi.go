@@ -50,7 +50,7 @@ func (midi *UserSectionMidi) GetAllByUserId(db *gorm.DB, userId uint) []UserSong
 	return loops
 }
 func (midi *UserSectionMidi) Update(db *gorm.DB) error {
-	result := db.Model(&midi).Debug().Updates(midi)
+	result := db.Model(&midi).Updates(midi)
 	if err := result.Error; err != nil {
 		return err
 	}

@@ -50,7 +50,7 @@ func saveTags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//タグ追加、更新
-	DB.Debug().Save(&input)
+	DB.Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
 func getTags(w http.ResponseWriter, r *http.Request) {
