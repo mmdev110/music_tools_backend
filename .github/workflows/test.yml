@@ -1,0 +1,21 @@
+name: test
+
+on:
+  workflow_dispatch:
+permissions:
+  #id-token: write
+  contents: read
+  pull-requests: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: caching
+        run: echo "hi!"
+      - name: compose build
+        run: docker compose -f docker-compose.test.yaml build
+      - name: compose up -d
+        run: docker compose -f docker-compose.test.yaml build
+      - name: exec tests
+        run: docker compose -f docker-compose.test.yaml run app sh -c "go test ./..."
