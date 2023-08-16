@@ -28,7 +28,7 @@ func (r UserAudioRange) GetID() uint {
 func (r *UserAudioRange) Delete(db *gorm.DB) error {
 
 	//tag自体の削除
-	result := db.Debug().Delete(r)
+	result := db.Delete(r)
 	if result.Error != nil {
 		return result.Error
 	}

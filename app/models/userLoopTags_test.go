@@ -6,13 +6,11 @@ import (
 
 func TestUserTag(t *testing.T) {
 	t.Run("can remove a tag associated with 2 songs", func(t *testing.T) {
-		err := Init(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer ClearSQLiteDB()
-
-		uid := uint(9999)
+		//data := prepareTestData(t)
+		defer ClearTestDB(DB)
+		var uid = uint(9999)
+		var user = User{ID: uid}
+		DB.Create(&user)
 		tag1 := UserTag{
 			UserId:    uid,
 			Name:      "tag1",
@@ -40,7 +38,7 @@ func TestUserTag(t *testing.T) {
 		if err := us2.Create(DB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
-		if err = tag1.Delete(DB); err != nil {
+		if err := tag1.Delete(DB); err != nil {
 			t.Errorf("error at delete tag %v", err)
 		}
 		//usersongからtagが消えてることを確認

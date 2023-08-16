@@ -32,7 +32,7 @@ func (tag *UserGenre) Update(db *gorm.DB) error {
 	return nil
 }
 func (tag *UserGenre) GetById(db *gorm.DB, id uint) error {
-	result := db.Debug().Preload("UserSongs").First(tag, id)
+	result := db.Preload("UserSongs").First(tag, id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -42,7 +42,7 @@ func (tag *UserGenre) GetById(db *gorm.DB, id uint) error {
 // UserSongsも取得する版
 func (tag *UserGenre) GetAllByUserId(db *gorm.DB, uid uint) ([]UserGenre, error) {
 	var uls []UserGenre
-	result := db.Debug().
+	result := db.
 		Preload("UserSongs").
 		Where("user_id=?", uid).
 		Order("sort_order ASC").
@@ -56,12 +56,12 @@ func (tag *UserGenre) GetAllByUserId(db *gorm.DB, uid uint) ([]UserGenre, error)
 // tagと中間テーブルのrelationを削除
 func (g *UserGenre) Delete(db *gorm.DB) error {
 	//中間テーブルのレコード削除
-	err := db.Debug().Model(g).Association("UserSongs").Clear()
+	err := db.Model(g).Association("UserSongs").Clear()
 	if err != nil {
 		return err
 	}
 	//tagの削除
-	result := db.Debug().Model(&UserGenre{}).Delete(g)
+	result := db.Model(&UserGenre{}).Delete(g)
 	if result.Error != nil {
 		return result.Error
 	}

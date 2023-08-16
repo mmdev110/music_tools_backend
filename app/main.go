@@ -15,7 +15,7 @@ import (
 
 func main() {
 	//DB接続
-	err := models.Init(false)
+	err := models.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,10 +23,8 @@ func main() {
 	web_server()
 }
 
-// DB接続無しのwebサーバ
 func web_server() {
-	fmt.Println("web_simple")
-
+	fmt.Println("web")
 	//ハンドラ登録
 	mux := registerHandlers()
 	conf.OverRideVarsByENV()
