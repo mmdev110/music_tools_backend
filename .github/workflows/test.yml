@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: create directory for cached images
+        run: mkdir images
 
       - name: load cached base image(golang)
         id: cache-go
