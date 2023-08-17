@@ -5,7 +5,7 @@ reopen in container
 ```
 todo  
 - [ ] testing
-  - [ ] run tests in Github Actions
+  - [x] run tests in Github Actions
   - [ ] middlewares
   - [ ] handlers
   - [ ] other functions
