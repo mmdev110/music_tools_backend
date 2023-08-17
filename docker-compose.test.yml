@@ -2,7 +2,9 @@
 version: "3.8"
 services:
   app:
-    build: ./Dockerfile.actions
+    build: 
+      context: .
+      dockerfile: Dockerfile.actions
     tty: true
     volumes:
       - ./:/go/src/
