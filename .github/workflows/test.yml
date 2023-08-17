@@ -26,8 +26,8 @@ jobs:
         id: cache-go
         uses: actions/cache@v3
         with:
-          path: images/${CACHE_KEY_GO}
-          key: ${CACHE_KEY_GO}
+          path: images/${{env.CACHE_KEY_GO}}
+          key: ${{env.CACHE_KEY_GO}}
       - name: pull and cache base image on fail(golang)
         if: steps.cache-go.outputs.cache-hit != 'true'
         run: |
@@ -40,8 +40,8 @@ jobs:
         id: cache-mysql
         uses: actions/cache@v3
         with:
-          path: images/${CACHE_KEY_MYSQL}
-          key: ${CACHE_KEY_MYSQL}
+          path: images/${{env.CACHE_KEY_MYSQL}}
+          key: ${{env.CACHE_KEY_MYSQL}}
       - name: pull and cache base image on fail(mysql)
         if: steps.cache-mysql.outputs.cache-hit != 'true'
         run: |
@@ -56,7 +56,3 @@ jobs:
         run: docker compose -f docker-compose.test.yml up -d
       - name: exec tests
         run: docker compose -f docker-compose.test.yml run app sh -c "go test ./..."
-      - name: test ls
-        run: |
-          ls
-          ls images/
