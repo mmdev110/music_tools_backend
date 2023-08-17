@@ -1,21 +1,60 @@
 name: test
 
 on:
+  pull_request:
+    branches: ["main", "dev"]
   workflow_dispatch:
 permissions:
   #id-token: write
   contents: read
   pull-requests: write
+
+# 使用するイメージと合わせる
+env:
+  IMAGE_GO: golang:1.19.2
+  CACHE_KEY_GO: image_go
+  IMAGE_MYSQL: mysql
+  CACHE_KEY_MYSQL: image_mysql
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: caching
-        run: echo "hi!"
+      - name: create directory for cached images
+        run: mkdir images
+
+      - name: load cached base image(golang)
+        id: cache-go
+        uses: actions/cache@v3
+        with:
+          path: images/${{env.CACHE_KEY_GO}}
+          key: ${{env.CACHE_KEY_GO}}
+      - name: pull and cache base image on fail(golang)
+        if: steps.cache-go.outputs.cache-hit != 'true'
+        run: |
+          docker pull ${IMAGE_GO}
+          docker save ${IMAGE_GO} -o images/${CACHE_KEY_GO}
+      - name: load base image from cache(golang)
+        run: docker load -i images/${CACHE_KEY_GO}
+
+      - name: load cached base image(mysql)
+        id: cache-mysql
+        uses: actions/cache@v3
+        with:
+          path: images/${{env.CACHE_KEY_MYSQL}}
+          key: ${{env.CACHE_KEY_MYSQL}}
+      - name: pull and cache base image on fail(mysql)
+        if: steps.cache-mysql.outputs.cache-hit != 'true'
+        run: |
+          docker pull ${IMAGE_MYSQL}
+          docker save ${IMAGE_MYSQL} -o images/${CACHE_KEY_MYSQL}
+      - name: load base image from cache(mysql)
+        run: docker load -i images/${CACHE_KEY_MYSQL}
+
       - name: compose build
-        run: docker compose -f docker-compose.test.yaml build
+        run: docker compose -f docker-compose.test.yml build
       - name: compose up -d
-        run: docker compose -f docker-compose.test.yaml build
+        run: docker compose -f docker-compose.test.yml up -d
       - name: exec tests
-        run: docker compose -f docker-compose.test.yaml run app sh -c "go test ./..."
+        run: docker compose -f docker-compose.test.yml run app sh -c "go test ./..."
