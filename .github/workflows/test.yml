@@ -14,8 +14,8 @@ jobs:
       - name: caching
         run: echo "hi!"
       - name: compose build
-        run: docker compose -f docker-compose.test.yaml build
+        run: docker compose -f docker-compose.test.yml build
       - name: compose up -d
-        run: docker compose -f docker-compose.test.yaml build
+        run: docker compose -f docker-compose.test.yml build
       - name: exec tests
-        run: docker compose -f docker-compose.test.yaml run app sh -c "go test ./..."
+        run: docker compose -f docker-compose.test.yml run app sh -c "go test ./..."
