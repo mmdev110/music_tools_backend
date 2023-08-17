@@ -6,13 +6,46 @@ permissions:
   #id-token: write
   contents: read
   pull-requests: write
+
+env:
+  IMAGE_GO: golang:1.19.2
+  CACHE_KEY_GO: image_go
+  IMAGE_MYSQL: mysql
+  CACHE_KEY_MYSQL: image_mysql
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: caching
-        run: echo "hi!"
+      - name: load cached base image(golang)
+        id: cache-go
+        uses: actions/cache@v3
+        with:
+          path: /${CACHE_KEY_GO}
+          key: ${CACHE_KEY_GO}
+      - name: pull and cache base image on fail(golang)
+        if: steps.cache-go.outputs.cache-hit != 'true'
+        run: |
+          docker pull ${IMAGE_GO}
+          docker save ${IMAGE_GO} -o /${CACHE_KEY_GO}
+      - name: load base image from cache(golang)
+        run: docker load -i /${CACHE_KEY_GO}
+
+      - name: load cached base image(mysql)
+        id: cache-mysql
+        uses: actions/cache@v3
+        with:
+          path: /${CACHE_KEY_MYSQL}
+          key: ${CACHE_KEY_MYSQL}
+      - name: pull and cache base image on fail(mysql)
+        if: steps.cache-mysql.outputs.cache-hit != 'true'
+        run: |
+          docker pull ${IMAGE_MYSQL}
+          docker save ${IMAGE_MYSQL} -o /${CACHE_KEY_MYSQL}
+      - name: load base image from cache(mysql)
+        run: docker load -i /${CACHE_KEY_MYSQL}
+
       - name: compose build
         run: docker compose -f docker-compose.test.yml build
       - name: compose up -d
