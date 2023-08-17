@@ -2,7 +2,9 @@
 version: "3.8"
 services:
   app:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile.actions
     tty: true
     volumes:
       - ./:/go/src/
@@ -14,7 +16,7 @@ services:
       - test_db
   #テスト用のDB
   test_db:
-    image: arm64v8/mysql
+    image: mysql
     #platform: linux/x86_64
     #volumes:
     #  - data:/var/lib/mysql
