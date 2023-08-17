@@ -14,7 +14,7 @@ services:
       - test_db
   #テスト用のDB
   test_db:
-    image: arm64v8/mysql
+    image: mysql
     #platform: linux/x86_64
     #volumes:
     #  - data:/var/lib/mysql
