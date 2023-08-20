@@ -36,25 +36,6 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func requirePasswordResetAuth(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("auth middreware")
-		tokenString := r.URL.Query().Get("token")
-		claim, err := utils.Authenticate(tokenString, "reset")
-		//for key, value := range r.Header {
-		//	fmt.Printf("%v: %v\n", key, value)
-		//}
-		if err != nil {
-			//w.WriteHeader(http.StatusUnauthorized)
-			utils.ErrorJSON(w, customError.Others, err)
-			return
-		}
-		userId := claim.UserId
-		ctx := utils.SetUIDInContext(r.Context(), userId)
-		next(w, r.WithContext(ctx))
-	}
-}
-
 func enableCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
