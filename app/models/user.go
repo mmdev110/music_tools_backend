@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"example.com/app/conf"
 	"example.com/app/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -81,17 +82,19 @@ func (user *User) ComparePassword(input string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input))
 	return err == nil
 }
-func (user *User) GenerateToken(tokenType string, duration time.Duration) (string, error) {
-	AllowedTokenTypes := []string{"access", "reset", "refresh", "email_confirm"}
-	isAllowed := false
-	for _, v := range AllowedTokenTypes {
-		if tokenType == v {
-			isAllowed = true
-			break
-		}
-	}
-	//allowedtokentypesにない場合はエラー
-	if !isAllowed {
+func (user *User) GenerateToken(tokenType string) (string, error) {
+	//AllowedTokenTypes := []string{"access", "reset", "refresh", "email_confirm"}
+	var duration time.Duration
+
+	if tokenType == "access" {
+		duration = conf.TOKEN_DURATION
+	} else if tokenType == "refresh" {
+		duration = conf.REFRESH_DURATION
+	} else if tokenType == "reset" {
+		duration = 30 * time.Minute
+	} else if tokenType == "email_confirm" {
+		duration = 30 * time.Minute
+	} else {
 		return "", fmt.Errorf("token type: %s not allowed", tokenType)
 	}
 
