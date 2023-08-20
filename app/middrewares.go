@@ -12,12 +12,7 @@ import (
 func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("auth")
-		//fmt.Println("cookies")
-		//fmt.Println(r.Cookies())
-		//for _, cookie := range r.Cookies() {
-		//	fmt.Printf("name: %s, value: %s\n", cookie.Name, cookie.Value)
-		//}
+		//fmt.Println("auth")
 		authHeader := r.Header.Get("Authorization")
 		claim, err := utils.Authenticate(authHeader, "access")
 		//for key, value := range r.Header {
