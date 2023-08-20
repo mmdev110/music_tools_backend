@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"example.com/app/conf"
 	"example.com/app/customError"
@@ -46,7 +45,7 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//リセット用のトークン生成
-	token, err := user.GenerateToken("reset", 30*time.Minute)
+	token, err := user.GenerateToken("reset")
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return

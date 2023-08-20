@@ -49,8 +49,8 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.GetUserByID(DB, userId)
 
 	//regenerate jwt
-	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
-	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
+	accessToken, _ := user.GenerateToken("access")
+	refreshToken, _ := user.GenerateToken("refresh")
 	user.AccessToken = accessToken
 	user.Update(DB)
 

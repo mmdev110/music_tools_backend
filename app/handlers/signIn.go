@@ -43,8 +43,8 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//generate jwt
-	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
-	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
+	accessToken, _ := user.GenerateToken("access")
+	refreshToken, _ := user.GenerateToken("refresh")
 	user.AccessToken = accessToken
 	if err := user.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
@@ -82,8 +82,8 @@ func SignInWithTokenHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("userid in handler = %d\n", user.ID)
 
 	//generate jwt
-	accessToken, _ := user.GenerateToken("access", conf.TOKEN_DURATION)
-	refreshToken, _ := user.GenerateToken("refresh", conf.REFRESH_DURATION)
+	accessToken, _ := user.GenerateToken("access")
+	refreshToken, _ := user.GenerateToken("refresh")
 	user.AccessToken = accessToken
 	if err := user.Update(DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)

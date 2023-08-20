@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"example.com/app/conf"
 	"example.com/app/customError"
@@ -60,7 +59,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//send confirmation email
 	//メール確認用のトークン生成
-	token, err := user.GenerateToken("email_confirm", 30*time.Minute)
+	token, err := user.GenerateToken("email_confirm")
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
