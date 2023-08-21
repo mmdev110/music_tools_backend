@@ -7,8 +7,8 @@ import (
 	"example.com/app/utils"
 )
 
-func getUserFromContext(ctx context.Context) *models.User {
+func (h *Base) getUserFromContext(ctx context.Context) *models.User {
 	userId := utils.GetUidFromContext(ctx)
-	user := models.GetUserByID(DB, userId)
+	user := models.GetUserByID(h.DB, userId)
 	return user
 }

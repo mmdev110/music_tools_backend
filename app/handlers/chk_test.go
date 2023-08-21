@@ -11,7 +11,7 @@ import (
 func Test_Chk(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/_chk", nil)
-	handler := http.HandlerFunc(ChkHandler)
+	handler := http.HandlerFunc(h.ChkHandler)
 
 	want_status := http.StatusOK
 

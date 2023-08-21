@@ -10,22 +10,22 @@ import (
 	"example.com/app/utils"
 )
 
-func GenreHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) GenreHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	if r.Method == http.MethodPost {
 		//新規作成、更新
-		saveGenres(w, r)
+		h.saveGenres(w, r)
 	} else if r.Method == http.MethodGet {
 		//タグ一覧の取得
-		getGenres(w, r)
+		h.getGenres(w, r)
 	} else {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 	}
 
 }
 
-func saveGenres(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromContext(r.Context())
+func (h *Base) saveGenres(w http.ResponseWriter, r *http.Request) {
+	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@saveGenres")
 	var input = []models.UserGenre{}
@@ -35,32 +35,32 @@ func saveGenres(w http.ResponseWriter, r *http.Request) {
 	//	utils.PrintStruct(v)
 	//}
 	tmp := models.UserGenre{}
-	db, err := tmp.GetAllByUserId(DB, user.ID)
+	db, err := tmp.GetAllByUserId(h.DB, user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
 
-	//DBにあって、リクエストにないタグを削除
+	//h.DBにあって、リクエストにないタグを削除
 	removedTags := utils.FindRemoved(db, input)
 	for _, t := range removedTags {
-		if err := t.Delete(DB); err != nil {
+		if err := t.Delete(h.DB); err != nil {
 			utils.ErrorJSON(w, customError.Others, err)
 			return
 		}
 	}
 	//タグ追加、更新
-	DB.Save(&input)
+	h.DB.Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
-func getGenres(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromContext(r.Context())
+func (h *Base) getGenres(w http.ResponseWriter, r *http.Request) {
+	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@gettags")
 
-	//DBから取得
+	//h.DBから取得
 	var tag = models.UserGenre{}
-	tags, err := tag.GetAllByUserId(DB, user.ID)
+	tags, err := tag.GetAllByUserId(h.DB, user.ID)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 	}

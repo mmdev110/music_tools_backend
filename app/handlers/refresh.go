@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func RefreshHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("refresh")
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for refresh", r.Method))
@@ -27,7 +27,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	//sessionIdでsession取得
 	session := &models.Session{}
-	sessionResult := session.GetBySessionID(DB, sessionId)
+	sessionResult := session.GetBySessionID(h.DB, sessionId)
 	if sessionResult.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("session not found"))
 		return
@@ -46,13 +46,13 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userId := claim.UserId
-	user := models.GetUserByID(DB, userId)
+	user := models.GetUserByID(h.DB, userId)
 
 	//regenerate jwt
 	accessToken, _ := user.GenerateToken("access")
 	refreshToken, _ := user.GenerateToken("refresh")
 	user.AccessToken = accessToken
-	user.Update(DB)
+	user.Update(h.DB)
 
 	//sessionの更新
 	//fmt.Println("old_refreshToken= ", session.RefreshToken)
@@ -60,7 +60,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	session.RefreshToken = "Bearer " + refreshToken
 	//fmt.Println("new_refreshToken= ", session.RefreshToken)
 
-	if err := session.Update(DB); err != nil {
+	if err := session.Update(h.DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("session save failed"))
 		return
 	}

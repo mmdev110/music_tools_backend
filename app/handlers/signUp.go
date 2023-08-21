@@ -19,7 +19,7 @@ import (
 // フロントエンドからEmailConfirmationHandlerを叩く
 // 確認できたらsigninページに遷移
 // 確認できなかったらエラー文表示
-func SignUpHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	fmt.Println("signUp")
@@ -34,7 +34,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	var form Form
 	json.NewDecoder(r.Body).Decode(&form)
 	//find existing user by email
-	existingUser := models.GetUserByEmail(DB, form.Email)
+	existingUser := models.GetUserByEmail(h.DB, form.Email)
 	if existingUser != nil && existingUser.IsConfirmed {
 		utils.ErrorJSON(w, customError.UserAlreadyExists, nil)
 		return
@@ -43,14 +43,14 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if existingUser != nil && !existingUser.IsConfirmed {
 		//update password
 		existingUser.SetNewPassword(form.Password)
-		if err := existingUser.Update(DB); err != nil {
+		if err := existingUser.Update(h.DB); err != nil {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("error while updating existing user: %v", err))
 			return
 		}
 		user = existingUser
 	} else {
 		//create new user
-		newUser, err := models.CreateUser(DB, form.Email, form.Password)
+		newUser, err := models.CreateUser(h.DB, form.Email, form.Password)
 		if err != nil {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("error while creating new user: %v", err))
 			return
@@ -82,7 +82,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // メールアドレス確認ハンドラ
-func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 	type Request struct {
 		Token string `json:"token"`
 	}
@@ -95,7 +95,7 @@ func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//user取得
-	user := models.GetUserByID(DB, claims.UserId)
+	user := models.GetUserByID(h.DB, claims.UserId)
 	if user == nil {
 		utils.ErrorJSON(w, customError.UserNotFound, nil)
 		return
@@ -106,7 +106,7 @@ func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//確認完了
 	user.IsConfirmed = true
-	user.Update(DB)
+	user.Update(h.DB)
 
 	utils.ResponseJSON(w, user, http.StatusOK)
 }

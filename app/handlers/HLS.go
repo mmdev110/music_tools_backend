@@ -17,11 +17,11 @@ import (
 var r_aac = regexp.MustCompile(`\.aac`)
 
 // S3からm3u8ファイルを取得し、その中身のaacファイルのアドレスをpresigned urlに置き換えた上で返す
-func HLSHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) HLSHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	//認証つけた方が良い
 
-	//user := getUserFromContext(r.Context())
+	//user := h.getUserFromContext(r.Context())
 	//fmt.Printf("userid in handler = %d\n", user.ID)
 	//パラメータ取り出し
 	str := strings.TrimPrefix(r.URL.Path, "/hls/")
@@ -29,7 +29,7 @@ func HLSHandler(w http.ResponseWriter, r *http.Request) {
 	userSongId := uint(int)
 
 	var us = models.UserSong{}
-	us.GetByID(DB, userSongId, false)
+	us.GetByID(h.DB, userSongId, false)
 	//if us.UserId != user.ID {
 	//	utils.ErrorJSON(w, customError.Others, errors.New("user mismatch"))
 	//}
