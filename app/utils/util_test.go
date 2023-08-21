@@ -19,21 +19,27 @@ func TestFindRemoved(t *testing.T) {
 	suites := []Suite{
 		{
 			memo:   "before 3, after 2",
-			before: []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
-			after:  []Temp{{ID: 1}, {ID: 2}},
-			want:   []Temp{{ID: 3}},
+			before: []Temp{{1}, {2}, {3}},
+			after:  []Temp{{1}, {2}},
+			want:   []Temp{{3}},
 		},
 		{
 			memo:   "before 3, after 3",
-			before: []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
-			after:  []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
+			before: []Temp{{1}, {2}, {3}},
+			after:  []Temp{{1}, {2}, {3}},
 			want:   []Temp{},
 		},
 		{
+			memo:   "remove 2",
+			before: []Temp{{1}, {2}, {3}},
+			after:  []Temp{{3}, {5}, {6}},
+			want:   []Temp{{1}, {2}},
+		},
+		{
 			memo:   "When after is empty, return all values",
-			before: []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
+			before: []Temp{{1}, {2}, {3}},
 			after:  []Temp{},
-			want:   []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
+			want:   []Temp{{1}, {2}, {3}},
 		},
 	}
 	for _, suite := range suites {
@@ -59,18 +65,18 @@ func TestUniq(t *testing.T) {
 	suites := []Suite{
 		{
 			memo: "arr 3, after 2",
-			arr:  []Temp{{ID: 1}, {ID: 1}, {ID: 1}, {ID: 2}, {ID: 3}},
-			want: []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
+			arr:  []Temp{{1}, {1}, {1}, {2}, {3}},
+			want: []Temp{{1}, {2}, {3}},
 		},
 		{
 			memo: "arr 3, after 3",
-			arr:  []Temp{{ID: 1}, {ID: 1}, {ID: 1}},
-			want: []Temp{{ID: 1}},
+			arr:  []Temp{{1}, {1}, {1}},
+			want: []Temp{{1}},
 		},
 		{
 			memo: "When after is empty, return all values",
-			arr:  []Temp{{ID: 1}, {ID: 2}, {ID: 2}, {ID: 2}, {ID: 3}, {ID: 1}},
-			want: []Temp{{ID: 1}, {ID: 2}, {ID: 3}},
+			arr:  []Temp{{1}, {2}, {2}, {2}, {3}, {1}},
+			want: []Temp{{1}, {2}, {3}},
 		},
 	}
 	for _, suite := range suites {
