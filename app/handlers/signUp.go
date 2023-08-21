@@ -36,7 +36,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//find existing user by email
 	existingUser := models.GetUserByEmail(DB, form.Email)
 	if existingUser != nil && existingUser.IsConfirmed {
-		utils.ErrorJSON(w, customError.UserAlreadyExists)
+		utils.ErrorJSON(w, customError.UserAlreadyExists, nil)
 		return
 	}
 	var user *models.User
@@ -97,11 +97,11 @@ func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 	//user取得
 	user := models.GetUserByID(DB, claims.UserId)
 	if user == nil {
-		utils.ErrorJSON(w, customError.UserNotFound)
+		utils.ErrorJSON(w, customError.UserNotFound, nil)
 		return
 	}
 	if user.IsConfirmed {
-		utils.ErrorJSON(w, customError.AddressAlreadyConfirmed)
+		utils.ErrorJSON(w, customError.AddressAlreadyConfirmed, nil)
 		return
 	}
 	//確認完了

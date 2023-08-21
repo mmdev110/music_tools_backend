@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -34,12 +36,27 @@ func ResponseJSON(w http.ResponseWriter, payload interface{}, status int) {
 //}
 
 // add err to overwrite message
-func ErrorJSON(w http.ResponseWriter, customError customError.CustomError, err ...error) {
+func ErrorJSON(w http.ResponseWriter, customError customError.CustomError, err error) {
 	status := http.StatusBadRequest
-	if len(err) > 0 {
-		customError.Message = err[0].Error()
+	if err != nil {
+		customError.Message = err.Error()
 	}
 	payload := customError
 	log.Println(customError.Error())
 	ResponseJSON(w, payload, status)
+}
+
+func BodyToString(body io.ReadCloser) string {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(body)
+	bytes := buf.String()
+	return string(bytes)
+}
+
+func ToJSON(payload interface{}) (string, error) {
+	b, err := json.MarshalIndent(payload, "", "\t")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
