@@ -67,7 +67,7 @@ func (app *Application) registerHandlers() http.Handler {
 	mux.HandleFunc("/song/", requireAuth(h.SongHandler))
 	mux.HandleFunc("/delete_song", requireAuth(h.DeleteSong))
 	mux.HandleFunc("/hls/", h.HLSHandler)
-	mux.HandleFunc("/test", h.TestHandler)
+	//mux.HandleFunc("/test", h.TestHandler)
 
 	return enableCORS(mux)
 }
