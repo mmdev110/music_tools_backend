@@ -14,11 +14,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// TODO: Application, handlers.Base, confなどに散らばってる設定を１か所にまとめたいが、
+// パッケージ跨ぐと難しい。。j
 type Application struct {
 	DB *gorm.DB
 }
 
 func main() {
+
 	app := Application{}
 	//DB接続
 	db, err := models.Init()
@@ -49,7 +52,9 @@ func (app *Application) web_server() {
 }
 func (app *Application) registerHandlers() http.Handler {
 	h := handlers.Base{
-		DB: app.DB,
+		DB:        app.DB,
+		SendEmail: true,
+		IsTesting: false,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/_chk", h.ChkHandler)
