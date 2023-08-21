@@ -22,8 +22,8 @@ func InitTestDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	migrateModels(db)
 	connectedToTestDB = true
+	migrateModels(db)
 	fmt.Println("@@@@connected to test db")
 	return db, nil
 }
@@ -58,17 +58,17 @@ type TestData struct {
 	Songs  []UserSong
 }
 
-func prepareTestUserOnly() (*User, error) {
+func PrepareTestUserOnly(db *gorm.DB) (*User, error) {
 	uid := uint(9999)
 	user := User{ID: uid}
-	result := TestDB.Create(&user)
+	result := db.Create(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &user, nil
 }
 
-func prepareTestData(t *testing.T) TestData {
+func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	var uid = uint(9999)
 	var user = User{
 		ID:          uid,
@@ -118,25 +118,25 @@ func prepareTestData(t *testing.T) TestData {
 	}
 
 	fmt.Println("preparing data")
-	if res := TestDB.Create(&user); res.Error != nil {
+	if res := db.Create(&user); res.Error != nil {
 		t.Errorf("error at create %v ", res.Error)
 	}
-	if err := tag1.Create(TestDB); err != nil {
+	if err := tag1.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag2.Create(TestDB); err != nil {
+	if err := tag2.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := tag3.Create(TestDB); err != nil {
+	if err := tag3.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre1.Create(TestDB); err != nil {
+	if err := genre1.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre2.Create(TestDB); err != nil {
+	if err := genre2.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := genre3.Create(TestDB); err != nil {
+	if err := genre3.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	var us1 = UserSong{
@@ -251,10 +251,10 @@ func prepareTestData(t *testing.T) TestData {
 				},
 			}},
 		}}
-	if err := us1.Create(TestDB); err != nil {
+	if err := us1.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
-	if err := us2.Create(TestDB); err != nil {
+	if err := us2.Create(db); err != nil {
 		t.Errorf("error at create %v", err)
 	}
 	return TestData{

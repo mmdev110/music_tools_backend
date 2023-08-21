@@ -13,6 +13,6 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	TestDB = db
-	ClearTestDB(TestDB)
+	//ClearTestDB(TestDB)
 	os.Exit(m.Run())
 }

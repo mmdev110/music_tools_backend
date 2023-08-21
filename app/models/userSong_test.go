@@ -9,9 +9,9 @@ import (
 )
 
 func Test_PrepareData(t *testing.T) {
-	t.Run("check prepareTestData", func(t *testing.T) {
+	t.Run("check PrepareTestData", func(t *testing.T) {
 		defer ClearTestDB(TestDB)
-		prepareTestData(t)
+		PrepareTestData(t, TestDB)
 
 		//fmt.Println("@@check")
 		//for _, song := range data.Songs {
@@ -76,7 +76,7 @@ func TestUserSong(t *testing.T) {
 		want := 2
 		defer ClearTestDB(TestDB)
 
-		user, err := prepareTestUserOnly()
+		user, err := PrepareTestUserOnly(TestDB)
 		if err != nil {
 			t.Error(err)
 		}
@@ -124,7 +124,7 @@ func TestUserSong(t *testing.T) {
 // transaction, lockの挙動確認
 func TestTransaction(t *testing.T) {
 	defer ClearTestDB(TestDB)
-	user, err := prepareTestUserOnly()
+	user, err := PrepareTestUserOnly(TestDB)
 	if err != nil {
 		t.Error(err)
 	}
@@ -165,7 +165,7 @@ func TestTransaction(t *testing.T) {
 func TestSearch(t *testing.T) {
 
 	defer ClearTestDB(TestDB)
-	data := prepareTestData(t)
+	data := PrepareTestData(t, TestDB)
 	fmt.Println("@@@TestSearch")
 	type Suite struct {
 		memo string
