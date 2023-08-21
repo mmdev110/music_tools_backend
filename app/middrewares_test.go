@@ -69,12 +69,12 @@ func Test_requireAuth(t *testing.T) {
 		setHeader  bool
 		wantStatus int
 	}{
-		{"no header", "", false, 400},
-		{"wrong token", "wrongjwttoken", true, 400},
-		{"empty token", "", true, 400},
-		{"valid token", "Bearer " + token, true, 200},
-		{"valid, but no bearer", token, true, 400},
-		{"expired", "Bearer " + expiredToken, true, 400},
+		{"no header", "", false, http.StatusBadRequest},
+		{"wrong token", "wrongjwttoken", true, http.StatusBadRequest},
+		{"empty token", "", true, http.StatusBadRequest},
+		{"valid token", "Bearer " + token, true, http.StatusOK},
+		{"valid, but no bearer", token, true, http.StatusBadRequest},
+		{"expired", "Bearer " + expiredToken, true, http.StatusBadRequest},
 	}
 
 	for _, test := range tests {
@@ -88,7 +88,7 @@ func Test_requireAuth(t *testing.T) {
 		if gotStatus != test.wantStatus {
 			t.Errorf("status: got %d, want %d", gotStatus, test.wantStatus)
 		}
-		if test.wantStatus == 200 {
+		if test.wantStatus == http.StatusOK {
 			//contextに入れたIDのチェック
 			got := idFromContext
 			if got != u.ID {
