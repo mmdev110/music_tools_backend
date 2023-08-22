@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -22,7 +23,6 @@ import (
 func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
-	fmt.Println("signUp")
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for SignUp", r.Method))
 		return
@@ -33,6 +33,14 @@ func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var form Form
 	json.NewDecoder(r.Body).Decode(&form)
+
+	if form.Email == "" {
+		utils.ErrorJSON(w, customError.InsufficientParameters, errors.New("email not provided"))
+		return
+	} else if form.Password == "" {
+		utils.ErrorJSON(w, customError.InsufficientParameters, errors.New("password not provided"))
+		return
+	}
 	//find existing user by email
 	existingUser := models.GetUserByEmail(h.DB, form.Email)
 	if existingUser != nil && existingUser.IsConfirmed {
@@ -76,7 +84,9 @@ func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		"30分以内に下記のリンクにアクセスしていただくことでメールアドレスの確認が完了いたします。\n" +
 		"上記の内容に心当たりがない場合はこのメールを無視してください。\n" +
 		link
-	utils.SendEmail(user.Email, "Email Confirmation(music_tools)", body)
+	if h.SendEmail {
+		utils.SendEmail(user.Email, "Email Confirmation(music_tools)", body)
+	}
 	//response
 	utils.ResponseJSON(w, user, http.StatusOK)
 }

@@ -76,10 +76,11 @@ func TestUserSong(t *testing.T) {
 		want := 2
 		defer ClearTestDB(TestDB)
 
-		user, err := PrepareTestUserOnly(TestDB)
+		users, err := PrepareTestUsersOnly(TestDB)
 		if err != nil {
 			t.Error(err)
 		}
+		user := users[0]
 		tag1 := UserTag{
 			UserId:    user.ID,
 			Name:      "tag1",
@@ -124,10 +125,11 @@ func TestUserSong(t *testing.T) {
 // transaction, lockの挙動確認
 func TestTransaction(t *testing.T) {
 	defer ClearTestDB(TestDB)
-	user, err := PrepareTestUserOnly(TestDB)
+	users, err := PrepareTestUsersOnly(TestDB)
 	if err != nil {
 		t.Error(err)
 	}
+	user := users[0]
 	t.Run("If an error happened in transaction, it should rollback", func(t *testing.T) {
 		us := UserSong{UserId: user.ID}
 

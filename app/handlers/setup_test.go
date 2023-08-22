@@ -8,7 +8,11 @@ import (
 	"example.com/app/models"
 )
 
-var h = Base{}
+var h = Base{
+	DB:        nil,
+	IsTesting: true,
+	SendEmail: false,
+}
 
 func TestMain(m *testing.M) {
 	db, err := models.InitTestDB()

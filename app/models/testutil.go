@@ -35,6 +35,7 @@ func ClearTestDB(db *gorm.DB) {
 	if !connectedToTestDB {
 		return
 	}
+	fmt.Println("clearing DB")
 	db.Exec("DROP TABLE usersongs_genres")
 	db.Exec("DROP TABLE usersongs_tags")
 	db.Exec("DROP TABLE user_tags")
@@ -58,14 +59,25 @@ type TestData struct {
 	Songs  []UserSong
 }
 
-func PrepareTestUserOnly(db *gorm.DB) (*User, error) {
-	uid := uint(9999)
-	user := User{ID: uid}
-	result := db.Create(&user)
-	if result.Error != nil {
+/*
+return dummy users
+
+user[0]: confirmed user with email "test@test.test"
+
+user[1]: unconfirmed user with email "test2@test.test"
+*/
+func PrepareTestUsersOnly(db *gorm.DB) ([]*User, error) {
+
+	user := User{ID: uint(9999), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
+	user2 := User{ID: uint(9998), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
+
+	if result := db.Create(&user); result.Error != nil {
 		return nil, result.Error
 	}
-	return &user, nil
+	if result := db.Create(&user2); result.Error != nil {
+		return nil, result.Error
+	}
+	return []*User{&user, &user2}, nil
 }
 
 func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
