@@ -65,6 +65,7 @@ func (app *Application) registerHandlers() http.Handler {
 	mux.HandleFunc("/reset_password", h.ResetPasswordHandler)
 	mux.HandleFunc("/email_confirm", h.EmailConfirmationHandler)
 	mux.HandleFunc("/user", requireAuth(h.UserHandler))
+	//SignInWithToken多分使ってない(refreshに置き換わった)ので消す
 	mux.HandleFunc("/signin_with_token", requireAuth(h.SignInWithTokenHandler))
 	mux.HandleFunc("/list", requireAuth(h.ListHandler))
 	mux.HandleFunc("/tags", requireAuth(h.TagHandler))
