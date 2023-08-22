@@ -93,15 +93,27 @@ func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 // メールアドレス確認ハンドラ
 func (h *Base) EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for email confirmation", r.Method))
+		return
+	}
 	type Request struct {
 		Token string `json:"token"`
 	}
 	var req Request
 	json.NewDecoder(r.Body).Decode(&req)
+	if req.Token == "" {
+		utils.ErrorJSON(w, customError.InvalidToken, nil)
+		return
+	}
 	//tokenのチェック
 	claims, err := utils.ParseJwt(req.Token)
 	if err != nil {
 		utils.ErrorJSON(w, customError.InvalidToken, err)
+		return
+	}
+	if claims.TokenType != "email_confirm" {
+		utils.ErrorJSON(w, customError.InvalidToken, errors.New("wrong token type"))
 		return
 	}
 	//user取得
