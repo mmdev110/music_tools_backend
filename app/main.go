@@ -9,24 +9,34 @@ import (
 	"example.com/app/conf"
 	"example.com/app/handlers"
 	"example.com/app/models"
+	"gorm.io/gorm"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// TODO: Application, handlers.Base, confなどに散らばってる設定を１か所にまとめたいが、
+// パッケージ跨ぐと難しい。。j
+type Application struct {
+	DB *gorm.DB
+}
+
 func main() {
+
+	app := Application{}
 	//DB接続
-	err := models.Init()
+	db, err := models.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
-	//playground()
-	web_server()
+	app.DB = db
+
+	app.web_server()
 }
 
-func web_server() {
+func (app *Application) web_server() {
 	fmt.Println("web")
 	//ハンドラ登録
-	mux := registerHandlers()
+	mux := app.registerHandlers()
 	conf.OverRideVarsByENV()
 	//サーバー起動
 	server := &http.Server{
@@ -40,25 +50,30 @@ func web_server() {
 
 	log.Fatal(server.ListenAndServe())
 }
-func registerHandlers() http.Handler {
-	handlers.DB = models.DB
+func (app *Application) registerHandlers() http.Handler {
+	h := handlers.Base{
+		DB:        app.DB,
+		SendEmail: true,
+		IsTesting: false,
+	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/_chk", handlers.ChkHandler)
-	mux.HandleFunc("/signin", handlers.SignInHandler)
-	mux.HandleFunc("/signup", handlers.SignUpHandler)
-	mux.HandleFunc("/refresh", handlers.RefreshHandler)
-	mux.HandleFunc("/signout", handlers.SignOutHandler)
-	mux.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
-	mux.HandleFunc("/email_confirm", handlers.EmailConfirmationHandler)
-	mux.HandleFunc("/user", requireAuth(handlers.UserHandler))
-	mux.HandleFunc("/signin_with_token", requireAuth(handlers.SignInWithTokenHandler))
-	mux.HandleFunc("/list", requireAuth(handlers.ListHandler))
-	mux.HandleFunc("/tags", requireAuth(handlers.TagHandler))
-	mux.HandleFunc("/genres", requireAuth(handlers.GenreHandler))
-	mux.HandleFunc("/song/", requireAuth(handlers.SongHandler))
-	mux.HandleFunc("/delete_song", requireAuth(handlers.DeleteSong))
-	mux.HandleFunc("/hls/", handlers.HLSHandler)
-	mux.HandleFunc("/test", handlers.TestHandler)
+	mux.HandleFunc("/_chk", h.ChkHandler)
+	mux.HandleFunc("/signin", h.SignInHandler)
+	mux.HandleFunc("/signup", h.SignUpHandler)
+	mux.HandleFunc("/refresh", h.RefreshHandler)
+	mux.HandleFunc("/signout", h.SignOutHandler)
+	mux.HandleFunc("/reset_password", h.ResetPasswordHandler)
+	mux.HandleFunc("/email_confirm", h.EmailConfirmationHandler)
+	mux.HandleFunc("/user", requireAuth(h.UserHandler))
+	//SignInWithToken多分使ってない(refreshに置き換わった)ので消す
+	mux.HandleFunc("/signin_with_token", requireAuth(h.SignInWithTokenHandler))
+	mux.HandleFunc("/list", requireAuth(h.ListHandler))
+	mux.HandleFunc("/tags", requireAuth(h.TagHandler))
+	mux.HandleFunc("/genres", requireAuth(h.GenreHandler))
+	mux.HandleFunc("/song/", requireAuth(h.SongHandler))
+	mux.HandleFunc("/delete_song", requireAuth(h.DeleteSong))
+	mux.HandleFunc("/hls/", h.HLSHandler)
+	//mux.HandleFunc("/test", h.TestHandler)
 
 	return enableCORS(mux)
 }

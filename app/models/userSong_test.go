@@ -9,9 +9,9 @@ import (
 )
 
 func Test_PrepareData(t *testing.T) {
-	t.Run("check prepareTestData", func(t *testing.T) {
-		defer ClearTestDB(DB)
-		prepareTestData(t)
+	t.Run("check PrepareTestData", func(t *testing.T) {
+		defer ClearTestDB(TestDB)
+		PrepareTestData(t, TestDB)
 
 		//fmt.Println("@@check")
 		//for _, song := range data.Songs {
@@ -29,7 +29,7 @@ func TestUserSong(t *testing.T) {
 	t.Run("delete tag from UserSong", func(t *testing.T) {
 		t.Skip()
 		want := 1
-		defer ClearTestDB(DB)
+		defer ClearTestDB(TestDB)
 
 		uid := uint(9999)
 		tag1 := UserTag{
@@ -38,7 +38,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(DB); err != nil {
+		if err := tag1.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -47,7 +47,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(DB); err != nil {
+		if err := tag2.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -55,38 +55,39 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1, tag2},
 		}
-		if err := us.Create(DB); err != nil {
+		if err := us.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(DB, us.ID, false)
+		song.GetByID(TestDB, us.ID, false)
 		//tagのリレーション削除
-		song.DeleteTagRelation(DB, &song.Tags[1])
+		song.DeleteTagRelation(TestDB, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update(DB)
+		song.Update(TestDB)
 
 		song2 := UserSong{}
-		song2.GetByID(DB, song.ID, false)
+		song2.GetByID(TestDB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
 	})
 	t.Run("append tag to UserSong", func(t *testing.T) {
 		want := 2
-		defer ClearTestDB(DB)
+		defer ClearTestDB(TestDB)
 
-		user, err := prepareTestUserOnly()
+		users, err := PrepareTestUsersOnly(TestDB)
 		if err != nil {
 			t.Error(err)
 		}
+		user := users[0]
 		tag1 := UserTag{
 			UserId:    user.ID,
 			Name:      "tag1",
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(DB); err != nil {
+		if err := tag1.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -95,7 +96,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(DB); err != nil {
+		if err := tag2.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -103,17 +104,17 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us.Create(DB); err != nil {
+		if err := us.Create(TestDB); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(DB, us.ID, false)
+		song.GetByID(TestDB, us.ID, false)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update(DB)
+		song.Update(TestDB)
 
 		song2 := UserSong{}
-		song2.GetByID(DB, song.ID, false)
+		song2.GetByID(TestDB, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
@@ -123,20 +124,21 @@ func TestUserSong(t *testing.T) {
 
 // transaction, lockの挙動確認
 func TestTransaction(t *testing.T) {
-	defer ClearTestDB(DB)
-	user, err := prepareTestUserOnly()
+	defer ClearTestDB(TestDB)
+	users, err := PrepareTestUsersOnly(TestDB)
 	if err != nil {
 		t.Error(err)
 	}
+	user := users[0]
 	t.Run("If an error happened in transaction, it should rollback", func(t *testing.T) {
 		us := UserSong{UserId: user.ID}
 
 		us.Title = "BEFORE"
 		//データ作成
-		if err := us.Create(DB); err != nil {
+		if err := us.Create(TestDB); err != nil {
 			t.Fatal(err)
 		}
-		err := DB.Transaction(func(tx *gorm.DB) error {
+		err := TestDB.Transaction(func(tx *gorm.DB) error {
 			song := UserSong{}
 			res := tx.Model(UserSong{}).First(&song) //1件取得
 			if res.RowsAffected == 0 {
@@ -154,7 +156,7 @@ func TestTransaction(t *testing.T) {
 		}
 		//再取得してtitleを確認
 		after := UserSong{}
-		DB.Model(UserSong{}).First(&after)
+		TestDB.Model(UserSong{}).First(&after)
 		if after.Title == "AFTER" { //更新されてるのでfail
 			t.Fatal(errors.New("committed.transaction not working"))
 		}
@@ -164,8 +166,8 @@ func TestTransaction(t *testing.T) {
 }
 func TestSearch(t *testing.T) {
 
-	defer ClearTestDB(DB)
-	data := prepareTestData(t)
+	defer ClearTestDB(TestDB)
+	data := PrepareTestData(t, TestDB)
 	fmt.Println("@@@TestSearch")
 	type Suite struct {
 		memo string
@@ -240,7 +242,7 @@ func TestSearch(t *testing.T) {
 	for _, s := range suites {
 		t.Run(s.memo, func(t *testing.T) {
 			us := UserSong{}
-			songs, err := us.Search(DB, s.cond)
+			songs, err := us.Search(TestDB, s.cond)
 			if err != nil {
 				t.Fatal(err)
 			}

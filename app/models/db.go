@@ -8,9 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
-func Init() error {
+func Init() (*gorm.DB, error) {
 	var err error
 	//fmt.Printf("DSN = %s\n", dsn)
 	//"gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8&parseTime=True&loc=Local", // data source name
@@ -21,12 +19,11 @@ func Init() error {
 	dsn := user + ":" + password + "@tcp(" + db_host + ")/" + db_name + "?charset=utf8mb4&parseTime=True"
 	db, err := connectMySQL(dsn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println("@@@DBconnection success")
 	migrateModels(db)
-	DB = db
-	return nil
+	return db, nil
 }
 func connectMySQL(dsn string) (*gorm.DB, error) {
 

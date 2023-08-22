@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,10 +20,9 @@ import (
 // フロントエンドからEmailConfirmationHandlerを叩く
 // 確認できたらsigninページに遷移
 // 確認できなかったらエラー文表示
-func SignUpHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
-	fmt.Println("signUp")
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for SignUp", r.Method))
 		return
@@ -33,24 +33,32 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var form Form
 	json.NewDecoder(r.Body).Decode(&form)
+
+	if form.Email == "" {
+		utils.ErrorJSON(w, customError.InsufficientParameters, errors.New("email not provided"))
+		return
+	} else if form.Password == "" {
+		utils.ErrorJSON(w, customError.InsufficientParameters, errors.New("password not provided"))
+		return
+	}
 	//find existing user by email
-	existingUser := models.GetUserByEmail(DB, form.Email)
+	existingUser := models.GetUserByEmail(h.DB, form.Email)
 	if existingUser != nil && existingUser.IsConfirmed {
-		utils.ErrorJSON(w, customError.UserAlreadyExists)
+		utils.ErrorJSON(w, customError.UserAlreadyExists, nil)
 		return
 	}
 	var user *models.User
 	if existingUser != nil && !existingUser.IsConfirmed {
 		//update password
 		existingUser.SetNewPassword(form.Password)
-		if err := existingUser.Update(DB); err != nil {
+		if err := existingUser.Update(h.DB); err != nil {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("error while updating existing user: %v", err))
 			return
 		}
 		user = existingUser
 	} else {
 		//create new user
-		newUser, err := models.CreateUser(DB, form.Email, form.Password)
+		newUser, err := models.CreateUser(h.DB, form.Email, form.Password)
 		if err != nil {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("error while creating new user: %v", err))
 			return
@@ -76,37 +84,51 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		"30分以内に下記のリンクにアクセスしていただくことでメールアドレスの確認が完了いたします。\n" +
 		"上記の内容に心当たりがない場合はこのメールを無視してください。\n" +
 		link
-	utils.SendEmail(user.Email, "Email Confirmation(music_tools)", body)
+	if h.SendEmail {
+		utils.SendEmail(user.Email, "Email Confirmation(music_tools)", body)
+	}
 	//response
 	utils.ResponseJSON(w, user, http.StatusOK)
 }
 
 // メールアドレス確認ハンドラ
-func EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for email confirmation", r.Method))
+		return
+	}
 	type Request struct {
 		Token string `json:"token"`
 	}
 	var req Request
 	json.NewDecoder(r.Body).Decode(&req)
+	if req.Token == "" {
+		utils.ErrorJSON(w, customError.InvalidToken, nil)
+		return
+	}
 	//tokenのチェック
 	claims, err := utils.ParseJwt(req.Token)
 	if err != nil {
 		utils.ErrorJSON(w, customError.InvalidToken, err)
 		return
 	}
+	if claims.TokenType != "email_confirm" {
+		utils.ErrorJSON(w, customError.InvalidToken, errors.New("wrong token type"))
+		return
+	}
 	//user取得
-	user := models.GetUserByID(DB, claims.UserId)
+	user := models.GetUserByID(h.DB, claims.UserId)
 	if user == nil {
-		utils.ErrorJSON(w, customError.UserNotFound)
+		utils.ErrorJSON(w, customError.UserNotFound, nil)
 		return
 	}
 	if user.IsConfirmed {
-		utils.ErrorJSON(w, customError.AddressAlreadyConfirmed)
+		utils.ErrorJSON(w, customError.AddressAlreadyConfirmed, nil)
 		return
 	}
 	//確認完了
 	user.IsConfirmed = true
-	user.Update(DB)
+	user.Update(h.DB)
 
 	utils.ResponseJSON(w, user, http.StatusOK)
 }
