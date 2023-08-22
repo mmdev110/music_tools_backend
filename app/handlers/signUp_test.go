@@ -132,7 +132,9 @@ func Test_EmailConfirmationHandler(t *testing.T) {
 				if err := json.NewDecoder(w.Result().Body).Decode(&got_u); err != nil {
 					t.Error(err)
 				}
-				//utils.PrintStruct(got_u)
+				if !got_u.IsConfirmed {
+					t.Error("user is not confirmed after success")
+				}
 
 			} else {
 				//返ったエラーの中身を見る

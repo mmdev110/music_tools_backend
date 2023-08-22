@@ -12,6 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
+/*
+cookieによるリフレッシュ
+*/
 func (h *Base) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("refresh")
 	if r.Method != http.MethodPost {
