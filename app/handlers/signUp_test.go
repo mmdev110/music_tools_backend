@@ -82,6 +82,8 @@ func Test_EmailConfirmationHandler(t *testing.T) {
 	token_confirmed, _ := users[0].GenerateToken("email_confirm")
 	token_unconfirmed, _ := users[1].GenerateToken("email_confirm")
 	token_unconfirmed_wrong_type, _ := users[1].GenerateToken("access")
+	userNonExistent := models.User{ID: uint(1)}
+	token_non_existent, _ := userNonExistent.GenerateToken("email_confirm")
 	type Token struct {
 		Token string `json:"token"`
 	}
@@ -95,6 +97,7 @@ func Test_EmailConfirmationHandler(t *testing.T) {
 		{"fail with random token", "raklasfdaklw", http.StatusBadRequest, customError.InvalidToken.Code},
 		{"fail with expired token", expiredToken, http.StatusBadRequest, customError.InvalidToken.Code},
 		{"fail with confirmed user", token_confirmed, http.StatusBadRequest, customError.AddressAlreadyConfirmed.Code},
+		{"fail with non-existent ", token_non_existent, http.StatusBadRequest, customError.UserNotFound.Code},
 		{"success with unconfirmed user", token_unconfirmed, http.StatusOK, -1},
 		{"fail with unconfirmed user with wrong token type", token_unconfirmed_wrong_type, http.StatusBadRequest, customError.InvalidToken.Code},
 	}
