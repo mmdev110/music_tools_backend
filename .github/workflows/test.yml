@@ -57,4 +57,4 @@ jobs:
       - name: compose up -d
         run: docker compose -f docker-compose.test.yml up -d
       - name: exec tests
-        run: docker compose -f docker-compose.test.yml run app sh -c "go test ./..."
+        run: docker compose -f docker-compose.test.yml run app sh -c "go test -p 1 ./..."
