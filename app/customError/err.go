@@ -33,6 +33,10 @@ var IncorrectPassword = CustomError{
 	Code:    5,
 	Message: "password mismatch",
 }
+var InsufficientParameters = CustomError{
+	Code:    6,
+	Message: "insufficient parameters",
+}
 
 var OperationNotAllowed = CustomError{
 	Code:    100,

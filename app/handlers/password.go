@@ -14,18 +14,18 @@ import (
 )
 
 // パスワードリセット用のリンクをメールで送信するハンドラー
-func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	if action == "request" {
-		SendResetEmailHandler(w, r)
+		h.SendResetEmailHandler(w, r)
 	} else if action == "reset" {
-		PasswordResetHandler(w, r)
+		h.PasswordResetHandler(w, r)
 	} else {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("action %s not allowed for this operation", action))
 	}
 
 }
-func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		if r.Method != http.MethodPost {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for this operation", r.Method))
@@ -39,7 +39,7 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 	var form Form
 	json.NewDecoder(r.Body).Decode(&form)
 	//emailを持ったユーザーがいるか確認
-	user := models.GetUserByEmail(DB, form.Email)
+	user := models.GetUserByEmail(h.DB, form.Email)
 	if user == nil {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("user not found for %s", form.Email))
 		return
@@ -71,7 +71,7 @@ func SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // 新しいパスワードを設定するハンドラー
-func PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	//form取り出し
 	type Form struct {
 		Token       string `json:"token"`
@@ -86,7 +86,7 @@ func PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//user取得
-	user := models.GetUserByID(DB, claims.UserId)
+	user := models.GetUserByID(h.DB, claims.UserId)
 	if user == nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("user not found"))
 		return
@@ -97,7 +97,7 @@ func PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, customError.Others, err3)
 		return
 	}
-	user.Update(DB)
+	user.Update(h.DB)
 	//user更新
 
 	utils.ResponseJSON(w, user, http.StatusOK)

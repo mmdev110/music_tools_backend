@@ -16,13 +16,13 @@ import (
 )
 
 // userSongの一覧
-func ListHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) ListHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
 	fmt.Println("listhandler")
-	user := getUserFromContext(r.Context())
+	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 
 	//検索条件取り出し
@@ -35,7 +35,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var us = models.UserSong{}
-	userSongs, err := us.Search(DB, condition)
+	userSongs, err := us.Search(h.DB, condition)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
@@ -50,9 +50,9 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
 }
 
-func SongHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Base) SongHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("@@@@songhandler")
-	user := getUserFromContext(r.Context())
+	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	param := strings.TrimPrefix(r.URL.Path, "/song/")
 	fmt.Printf("param = %s\n", param)
@@ -60,26 +60,26 @@ func SongHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if param == "new" {
 			//新規作成
-			createSong(w, r, user)
+			h.createSong(w, r, user)
 		} else {
 			//更新
 			uid, _ := strconv.Atoi(param)
 			userSongId := uint(uid)
-			updateSong(w, r, user, userSongId)
+			h.updateSong(w, r, user, userSongId)
 		}
 	} else if r.Method == http.MethodGet {
 		//取得
 		//uid, _ := strconv.Atoi(param)
 		//userSongId := uint(uid)
 		uuid := param
-		getSong(w, r, user, uuid)
+		h.getSong(w, r, user, uuid)
 	} else {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
 
 }
-func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
+func (h *Base) createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	fmt.Println("@@@@Create Song")
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
@@ -87,7 +87,7 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	//create
 	us.UserId = user.ID
 
-	if err := us.Create(DB); err != nil {
+	if err := us.Create(h.DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 	}
 
@@ -100,7 +100,7 @@ func createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	utils.ResponseJSON(w, us, http.StatusOK)
 
 }
-func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
+func (h *Base) updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
 	fmt.Println("@@@@Update Song")
 
 	var us = models.UserSong{}
@@ -109,7 +109,7 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 	//update
 	var db = models.UserSong{}
 
-	err := DB.Transaction(func(tx *gorm.DB) error {
+	err := h.DB.Transaction(func(tx *gorm.DB) error {
 		//for update
 		result := db.GetByID(tx, userSongId, true)
 		if result.RowsAffected == 0 {
@@ -142,9 +142,9 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		}
 		//audioRangeの削除
 		for _, sec := range us.Sections {
-			for _, secDB := range db.Sections {
-				if sec.ID == secDB.ID {
-					removedRange := utils.FindRemoved(secDB.AudioRanges, sec.AudioRanges)
+			for _, sech := range db.Sections {
+				if sec.ID == sech.ID {
+					removedRange := utils.FindRemoved(sech.AudioRanges, sec.AudioRanges)
 					for _, r := range removedRange {
 						if err := r.Delete(tx); err != nil {
 							return err
@@ -162,9 +162,9 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 		}
 		//section-instrumentsの中間テーブルの削除
 		for _, sec := range us.Sections {
-			for _, secDB := range db.Sections {
-				if sec.ID == secDB.ID {
-					removedInst := utils.FindRemoved(secDB.Instruments, sec.Instruments)
+			for _, sech := range db.Sections {
+				if sec.ID == sech.ID {
+					removedInst := utils.FindRemoved(sech.Instruments, sec.Instruments)
 					for _, inst := range removedInst {
 						if err := sec.DeleteInstrumentRelation(tx, &inst); err != nil {
 							return err
@@ -198,12 +198,12 @@ func updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userS
 }
 
 // songIdに対応するsongを返す
-func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid string) {
+func (h *Base) getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid string) {
 
-	//DBから取得
+	//h.DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(DB, uuid, true)
+	result := us.GetByUUID(h.DB, uuid, true)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
@@ -219,7 +219,7 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 	//閲覧回数の更新
 	us.ViewTimes += 1
 	us.LastViewedAt = time.Now()
-	if err := us.Update(DB); err != nil {
+	if err := us.Update(h.DB); err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
@@ -231,12 +231,12 @@ func getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid str
 
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
-func DeleteSong(w http.ResponseWriter, r *http.Request) {
+func (h *Base) DeleteSong(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
-	user := getUserFromContext(r.Context())
+	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	type Req struct {
 		ID uint `json:"Id"`
@@ -246,12 +246,12 @@ func DeleteSong(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 
 	us := &models.UserSong{}
-	result := us.GetByID(DB, req.ID, false)
+	result := us.GetByID(h.DB, req.ID, false)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
-	err := us.Delete(DB)
+	err := us.Delete(h.DB)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, err)
 		return

@@ -1,7 +1,9 @@
 package handlers
 
-import (
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
-var DB *gorm.DB
+type Base struct {
+	DB        *gorm.DB
+	IsTesting bool //test実行中かどうか
+	SendEmail bool //メール送信実行するか
+}
