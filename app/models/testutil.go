@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -31,8 +32,11 @@ func InitTestDB() (*gorm.DB, error) {
 func ClearTestDB(db *gorm.DB) {
 	//テスト用DBのクリア
 	//テーブル消してマイグレーションし直す
-	//怖すぎる
+	//怖すぎ
 	if !connectedToTestDB {
+		return
+	}
+	if os.Getenv("ENV") == "prod" {
 		return
 	}
 	fmt.Println("clearing DB")
