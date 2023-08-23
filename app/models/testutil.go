@@ -2,14 +2,12 @@ package models
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-var connectedToTestDB = false
 var TestDB *gorm.DB
 
 func InitTestDB() (*gorm.DB, error) {
@@ -23,37 +21,9 @@ func InitTestDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	connectedToTestDB = true
 	migrateModels(db)
 	fmt.Println("@@@@connected to test db")
 	return db, nil
-}
-
-func ClearTestDB(db *gorm.DB) {
-	//テスト用DBのクリア
-	//テーブル消してマイグレーションし直す
-	//怖すぎ
-	if !connectedToTestDB {
-		return
-	}
-	if os.Getenv("ENV") == "prod" {
-		return
-	}
-	fmt.Println("clearing DB")
-	db.Exec("DROP TABLE usersongs_genres")
-	db.Exec("DROP TABLE usersongs_tags")
-	db.Exec("DROP TABLE user_tags")
-	db.Exec("DROP TABLE user_genres")
-	db.Exec("DROP TABLE user_audio_ranges")
-	db.Exec("DROP TABLE user_section_midis")
-	db.Exec("DROP TABLE sections_instruments")
-	db.Exec("DROP TABLE user_song_instruments")
-	db.Exec("DROP TABLE user_song_audios")
-	db.Exec("DROP TABLE sessions")
-	db.Exec("DROP TABLE user_song_sections")
-	db.Exec("DROP TABLE user_songs")
-	db.Exec("DROP TABLE users")
-	migrateModels(db)
 }
 
 type TestData struct {
@@ -66,21 +36,24 @@ type TestData struct {
 /*
 return dummy users
 
-user[0]: confirmed user with email "test@test.test"
+user[0]: confirmed user with ID 10000, email "test@test.test"
 
-user[1]: unconfirmed user with email "test2@test.test"
+user[1]: unconfirmed user with UD 10001, email "test2@test.test"
 */
-func PrepareTestUsersOnly(db *gorm.DB) ([]*User, error) {
+func PrepareTestUsersOnly(db *gorm.DB, dryRun bool) ([]*User, error) {
 
-	user := User{ID: uint(9999), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
-	user2 := User{ID: uint(9998), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
+	user := User{ID: uint(10000), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
+	user2 := User{ID: uint(10001), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
+	if !dryRun {
+		if result := db.Create(&user); result.Error != nil {
+			return nil, result.Error
+		}
+		if result := db.Create(&user2); result.Error != nil {
+			return nil, result.Error
+		}
+		fmt.Println("CREATED!!")
+	}
 
-	if result := db.Create(&user); result.Error != nil {
-		return nil, result.Error
-	}
-	if result := db.Create(&user2); result.Error != nil {
-		return nil, result.Error
-	}
 	return []*User{&user, &user2}, nil
 }
 

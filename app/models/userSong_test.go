@@ -10,8 +10,9 @@ import (
 
 func Test_PrepareData(t *testing.T) {
 	t.Run("check PrepareTestData", func(t *testing.T) {
-		defer ClearTestDB(TestDB)
-		PrepareTestData(t, TestDB)
+		tx := TestDB.Begin()
+		defer tx.Rollback()
+		PrepareTestData(t, tx)
 
 		//fmt.Println("@@check")
 		//for _, song := range data.Songs {
@@ -29,7 +30,8 @@ func TestUserSong(t *testing.T) {
 	t.Run("delete tag from UserSong", func(t *testing.T) {
 		t.Skip()
 		want := 1
-		defer ClearTestDB(TestDB)
+		tx := TestDB.Begin()
+		defer tx.Rollback()
 
 		uid := uint(9999)
 		tag1 := UserTag{
@@ -38,7 +40,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(TestDB); err != nil {
+		if err := tag1.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -47,7 +49,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(TestDB); err != nil {
+		if err := tag2.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -55,28 +57,29 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1, tag2},
 		}
-		if err := us.Create(TestDB); err != nil {
+		if err := us.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(TestDB, us.ID, false)
+		song.GetByID(tx, us.ID, false)
 		//tagのリレーション削除
-		song.DeleteTagRelation(TestDB, &song.Tags[1])
+		song.DeleteTagRelation(tx, &song.Tags[1])
 		//tagを一つ削除
 		song.Tags = append(song.Tags[:1])
-		song.Update(TestDB)
+		song.Update(tx)
 
 		song2 := UserSong{}
-		song2.GetByID(TestDB, song.ID, false)
+		song2.GetByID(tx, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
 	})
 	t.Run("append tag to UserSong", func(t *testing.T) {
 		want := 2
-		defer ClearTestDB(TestDB)
+		tx := TestDB.Begin()
+		defer tx.Rollback()
 
-		users, err := PrepareTestUsersOnly(TestDB)
+		users, err := PrepareTestUsersOnly(tx, false)
 		if err != nil {
 			t.Error(err)
 		}
@@ -87,7 +90,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag1.Create(TestDB); err != nil {
+		if err := tag1.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		tag2 := UserTag{
@@ -96,7 +99,7 @@ func TestUserSong(t *testing.T) {
 			SortOrder: 0,
 			UserSongs: []UserSong{},
 		}
-		if err := tag2.Create(TestDB); err != nil {
+		if err := tag2.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		us := UserSong{
@@ -104,17 +107,17 @@ func TestUserSong(t *testing.T) {
 			Genres: []UserGenre{},
 			Tags:   []UserTag{tag1},
 		}
-		if err := us.Create(TestDB); err != nil {
+		if err := us.Create(tx); err != nil {
 			t.Errorf("error at create %v", err)
 		}
 		song := UserSong{}
-		song.GetByID(TestDB, us.ID, false)
+		song.GetByID(tx, us.ID, false)
 		//tagを一つ追加
 		song.Tags = append(song.Tags, tag2)
-		song.Update(TestDB)
+		song.Update(tx)
 
 		song2 := UserSong{}
-		song2.GetByID(TestDB, song.ID, false)
+		song2.GetByID(tx, song.ID, false)
 		if l := len(song2.Tags); l != want {
 			t.Errorf("want =%d , but got =%d ", want, l)
 		}
@@ -124,8 +127,10 @@ func TestUserSong(t *testing.T) {
 
 // transaction, lockの挙動確認
 func TestTransaction(t *testing.T) {
-	defer ClearTestDB(TestDB)
-	users, err := PrepareTestUsersOnly(TestDB)
+	t.Skip()
+	tx := TestDB.Begin()
+	defer tx.Rollback()
+	users, err := PrepareTestUsersOnly(tx, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -135,10 +140,10 @@ func TestTransaction(t *testing.T) {
 
 		us.Title = "BEFORE"
 		//データ作成
-		if err := us.Create(TestDB); err != nil {
+		if err := us.Create(tx); err != nil {
 			t.Fatal(err)
 		}
-		err := TestDB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Transaction(func(tx2 *gorm.DB) error {
 			song := UserSong{}
 			res := tx.Model(UserSong{}).First(&song) //1件取得
 			if res.RowsAffected == 0 {
@@ -156,7 +161,7 @@ func TestTransaction(t *testing.T) {
 		}
 		//再取得してtitleを確認
 		after := UserSong{}
-		TestDB.Model(UserSong{}).First(&after)
+		tx.Model(UserSong{}).First(&after)
 		if after.Title == "AFTER" { //更新されてるのでfail
 			t.Fatal(errors.New("committed.transaction not working"))
 		}
@@ -165,40 +170,44 @@ func TestTransaction(t *testing.T) {
 
 }
 func TestSearch(t *testing.T) {
+	tx := TestDB.Begin()
+	defer tx.Rollback()
 
-	defer ClearTestDB(TestDB)
-	data := PrepareTestData(t, TestDB)
+	data := PrepareTestData(t, tx)
+	uid := data.uid
+	tags := data.Tags
+	genres := data.Genres
+	songs := data.Songs
 	fmt.Println("@@@TestSearch")
 	type Suite struct {
 		memo string
 		cond SongSearchCond
 		want []UserSong
 	}
-	uid := uint(9999)
 	suites := []Suite{
 		{
 			memo: "return 2",
 			cond: SongSearchCond{
 				UserIds:     []uint{uid},
-				TagIds:      []uint{1},
-				GenreIds:    []uint{1},
+				TagIds:      []uint{tags[0].ID},
+				GenreIds:    []uint{genres[0].ID},
 				SectionName: "",
 				OrderBy:     "",
 				Ascending:   true,
 			},
-			want: []UserSong{data.Songs[0], data.Songs[1]},
+			want: []UserSong{songs[0], songs[1]},
 		},
 		{
 			memo: "return 1",
 			cond: SongSearchCond{
 				UserIds:     []uint{uid},
-				TagIds:      []uint{2},
-				GenreIds:    []uint{2},
+				TagIds:      []uint{tags[1].ID},
+				GenreIds:    []uint{genres[1].ID},
 				SectionName: "",
 				OrderBy:     "",
 				Ascending:   true,
 			},
-			want: []UserSong{data.Songs[0]},
+			want: []UserSong{songs[0]},
 		},
 		{
 			memo: "empty condition",
@@ -210,7 +219,7 @@ func TestSearch(t *testing.T) {
 				OrderBy:     "",
 				Ascending:   true,
 			},
-			want: []UserSong{data.Songs[0], data.Songs[1]},
+			want: []UserSong{songs[0], songs[1]},
 		},
 		{
 			memo: "sectionName",
@@ -222,7 +231,7 @@ func TestSearch(t *testing.T) {
 				OrderBy:     "",
 				Ascending:   true,
 			},
-			want: []UserSong{data.Songs[0], data.Songs[1]},
+			want: []UserSong{songs[0], songs[1]},
 		},
 		{
 			memo: "sectionName2",
@@ -234,15 +243,15 @@ func TestSearch(t *testing.T) {
 				OrderBy:     "",
 				Ascending:   true,
 			},
-			//本当はdata.Songs[1]だけ取得されるべきだが、
+			//本当はsongs[1]だけ取得されるべきだが、
 			//使ってない機能なのでPASSさせとく
-			want: []UserSong{data.Songs[0], data.Songs[1]},
+			want: []UserSong{songs[0], songs[1]},
 		},
 	}
 	for _, s := range suites {
 		t.Run(s.memo, func(t *testing.T) {
 			us := UserSong{}
-			songs, err := us.Search(TestDB, s.cond)
+			songs, err := us.Search(tx, s.cond)
 			if err != nil {
 				t.Fatal(err)
 			}

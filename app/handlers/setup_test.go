@@ -12,6 +12,7 @@ import (
 	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/utils"
+	"gorm.io/gorm"
 )
 
 var expiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEwMCwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMCIsImF1ZCI6WyJodHRwOi8vbG9jYWxob3N0OjMwMDAiXSwiZXhwIjoxNjkyNTA4ODc0LCJuYmYiOjE2OTI1MDg4MTQsImlhdCI6MTY5MjUwODgxNH0.Nw5g5FYh_uiZkvOg0bhxV0nIP_Z75lYZ72xjwOArbL0"
@@ -21,6 +22,7 @@ var h = Base{
 	IsTesting: true,
 	SendEmail: false,
 }
+var TestDB *gorm.DB
 
 func TestMain(m *testing.M) {
 	db, err := models.InitTestDB()
@@ -28,7 +30,8 @@ func TestMain(m *testing.M) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	h.DB = db
+	TestDB = db
+	h.DB = TestDB
 	os.Exit(m.Run())
 }
 
@@ -52,13 +55,13 @@ func template(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
 			//必要なデータをテーブルに入れとく
-			_, err := models.PrepareTestUsersOnly(h.DB)
+			_, err := models.PrepareTestUsersOnly(h.DB, false)
 			if err != nil {
 				t.Error(err)
 			}
-			//テスト後のclean up
-			defer models.ClearTestDB(h.DB)
 
 			//request
 			js, _ := utils.ToJSON(test.somedata)

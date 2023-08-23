@@ -224,7 +224,7 @@ func (us *UserSong) Search(db *gorm.DB, cond SongSearchCond) ([]UserSong, error)
 	for _, v := range tmpSongs {
 		songIds = append(songIds, v.ID)
 	}
-	fmt.Println("songIds = ", songIds)
+	fmt.Println("pre search songIds = ", songIds)
 
 	//songIdsとsectionNameで再検索
 	query := "id IN(?) AND user_id IN (?)"

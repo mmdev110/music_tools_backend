@@ -11,12 +11,13 @@ import (
 )
 
 func Test_UserHandler(t *testing.T) {
-	users, err := models.PrepareTestUsersOnly(h.DB)
+	h.DB = TestDB.Begin()
+	defer h.DB.Rollback()
+	users, err := models.PrepareTestUsersOnly(h.DB, false)
 	if err != nil {
 		t.Error(err)
 	}
 	user := users[0]
-	defer models.ClearTestDB(h.DB)
 	r := httptest.NewRequest(http.MethodGet, "/user", nil)
 	ctx := utils.SetUIDInContext(r.Context(), user.ID)
 

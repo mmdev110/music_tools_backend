@@ -14,7 +14,9 @@ import (
 )
 
 func Test_RefreshHandler(t *testing.T) {
-	users, _ := models.PrepareTestUsersOnly(h.DB)
+	h.DB = TestDB.Begin()
+	defer h.DB.Rollback()
+	users, _ := models.PrepareTestUsersOnly(h.DB, false)
 	refreshToken, _ := users[0].GenerateToken("refresh")
 	sessionString := uuid.NewString()
 	session := models.Session{
@@ -24,8 +26,6 @@ func Test_RefreshHandler(t *testing.T) {
 	}
 	session.Update(h.DB)
 
-	//テスト後のclean up
-	defer models.ClearTestDB(h.DB)
 	//テストデータを定義する
 	tests := []struct {
 		name          string

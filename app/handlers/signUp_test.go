@@ -31,11 +31,13 @@ func Test_SignUpHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := models.PrepareTestUsersOnly(h.DB)
+			//トランザクション貼る
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
+			_, err := models.PrepareTestUsersOnly(h.DB, false)
 			if err != nil {
 				t.Error(err)
 			}
-			defer models.ClearTestDB(h.DB)
 
 			js, _ := utils.ToJSON(test.data)
 			r := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(js))
@@ -77,8 +79,9 @@ func Test_SignUpHandler(t *testing.T) {
 /*
  */
 func Test_EmailConfirmationHandler(t *testing.T) {
+
 	//テストデータを定義する
-	users, _ := models.PrepareTestUsersOnly(h.DB)
+	users, _ := models.PrepareTestUsersOnly(h.DB, true)
 	token_confirmed, _ := users[0].GenerateToken("email_confirm")
 	token_unconfirmed, _ := users[1].GenerateToken("email_confirm")
 	token_unconfirmed_wrong_type, _ := users[1].GenerateToken("access")
@@ -103,11 +106,14 @@ func Test_EmailConfirmationHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//必要なデータをテーブルに入れとく
-			models.PrepareTestUsersOnly(h.DB)
+			//トランザクション貼る
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
 
-			//テスト後のclean up
-			defer models.ClearTestDB(h.DB)
+			_, err := models.PrepareTestUsersOnly(h.DB, false)
+			if err != nil {
+				t.Error(err)
+			}
 
 			//request
 			js, _ := utils.ToJSON(Token{test.token})
