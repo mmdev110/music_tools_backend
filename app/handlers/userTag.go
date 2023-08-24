@@ -10,7 +10,7 @@ import (
 	"example.com/app/utils"
 )
 
-func (h *Base) TagHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) TagHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	if r.Method == http.MethodPost {
 		//新規作成、更新
@@ -24,7 +24,7 @@ func (h *Base) TagHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *Base) saveTags(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) saveTags(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@savetags")
@@ -53,7 +53,7 @@ func (h *Base) saveTags(w http.ResponseWriter, r *http.Request) {
 	h.DB.Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
-func (h *Base) getTags(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) getTags(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@gettags")

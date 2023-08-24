@@ -7,7 +7,7 @@ import (
 	"example.com/app/utils"
 )
 
-func (h *Base) UserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) UserHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	user := h.getUserFromContext(r.Context())

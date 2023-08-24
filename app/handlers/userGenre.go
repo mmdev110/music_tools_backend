@@ -10,7 +10,7 @@ import (
 	"example.com/app/utils"
 )
 
-func (h *Base) GenreHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) GenreHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	if r.Method == http.MethodPost {
 		//新規作成、更新
@@ -24,7 +24,7 @@ func (h *Base) GenreHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *Base) saveGenres(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) saveGenres(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@saveGenres")
@@ -53,7 +53,7 @@ func (h *Base) saveGenres(w http.ResponseWriter, r *http.Request) {
 	h.DB.Save(&input)
 	utils.ResponseJSON(w, input, http.StatusOK)
 }
-func (h *Base) getGenres(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) getGenres(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 	fmt.Println("@@@gettags")

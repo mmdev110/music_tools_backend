@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (h *Base) SignInHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("signIn")
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for signin", r.Method))
@@ -77,7 +77,7 @@ func (h *Base) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 // accesss_tokenによる認証
 // UserHandlerにtoken更新をつけたもの
-func (h *Base) SignInWithTokenHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SignInWithTokenHandler(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
 

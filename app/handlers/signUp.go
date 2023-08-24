@@ -20,7 +20,7 @@ import (
 // フロントエンドからEmailConfirmationHandlerを叩く
 // 確認できたらsigninページに遷移
 // 確認できなかったらエラー文表示
-func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	if r.Method != http.MethodPost {
@@ -92,7 +92,7 @@ func (h *Base) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // メールアドレス確認ハンドラ
-func (h *Base) EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) EmailConfirmationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for email confirmation", r.Method))
 		return

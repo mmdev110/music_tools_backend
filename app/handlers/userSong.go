@@ -16,7 +16,7 @@ import (
 )
 
 // userSongの一覧
-func (h *Base) ListHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) ListHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
@@ -50,7 +50,7 @@ func (h *Base) ListHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ResponseJSON(w, userSongs, http.StatusOK)
 }
 
-func (h *Base) SongHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SongHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("@@@@songhandler")
 	user := h.getUserFromContext(r.Context())
 	fmt.Printf("userid in handler = %d\n", user.ID)
@@ -79,7 +79,7 @@ func (h *Base) SongHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (h *Base) createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
+func (h *HandlersConf) createSong(w http.ResponseWriter, r *http.Request, user *models.User) {
 	fmt.Println("@@@@Create Song")
 	var us = models.UserSong{}
 	json.NewDecoder(r.Body).Decode(&us)
@@ -100,7 +100,7 @@ func (h *Base) createSong(w http.ResponseWriter, r *http.Request, user *models.U
 	utils.ResponseJSON(w, us, http.StatusOK)
 
 }
-func (h *Base) updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
+func (h *HandlersConf) updateSong(w http.ResponseWriter, r *http.Request, user *models.User, userSongId uint) {
 	fmt.Println("@@@@Update Song")
 
 	var us = models.UserSong{}
@@ -198,7 +198,7 @@ func (h *Base) updateSong(w http.ResponseWriter, r *http.Request, user *models.U
 }
 
 // songIdに対応するsongを返す
-func (h *Base) getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid string) {
+func (h *HandlersConf) getSong(w http.ResponseWriter, r *http.Request, user *models.User, uuid string) {
 
 	//h.DBから取得
 	var us = models.UserSong{}
@@ -231,7 +231,7 @@ func (h *Base) getSong(w http.ResponseWriter, r *http.Request, user *models.User
 
 	utils.ResponseJSON(w, us, http.StatusOK)
 }
-func (h *Base) DeleteSong(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) DeleteSong(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return

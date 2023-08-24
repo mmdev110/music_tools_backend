@@ -17,7 +17,7 @@ import (
 var r_aac = regexp.MustCompile(`\.aac`)
 
 // S3からm3u8ファイルを取得し、その中身のaacファイルのアドレスをpresigned urlに置き換えた上で返す
-func (h *Base) HLSHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) HLSHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	//認証つけた方が良い
 

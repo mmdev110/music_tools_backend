@@ -1,4 +1,4 @@
-package main
+package middlewares
 
 import (
 	"fmt"
@@ -11,9 +11,11 @@ import (
 	"example.com/app/utils"
 )
 
+var expiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEwMCwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMCIsImF1ZCI6WyJodHRwOi8vbG9jYWxob3N0OjMwMDAiXSwiZXhwIjoxNjkyNTA4ODc0LCJuYmYiOjE2OTI1MDg4MTQsImlhdCI6MTY5MjUwODgxNH0.Nw5g5FYh_uiZkvOg0bhxV0nIP_Z75lYZ72xjwOArbL0"
+
 func Test_CORS(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})
-	handler := enableCORS(emptyHandler)
+	handler := EnableCORS(emptyHandler)
 	type Header = struct {
 		name  string
 		value string
@@ -56,7 +58,7 @@ func Test_requireAuth(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		idFromContext = utils.GetUidFromContext(r.Context())
 	})
-	handler := requireAuth(emptyHandler)
+	handler := RequireAuth(emptyHandler)
 	u := models.User{}
 	u.ID = uint(100)
 	token, err := u.GenerateToken("access")
