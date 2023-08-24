@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,7 +8,7 @@ import (
 	"example.com/app/utils"
 )
 
-func Test_Chk(t *testing.T) {
+func Test_ChkHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/_chk", nil)
 	handler := http.HandlerFunc(h.ChkHandler)
@@ -36,10 +35,7 @@ func Test_Chk(t *testing.T) {
 }
 
 func Test_ChkServer(t *testing.T) {
-	fmt.Println(ts.URL)
 	r := httptest.NewRequest(http.MethodGet, ts.URL+"/_chk", nil)
-	fmt.Println(r.RequestURI)
-	fmt.Println(r.URL)
 	r.RequestURI = ""
 	w, err := ts.Client().Do(r)
 	//w, err := ts.Client().Get(ts.URL)
@@ -51,5 +47,11 @@ func Test_ChkServer(t *testing.T) {
 	if w.StatusCode != http.StatusOK {
 		t.Errorf("aaaaaa%d", w.StatusCode)
 	}
-	fmt.Println(utils.BodyToString(w.Body))
+
+	mp := map[string]string{"Status": "OK"}
+	want_response, err := utils.ToJSON(mp)
+	got_response := utils.BodyToString(w.Body)
+	if got_response != want_response {
+		t.Errorf("response: got %s, want %s", got_response, want_response)
+	}
 }
