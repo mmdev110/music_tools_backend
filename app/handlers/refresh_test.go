@@ -42,21 +42,21 @@ func Test_RefreshHandler(t *testing.T) {
 
 			//request
 			cookie := utils.GetSessionCookie(test.sessionString, 10*time.Minute)
-			r := httptest.NewRequest(http.MethodPost, "/test", nil)
+			r := httptest.NewRequest(http.MethodPost, ts.URL+"/refresh", nil)
+			r.RequestURI = ""
 			if test.sessionString != "" {
 				r.AddCookie(cookie)
 			}
-			//response
-			w := httptest.NewRecorder()
-			//handlerの準備
-			handler := http.HandlerFunc(h.RefreshHandler)
-			//実行
-			handler.ServeHTTP(w, r)
+			w, err := ts.Client().Do(r)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer w.Body.Close()
 
 			//responseがwに書き込まれるのでtestと比較
 
 			want_status := test.status
-			got_status := w.Result().StatusCode
+			got_status := w.StatusCode
 			if got_status != want_status {
 				t.Errorf("statusCode: got %d, want %d", got_status, want_status)
 			}
@@ -66,13 +66,13 @@ func Test_RefreshHandler(t *testing.T) {
 					AccessToken string `json:"access_token"`
 				}
 				res := Response{}
-				if err := json.NewDecoder(w.Result().Body).Decode(&res); err != nil {
+				if err := json.NewDecoder(w.Body).Decode(&res); err != nil {
 					t.Error(err)
 				}
 				if res.AccessToken == "" {
 					t.Error("access token not found after successful response")
 				}
-				got_cookie := w.Result().Cookies()[0]
+				got_cookie := w.Cookies()[0]
 				if got_cookie.Name != cookie.Name {
 					got := got_cookie.Name
 					want := cookie.Name
@@ -84,7 +84,7 @@ func Test_RefreshHandler(t *testing.T) {
 			} else {
 				//返ったエラーの中身を見る
 				got_e_response := customError.CustomError{} //なげぇ・・・
-				if err := json.NewDecoder(w.Result().Body).Decode(&got_e_response); err != nil {
+				if err := json.NewDecoder(w.Body).Decode(&got_e_response); err != nil {
 					t.Error(err)
 				}
 				if got_e_response.Code != test.errorCode {
