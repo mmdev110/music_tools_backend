@@ -111,6 +111,9 @@ func template(t *testing.T) {
 
 }
 
+/*
+reqにAuthorizationヘッダ付与
+*/
 func addAuthorizationHeader(req *http.Request, user *models.User) error {
 	authorization, err := user.GenerateToken("access")
 	if err != nil {
