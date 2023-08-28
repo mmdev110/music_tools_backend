@@ -10,7 +10,7 @@ import (
 
 // sign out
 // refresh_tokenを削除して返す
-func (h *Base) SignOutHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SignOutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.ErrorJSON(w, customError.MethodNotAllowed, fmt.Errorf("method %s not allowed for SignOut", r.Method))
 		return

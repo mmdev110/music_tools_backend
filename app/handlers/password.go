@@ -14,7 +14,7 @@ import (
 )
 
 // パスワードリセット用のリンクをメールで送信するハンドラー
-func (h *Base) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	if action == "request" {
 		h.SendResetEmailHandler(w, r)
@@ -25,7 +25,7 @@ func (h *Base) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (h *Base) SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		if r.Method != http.MethodPost {
 			utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for this operation", r.Method))
@@ -71,7 +71,7 @@ func (h *Base) SendResetEmailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // 新しいパスワードを設定するハンドラー
-func (h *Base) PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	//form取り出し
 	type Form struct {
 		Token       string `json:"token"`

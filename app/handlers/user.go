@@ -1,16 +1,20 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
+	"example.com/app/customError"
 	"example.com/app/utils"
 )
 
-func (h *Base) UserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) UserHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	user := h.getUserFromContext(r.Context())
-	fmt.Printf("userid in handler = %d\n", user.ID)
+	if user == nil {
+		utils.ErrorJSON(w, customError.UserNotFound, nil)
+		return
+	}
+	//fmt.Printf("userid in handler = %d\n", user.ID)
 	utils.ResponseJSON(w, user, http.StatusOK)
 }

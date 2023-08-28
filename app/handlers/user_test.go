@@ -1,29 +1,49 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"example.com/app/models"
-	"example.com/app/utils"
 )
 
 func Test_UserHandler(t *testing.T) {
-	users, err := models.PrepareTestUsersOnly(h.DB)
+	h.DB = TestDB.Begin()
+	u, err := models.InsertTestUsersOnly(h.DB)
 	if err != nil {
 		t.Error(err)
 	}
-	user := users[0]
-	defer models.ClearTestDB(h.DB)
-	r := httptest.NewRequest(http.MethodGet, "/user", nil)
-	ctx := utils.SetUIDInContext(r.Context(), user.ID)
+	defer h.DB.Rollback()
 
-	w := httptest.NewRecorder()
+	tests := []struct {
+		name string
+		user *models.User
+		code int
+	}{
+		{"can get requested user", u[0], http.StatusOK},
+		//{"cannot get other user", u[1].ID, http.StatusBadRequest},
+		{"cannot get unregistered user", &models.User{ID: uint(1)}, http.StatusBadRequest},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 
-	handler := http.HandlerFunc(h.UserHandler)
-	handler.ServeHTTP(w, r.WithContext(ctx))
+			r := httptest.NewRequest(http.MethodGet, ts.URL+"/user", nil)
+			addAuthorizationHeader(r, test.user)
+			r.RequestURI = ""
 
-	fmt.Println(utils.BodyToString(w.Result().Body))
+			w, err2 := ts.Client().Do(r)
+			if err2 != nil {
+				t.Error(err2)
+			}
+			defer w.Body.Close()
+
+			got_status := w.StatusCode
+			want_status := test.code
+			if got_status != want_status {
+				t.Errorf("status_code: got %d, want %d", got_status, want_status)
+			}
+		})
+	}
+
 }

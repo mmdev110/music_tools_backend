@@ -9,7 +9,7 @@ import (
 	"example.com/app/conf"
 )
 
-func (h *Base) TestHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) TestHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	cookie := &http.Cookie{
