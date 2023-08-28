@@ -1,6 +1,8 @@
 package models
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_InsertTestData(t *testing.T) {
 	t.Run("testing InsertTestData", func(t *testing.T) {
@@ -11,6 +13,7 @@ func Test_InsertTestData(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		//utils.PrintStruct(data)
 	})
 
 }
