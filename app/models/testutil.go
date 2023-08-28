@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 
-	"example.com/app/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -35,6 +34,9 @@ type TestData struct {
 
 /*
 return dummy data(no db inserts, data only)
+
+テスト毎にトランザクション張ってからinsertしたいが、テストケース作成のためデータだけ先に必要というジレンマあり
+なのでテストデータ取得とインサート処理を分けている
 */
 func GetTestData() TestData {
 	var uid = uint(9999)
@@ -269,7 +271,6 @@ func InsertTestData(db *gorm.DB) (*TestData, error) {
 	if err := data.Songs[1].Create(db); err != nil {
 		return nil, fmt.Errorf("error at create %v", err)
 	}
-	utils.PrintStruct(data.Songs[0])
 
 	return &data, nil
 }
