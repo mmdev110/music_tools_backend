@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -24,16 +25,37 @@ func (h *HandlersConf) TagHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/*
+現在の、タグを全て送ってそれに合わせてテーブルを更新する(宣言的？な)仕様は
+タグが増加するにつれてトラフィックが増加していくのでよろしくないかも
+
+/tags/list
+/tags/append
+/tags/delete
+/tags/update
+みたいに処理毎にエンドポイントを細分化した方が良さげ
+
+ただ1回のリクエストで完結するため、トランザクションが保たれる点はメリットでもある
+インプットを下の様に分けるのが良いか？？
+
+	{
+		add:[]Tags
+		delete:[]Tags
+		update:[]Tags
+	}
+*/
 func (h *HandlersConf) saveTags(w http.ResponseWriter, r *http.Request) {
 	user := h.getUserFromContext(r.Context())
-	fmt.Printf("userid in handler = %d\n", user.ID)
-	fmt.Println("@@@savetags")
 	var input = []models.UserTag{}
 
 	json.NewDecoder(r.Body).Decode(&input)
 	//for _, v := range input {
 	//	utils.PrintStruct(v)
 	//}
+	if len(input) == 0 {
+		utils.ErrorJSON(w, customError.Others, errors.New("no tags to save"))
+		return
+	}
 	tmp := models.UserTag{}
 	db, err := tmp.GetAllByUserId(h.DB, user.ID)
 	if err != nil {
