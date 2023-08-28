@@ -36,7 +36,12 @@ func main() {
 func (app *Application) web_server() {
 	fmt.Println("web")
 	//ハンドラ登録
-	mux := app.registerHandlers()
+	h := handlers.HandlersConf{
+		DB:        app.DB,
+		SendEmail: true,
+		IsTesting: false,
+	}
+	mux := h.Handlers()
 	conf.OverRideVarsByENV()
 	//サーバー起動
 	server := &http.Server{
@@ -49,31 +54,4 @@ func (app *Application) web_server() {
 	//
 
 	log.Fatal(server.ListenAndServe())
-}
-func (app *Application) registerHandlers() http.Handler {
-	h := handlers.Base{
-		DB:        app.DB,
-		SendEmail: true,
-		IsTesting: false,
-	}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/_chk", h.ChkHandler)
-	mux.HandleFunc("/signin", h.SignInHandler)
-	mux.HandleFunc("/signup", h.SignUpHandler)
-	mux.HandleFunc("/refresh", h.RefreshHandler)
-	mux.HandleFunc("/signout", h.SignOutHandler)
-	mux.HandleFunc("/reset_password", h.ResetPasswordHandler)
-	mux.HandleFunc("/email_confirm", h.EmailConfirmationHandler)
-	mux.HandleFunc("/user", requireAuth(h.UserHandler))
-	//SignInWithToken多分使ってない(refreshに置き換わった)ので消す
-	mux.HandleFunc("/signin_with_token", requireAuth(h.SignInWithTokenHandler))
-	mux.HandleFunc("/list", requireAuth(h.ListHandler))
-	mux.HandleFunc("/tags", requireAuth(h.TagHandler))
-	mux.HandleFunc("/genres", requireAuth(h.GenreHandler))
-	mux.HandleFunc("/song/", requireAuth(h.SongHandler))
-	mux.HandleFunc("/delete_song", requireAuth(h.DeleteSong))
-	mux.HandleFunc("/hls/", h.HLSHandler)
-	//mux.HandleFunc("/test", h.TestHandler)
-
-	return enableCORS(mux)
 }

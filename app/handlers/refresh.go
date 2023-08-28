@@ -15,7 +15,7 @@ import (
 /*
 cookieによるリフレッシュ
 */
-func (h *Base) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("refresh")
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for refresh", r.Method))

@@ -6,7 +6,7 @@ import (
 	"example.com/app/utils"
 )
 
-func (h *Base) ChkHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) ChkHandler(w http.ResponseWriter, r *http.Request) {
 	//動作確認用
 	//presignedUrl := awsUtil.GenerateSignedUrl()
 	response := map[string]string{"Status": "OK"}

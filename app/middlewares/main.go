@@ -1,4 +1,4 @@
-package main
+package middlewares
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"example.com/app/utils"
 )
 
-func requireAuth(next http.HandlerFunc) http.HandlerFunc {
+func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println("auth")
@@ -31,7 +31,7 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func enableCORS(next http.Handler) http.Handler {
+func EnableCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("path = %s. method = %s\n", r.URL.Path, r.Method)

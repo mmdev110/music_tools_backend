@@ -52,6 +52,12 @@ func BodyToString(body io.ReadCloser) string {
 	bytes := buf.String()
 	return string(bytes)
 }
+func BodyToStruct(body io.Reader, payload any) error {
+	if err := json.NewDecoder(body).Decode(payload); err != nil {
+		return err
+	}
+	return nil
+}
 
 func ToJSON(payload interface{}) (string, error) {
 	b, err := json.MarshalIndent(payload, "", "\t")
