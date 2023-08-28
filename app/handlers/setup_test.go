@@ -63,7 +63,7 @@ func template(t *testing.T) {
 			h.DB = TestDB.Begin()
 			defer h.DB.Rollback()
 			//必要なデータをテーブルに入れとく
-			_, err := models.PrepareTestUsersOnly(h.DB, false)
+			_, err := models.InsertTestUsersOnly(h.DB)
 			if err != nil {
 				t.Error(err)
 			}

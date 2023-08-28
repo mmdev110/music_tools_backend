@@ -8,23 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func Test_PrepareData(t *testing.T) {
-	t.Run("check PrepareTestData", func(t *testing.T) {
-		tx := TestDB.Begin()
-		defer tx.Rollback()
-		PrepareTestData(t, tx)
-
-		//fmt.Println("@@check")
-		//for _, song := range data.Songs {
-		//	fmt.Printf("id = %d, uuid = %s\n", song.ID, song.UUID)
-		//	utils.PrintStruct(song.Instruments)
-		//	for _, section := range song.Sections {
-		//		utils.PrintStruct(section.Instruments)
-		//	}
-		//}
-	})
-}
-
 func TestUserSong(t *testing.T) {
 
 	t.Run("delete tag from UserSong", func(t *testing.T) {
@@ -79,7 +62,7 @@ func TestUserSong(t *testing.T) {
 		tx := TestDB.Begin()
 		defer tx.Rollback()
 
-		users, err := PrepareTestUsersOnly(tx, false)
+		users, err := InsertTestUsersOnly(tx)
 		if err != nil {
 			t.Error(err)
 		}
@@ -130,7 +113,7 @@ func TestTransaction(t *testing.T) {
 	t.Skip()
 	tx := TestDB.Begin()
 	defer tx.Rollback()
-	users, err := PrepareTestUsersOnly(tx, false)
+	users, err := InsertTestUsersOnly(tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -173,8 +156,11 @@ func TestSearch(t *testing.T) {
 	tx := TestDB.Begin()
 	defer tx.Rollback()
 
-	data := PrepareTestData(t, tx)
-	uid := data.uid
+	data, err := InsertTestData(tx)
+	if err != nil {
+		t.Error(err)
+	}
+	uid := data.User.ID
 	tags := data.Tags
 	genres := data.Genres
 	songs := data.Songs

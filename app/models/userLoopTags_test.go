@@ -7,7 +7,7 @@ import (
 func TestUserTag(t *testing.T) {
 	t.Run("can remove a tag associated with 2 songs", func(t *testing.T) {
 		tx := TestDB.Begin()
-		//data := PrepareTestData(t)
+		//data := InsertTestData(t)
 		defer tx.Rollback()
 
 		var uid = uint(9999)

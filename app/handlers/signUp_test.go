@@ -34,7 +34,7 @@ func Test_SignUpHandler(t *testing.T) {
 			//トランザクション貼る
 			h.DB = TestDB.Begin()
 			defer h.DB.Rollback()
-			_, err := models.PrepareTestUsersOnly(h.DB, false)
+			_, err := models.InsertTestUsersOnly(h.DB)
 			if err != nil {
 				t.Error(err)
 			}
@@ -81,7 +81,7 @@ func Test_SignUpHandler(t *testing.T) {
 func Test_EmailConfirmationHandler(t *testing.T) {
 
 	//テストデータを定義する
-	users, _ := models.PrepareTestUsersOnly(h.DB, true)
+	users := models.GetTestUsers()
 	token_confirmed, _ := users[0].GenerateToken("email_confirm")
 	token_unconfirmed, _ := users[1].GenerateToken("email_confirm")
 	token_unconfirmed_wrong_type, _ := users[1].GenerateToken("access")
@@ -110,7 +110,7 @@ func Test_EmailConfirmationHandler(t *testing.T) {
 			h.DB = TestDB.Begin()
 			defer h.DB.Rollback()
 
-			_, err := models.PrepareTestUsersOnly(h.DB, false)
+			_, err := models.InsertTestUsersOnly(h.DB)
 			if err != nil {
 				t.Error(err)
 			}

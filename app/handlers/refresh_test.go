@@ -16,7 +16,7 @@ import (
 func Test_RefreshHandler(t *testing.T) {
 	h.DB = TestDB.Begin()
 	defer h.DB.Rollback()
-	users, _ := models.PrepareTestUsersOnly(h.DB, false)
+	users, _ := models.InsertTestUsersOnly(h.DB)
 	refreshToken, _ := users[0].GenerateToken("refresh")
 	sessionString := uuid.NewString()
 	session := models.Session{

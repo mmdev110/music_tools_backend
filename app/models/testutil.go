@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
-	"testing"
 
+	"example.com/app/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -27,37 +27,16 @@ func InitTestDB() (*gorm.DB, error) {
 }
 
 type TestData struct {
-	uid    uint
+	User   *User
 	Tags   []UserTag
 	Genres []UserGenre
 	Songs  []UserSong
 }
 
 /*
-return dummy users
-
-user[0]: confirmed user with ID 10000, email "test@test.test"
-
-user[1]: unconfirmed user with UD 10001, email "test2@test.test"
+return dummy data(no db inserts, data only)
 */
-func PrepareTestUsersOnly(db *gorm.DB, dryRun bool) ([]*User, error) {
-
-	user := User{ID: uint(10000), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
-	user2 := User{ID: uint(10001), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
-	if !dryRun {
-		if result := db.Create(&user); result.Error != nil {
-			return nil, result.Error
-		}
-		if result := db.Create(&user2); result.Error != nil {
-			return nil, result.Error
-		}
-		fmt.Println("CREATED!!")
-	}
-
-	return []*User{&user, &user2}, nil
-}
-
-func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
+func GetTestData() TestData {
 	var uid = uint(9999)
 	var user = User{
 		ID:          uid,
@@ -65,6 +44,7 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 		IsConfirmed: true,
 	}
 	var tag1 = UserTag{
+		ID:        1,
 		UserId:    uid,
 		Name:      "tag1",
 		SortOrder: 0,
@@ -72,6 +52,7 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	}
 
 	var tag2 = UserTag{
+		ID:        2,
 		UserId:    uid,
 		Name:      "tag2",
 		SortOrder: 0,
@@ -79,6 +60,7 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	}
 
 	var tag3 = UserTag{
+		ID:        3,
 		UserId:    uid,
 		Name:      "tag3",
 		SortOrder: 0,
@@ -86,6 +68,7 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	}
 
 	var genre1 = UserGenre{
+		ID:        1,
 		UserId:    uid,
 		Name:      "genre1",
 		SortOrder: 0,
@@ -93,6 +76,7 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	}
 
 	var genre2 = UserGenre{
+		ID:        2,
 		UserId:    uid,
 		Name:      "genre2",
 		SortOrder: 0,
@@ -100,34 +84,13 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 	}
 
 	var genre3 = UserGenre{
+		ID:        3,
 		UserId:    uid,
 		Name:      "genre3",
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
 
-	fmt.Println("preparing data")
-	if res := db.Create(&user); res.Error != nil {
-		t.Errorf("error at create %v ", res.Error)
-	}
-	if err := tag1.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := tag2.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := tag3.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := genre1.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := genre2.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := genre3.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
 	var us1 = UserSong{
 		UserId: uid,
 		UUID:   uuid.NewString(),
@@ -240,16 +203,66 @@ func PrepareTestData(t *testing.T, db *gorm.DB) TestData {
 				},
 			}},
 		}}
-	if err := us1.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
-	if err := us2.Create(db); err != nil {
-		t.Errorf("error at create %v", err)
-	}
 	return TestData{
-		uid:    uid,
-		Tags:   []UserTag{tag1, tag2},
-		Genres: []UserGenre{genre1, genre2},
+		User:   &user,
+		Tags:   []UserTag{tag1, tag2, tag3},
+		Genres: []UserGenre{genre1, genre2, genre3},
 		Songs:  []UserSong{us1, us2},
 	}
+}
+
+/*
+return dummy users(no db inserts, data only)
+
+user[0]: confirmed user with ID 10000, email "test@test.test"
+
+user[1]: unconfirmed user with UD 10001, email "test2@test.test"
+*/
+func GetTestUsers() []*User {
+	user := User{ID: uint(10000), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
+	user2 := User{ID: uint(10001), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
+	return []*User{&user, &user2}
+}
+
+/*
+insert dummy users to db
+*/
+func InsertTestUsersOnly(db *gorm.DB) ([]*User, error) {
+	users := GetTestUsers()
+	for _, user := range users {
+		if result := db.Create(user); result.Error != nil {
+			return nil, result.Error
+		}
+	}
+
+	return users, nil
+}
+
+/*
+insert dummy data to DB
+*/
+func InsertTestData(db *gorm.DB) (*TestData, error) {
+	data := GetTestData()
+	if result := db.Create(data.User); result.Error != nil {
+		return nil, result.Error
+	}
+	for _, tag := range data.Tags {
+		if err := tag.Create(db); err != nil {
+			return nil, fmt.Errorf("error at create %v", err)
+		}
+	}
+	for _, genre := range data.Genres {
+		if err := genre.Create(db); err != nil {
+			return nil, fmt.Errorf("error at create %v", err)
+		}
+	}
+	if err := data.Songs[0].Create(db); err != nil {
+		return nil, fmt.Errorf("error at create %v", err)
+	}
+	if err := data.Songs[1].Create(db); err != nil {
+		return nil, fmt.Errorf("error at create %v", err)
+	}
+	utils.PrintStruct(data.Songs[0])
+
+	return &data, nil
 }

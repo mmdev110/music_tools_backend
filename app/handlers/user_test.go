@@ -10,7 +10,7 @@ import (
 
 func Test_UserHandler(t *testing.T) {
 	h.DB = TestDB.Begin()
-	u, err := models.PrepareTestUsersOnly(h.DB, false)
+	u, err := models.InsertTestUsersOnly(h.DB)
 	if err != nil {
 		t.Error(err)
 	}

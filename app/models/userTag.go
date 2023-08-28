@@ -18,7 +18,7 @@ type UserTag struct {
 }
 
 func (tag *UserTag) Create(db *gorm.DB) error {
-	result := db.Create(&tag)
+	result := db.Debug().Create(&tag)
 	if result.Error != nil {
 		return result.Error
 	}
