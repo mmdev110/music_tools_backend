@@ -90,6 +90,13 @@ func GetTestData() TestData {
 		SortOrder: 0,
 		UserSongs: []UserSong{},
 	}
+	var genre4 = UserGenre{
+		ID:        4,
+		UserId:    uid,
+		Name:      "genre4",
+		SortOrder: 0,
+		UserSongs: []UserSong{},
+	}
 
 	var us1 = UserSong{
 		UserId: uid,
@@ -206,7 +213,7 @@ func GetTestData() TestData {
 	return TestData{
 		User:   &user,
 		Tags:   []UserTag{tag1, tag2, tag3},
-		Genres: []UserGenre{genre1, genre2, genre3},
+		Genres: []UserGenre{genre1, genre2, genre3, genre4},
 		Songs:  []UserSong{us1, us2},
 	}
 }

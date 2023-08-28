@@ -9,12 +9,12 @@ import (
 	"example.com/app/utils"
 )
 
-func Test_SaveTags(t *testing.T) {
+func Test_SaveGenres(t *testing.T) {
 
 }
-func Test_GetTags(t *testing.T) {
+func Test_GetGenres(t *testing.T) {
 
-	t.Run("can get tags", func(t *testing.T) {
+	t.Run("can get genres", func(t *testing.T) {
 		h.DB = TestDB.Begin()
 		defer h.DB.Rollback()
 
@@ -22,7 +22,7 @@ func Test_GetTags(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		req := httptest.NewRequest(http.MethodGet, ts.URL+"/tags", nil)
+		req := httptest.NewRequest(http.MethodGet, ts.URL+"/genres", nil)
 		req.RequestURI = ""
 		addAuthorizationHeader(req, data.User)
 
@@ -37,13 +37,13 @@ func Test_GetTags(t *testing.T) {
 		if got_code != want_code {
 			t.Errorf("status_code: got %d, want %d", got_code, want_code)
 		}
-		var res_tags []models.UserTag
-		if err := utils.BodyToStruct(res.Body, &res_tags); err != nil {
+		var res_genres []models.UserGenre
+		if err := utils.BodyToStruct(res.Body, &res_genres); err != nil {
 			t.Error(err)
 		}
-		//utils.PrintStruct(res_tags)
-		got_num := len(res_tags)
-		want_num := 3
+
+		got_num := len(res_genres)
+		want_num := 4
 		//utils.PrintStruct(res_genres)
 		if got_num != want_num {
 			t.Errorf("status_code: got %d, want %d", got_num, want_num)
