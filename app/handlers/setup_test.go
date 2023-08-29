@@ -108,3 +108,40 @@ func template(t *testing.T) {
 	}
 
 }
+
+/*
+requestテストのテンプレ
+*/
+func template_request(t *testing.T) {
+	//テストデータを定義する
+	tests := []struct {
+		name   string
+		status int
+	}{
+		{"test 1", http.StatusOK},
+		{"test 2", http.StatusBadRequest},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
+			data, _ := models.InsertTestData(h.DB)
+
+			//request
+			js, _ := utils.ToJSON(test.status)
+			req := httptest.NewRequest(http.MethodPost, ts.URL+"/test", strings.NewReader(js))
+			req.RequestURI = ""
+			token, _ := data.User.GenerateToken("access")
+			testutil.AddAuthorizationHeader(req, token)
+			//response
+			res, err := ts.Client().Do(req)
+			if err != nil {
+				t.Error(err)
+			}
+			//responseがwに書き込まれるのでtestと比較
+			testutil.Checker(t, "status_code", res.StatusCode, test.status)
+
+		})
+	}
+
+}

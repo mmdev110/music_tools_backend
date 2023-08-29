@@ -204,15 +204,16 @@ func (h *HandlersConf) getSong(w http.ResponseWriter, r *http.Request, user *mod
 	//h.DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(h.DB, uuid, true)
-	if result.RowsAffected == 0 {
+	err, isFound := us.GetByUUID(h.DB, uuid, true)
+	if !isFound {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
-	if result.Error != nil {
-		utils.ErrorJSON(w, customError.Others, result.Error)
+	if err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
+
 	//他人のデータは取得不可
 	if us.UserId != user.ID {
 		utils.ErrorJSON(w, customError.Others, errors.New("you cannot get this Song"))

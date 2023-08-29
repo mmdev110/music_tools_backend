@@ -68,7 +68,59 @@ func Test_SearchSongsHandler(t *testing.T) {
 	}
 }
 
-func Test_CreateSong(t *testing.T) {}
+func Test_CreateSong(t *testing.T) {
+	//テストデータを定義する
+	songData := models.VariousSongData()
+
+	tests := []struct {
+		name   string
+		song   models.UserSong
+		status int
+	}{
+		{"can add complex song", songData.Complex, http.StatusOK},
+		{"can add simple song", songData.Simple, http.StatusOK},
+		{"can add complex song with no instruments used", songData.NoInstUsed, http.StatusOK},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
+			data, _ := models.InsertTestData(h.DB)
+
+			//request
+			js, _ := utils.ToJSON(test.song)
+			req := httptest.NewRequest(http.MethodPost, ts.URL+"/song/new", strings.NewReader(js))
+			req.RequestURI = ""
+			token, _ := data.User.GenerateToken("access")
+			testutil.AddAuthorizationHeader(req, token)
+
+			//response
+			res, err := ts.Client().Do(req)
+			if err != nil {
+				t.Error(err)
+			}
+			//responseのチェック
+			testutil.Checker(t, "status_code", res.StatusCode, test.status)
+
+			if res.StatusCode == http.StatusOK {
+				us := models.UserSong{}
+				utils.BodyToStruct(res.Body, &us)
+
+				s := models.UserSong{}
+				err, isFound := s.GetByUUID(h.DB, us.UUID, true)
+				if !isFound {
+					t.Error("failed. added song not found.")
+				}
+				if err != nil {
+					t.Error(err)
+				}
+				//utils.PrintStruct(s)
+			}
+
+		})
+	}
+
+}
 func Test_UpdateSong(t *testing.T) {
 
 }

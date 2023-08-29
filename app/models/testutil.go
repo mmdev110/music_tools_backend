@@ -221,6 +221,97 @@ func GetTestData() TestData {
 }
 
 /*
+APIテスト用の様々なsong
+*/
+type VariousSongs struct {
+	Complex    UserSong
+	Simple     UserSong
+	NoInstUsed UserSong
+}
+
+func VariousSongData() VariousSongs {
+	data := GetTestData()
+
+	complex := UserSong{ //relationフルに使うsong
+		Title:  "complex_title",
+		Artist: "complex_artist",
+		Tags:   []UserTag{data.Tags[0], data.Tags[2]},
+		Genres: []UserGenre{data.Genres[0], data.Genres[2]},
+		Instruments: []UserSongInstrument{
+			{Name: "drum1"},
+			{Name: "drum2"},
+			{Name: "melody1"},
+		},
+		Audio: UserSongAudio{
+			Name: "my audio1",
+			Url:  Url{Get: "", Put: ""},
+		},
+		Sections: []UserSongSection{
+			{
+				Name: "intro",
+				Instruments: []UserSongInstrument{
+					{Name: "drum1"},
+					{Name: "drum2"},
+				},
+				AudioRanges: []UserAudioRange{
+					{Name: "full", Start: 0, End: 100},
+					{Name: "transition", Start: 95, End: 100},
+				},
+				Midi: UserSectionMidi{
+					Name: "piano_midi",
+				},
+			},
+			{
+				Name: "A melo",
+				Instruments: []UserSongInstrument{
+					{Name: "drum1"},
+					{Name: "drum2"},
+					{Name: "melody1"},
+				},
+				AudioRanges: []UserAudioRange{
+					{Name: "full", Start: 100, End: 155},
+					{Name: "transition", Start: 135, End: 155},
+				},
+				Midi: UserSectionMidi{
+					Name: "bass_midi",
+				},
+			},
+		},
+	}
+	noInstUsed := UserSong{ //instはあるが、sectionでinst指定しないパターン
+		Title:  "noinstused_title",
+		Artist: "noinstused_artist",
+		Instruments: []UserSongInstrument{
+			{Name: "drum1"},
+			{Name: "drum2"},
+			{Name: "melody1"},
+		},
+		Audio: UserSongAudio{
+			Name: "my audio1",
+			Url:  Url{Get: "", Put: ""},
+		},
+		Sections: []UserSongSection{
+			{
+				Name: "intro",
+			},
+			{
+				Name: "A melo",
+			},
+		},
+	}
+	simple := UserSong{ //最小構成のsong
+		Title:  "simple_title",
+		Artist: "simple_artist",
+	}
+
+	return VariousSongs{
+		Complex:    complex,
+		Simple:     simple,
+		NoInstUsed: noInstUsed,
+	}
+}
+
+/*
 return dummy users(no db inserts, data only)
 
 user[0]: confirmed user with ID 10000, email "test@test.test"
