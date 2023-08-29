@@ -16,18 +16,19 @@ import (
 )
 
 // userSongの一覧
-func (h *HandlersConf) ListHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SearchSongsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
-	fmt.Println("listhandler")
 	user := h.getUserFromContext(r.Context())
-	fmt.Printf("userid in handler = %d\n", user.ID)
 
 	//検索条件取り出し
 	var condition = models.SongSearchCond{}
-	json.NewDecoder(r.Body).Decode(&condition)
+	if err := utils.BodyToStruct(r.Body, &condition); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
 
 	//自分のuserId以外は検索禁止
 	if ids := condition.UserIds; !(len(ids) == 1 && ids[0] == user.ID) {

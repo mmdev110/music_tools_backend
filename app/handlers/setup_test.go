@@ -122,3 +122,9 @@ func addAuthorizationHeader(req *http.Request, user *models.User) error {
 	req.Header.Add("Authorization", "Bearer "+authorization)
 	return nil
 }
+
+func checker[T comparable](t *testing.T, parameterName string, got, want T) {
+	if got != want {
+		t.Errorf("%s: got %v, want %v", parameterName, got, want)
+	}
+}
