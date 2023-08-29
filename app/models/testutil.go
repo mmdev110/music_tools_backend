@@ -228,7 +228,7 @@ user[0]: confirmed user with ID 10000, email "test@test.test"
 user[1]: unconfirmed user with UD 10001, email "test2@test.test"
 */
 func GetTestUsers() []*User {
-	user := User{ID: uint(10000), Email: "test@test.test", Password: "dummy", IsConfirmed: true}
+	user := User{ID: uint(10000), Email: "tes@test.test", Password: "dummy", IsConfirmed: true}
 	user2 := User{ID: uint(10001), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
 	return []*User{&user, &user2}
 }
