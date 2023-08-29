@@ -24,7 +24,7 @@ func Test_SignUpHandler(t *testing.T) {
 		status    int
 		errorCode int
 	}{
-		{"cannot signup with existing confirmed email", Form{"test@test.test", "dummypassword"}, http.StatusBadRequest, customError.UserAlreadyExists.Code},
+		{"cannot signup with existing confirmed email", Form{"tes@test.test", "dummypassword"}, http.StatusBadRequest, customError.UserAlreadyExists.Code},
 		{"can signup with existing unconfirmed email", Form{"test2@test.test", "dummypassword"}, http.StatusOK, -1},
 		{"can signup with non-existing email", Form{"test3@test.test", "dummypassword"}, http.StatusOK, -1},
 		{"cannot signup with empty email", Form{"", "dummypassword"}, http.StatusBadRequest, customError.InsufficientParameters.Code},
