@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"example.com/app/models"
+	"example.com/app/testutil"
 )
 
 func Test_UserHandler(t *testing.T) {
@@ -29,7 +30,8 @@ func Test_UserHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			r := httptest.NewRequest(http.MethodGet, ts.URL+"/user", nil)
-			addAuthorizationHeader(r, test.user)
+			token, _ := test.user.GenerateToken("access")
+			testutil.AddAuthorizationHeader(r, token)
 			r.RequestURI = ""
 
 			w, err2 := ts.Client().Do(r)
@@ -38,11 +40,8 @@ func Test_UserHandler(t *testing.T) {
 			}
 			defer w.Body.Close()
 
-			got_status := w.StatusCode
-			want_status := test.code
-			if got_status != want_status {
-				t.Errorf("status_code: got %d, want %d", got_status, want_status)
-			}
+			//ステータスチェック
+			testutil.Checker(t, "status_code", w.StatusCode, test.code)
 		})
 	}
 

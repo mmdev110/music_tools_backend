@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"example.com/app/models"
+	"example.com/app/testutil"
 	"example.com/app/utils"
 	"golang.org/x/exp/slices"
 )
@@ -51,7 +52,8 @@ func Test_SaveTags(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, ts.URL+"/tags", strings.NewReader(str))
 			req.RequestURI = ""
 			if test.authRequired {
-				addAuthorizationHeader(req, data.User)
+				token, _ := data.User.GenerateToken("access")
+				testutil.AddAuthorizationHeader(req, token)
 			}
 			res, err2 := ts.Client().Do(req)
 			if err2 != nil {
@@ -59,30 +61,19 @@ func Test_SaveTags(t *testing.T) {
 			}
 			defer res.Body.Close()
 
-			got_status := res.StatusCode
-			want_status := test.statusCode
-			if got_status != want_status {
-				t.Errorf("status_code: got %d, want %d", got_status, want_status)
-			}
+			testutil.Checker(t, "status_code", res.StatusCode, test.statusCode)
+
 			if test.name == "can save new tags" {
 				tmp := models.UserTag{}
 				tags, _ := tmp.GetAllByUserId(h.DB, data.User.ID)
-				//utils.PrintStruct(tags)
-				got_num := len(tags)
-				want_num := len(newTags)
-				if got_num != want_num {
-					t.Errorf("tags_num: got %d, want %d", got_num, want_num)
-				}
+				testutil.Checker(t, "tags_num", len(tags), len(newTags))
 			}
 			if test.name == "can update existing tags" {
 				tmp := models.UserTag{}
 				tags, _ := tmp.GetAllByUserId(h.DB, data.User.ID)
-				//utils.PrintStruct(tags)
-				got_num := len(tags)
-				want_num := len(updatedTags)
-				if got_num != want_num {
-					t.Errorf("tags_num: got %d, want %d", got_num, want_num)
-				}
+
+				testutil.Checker(t, "tags_num", len(tags), len(updatedTags))
+
 				names := []string{}
 				for _, tag := range tags {
 					names = append(names, tag.Name)
@@ -112,7 +103,8 @@ func Test_GetTags(t *testing.T) {
 		}
 		req := httptest.NewRequest(http.MethodGet, ts.URL+"/tags", nil)
 		req.RequestURI = ""
-		addAuthorizationHeader(req, data.User)
+		token, _ := data.User.GenerateToken("access")
+		testutil.AddAuthorizationHeader(req, token)
 
 		res, err := ts.Client().Do(req)
 		if err != nil {
@@ -120,22 +112,15 @@ func Test_GetTags(t *testing.T) {
 		}
 		defer res.Body.Close()
 
-		got_code := res.StatusCode
-		want_code := http.StatusOK
-		if got_code != want_code {
-			t.Errorf("status_code: got %d, want %d", got_code, want_code)
-		}
+		testutil.Checker(t, "status_code", res.StatusCode, http.StatusOK)
+
 		var res_tags []models.UserTag
 		if err := utils.BodyToStruct(res.Body, &res_tags); err != nil {
 			t.Error(err)
 		}
-		//utils.PrintStruct(res_tags)
-		got_num := len(res_tags)
-		want_num := 3
-		//utils.PrintStruct(res_genres)
-		if got_num != want_num {
-			t.Errorf("status_code: got %d, want %d", got_num, want_num)
-		}
+
+		testutil.Checker(t, "num", len(res_tags), 3)
+
 	})
 
 }

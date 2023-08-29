@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"example.com/app/models"
+	"example.com/app/testutil"
 	"example.com/app/utils"
 )
 
@@ -43,8 +44,10 @@ func Test_SearchSongsHandler(t *testing.T) {
 			js, err := utils.ToJSON(test.condition)
 			req := httptest.NewRequest(test.method, ts.URL+"/list", strings.NewReader(js))
 			req.RequestURI = ""
+			user := &models.User{ID: test.uid}
+			token, _ := user.GenerateToken("access")
 			if test.requireAuth {
-				addAuthorizationHeader(req, &models.User{ID: test.uid})
+				testutil.AddAuthorizationHeader(req, token)
 			}
 
 			res, err := ts.Client().Do(req)
@@ -54,11 +57,11 @@ func Test_SearchSongsHandler(t *testing.T) {
 			defer res.Body.Close()
 
 			//ステータスチェック
-			checker(t, "status_code", res.StatusCode, test.statusCode)
+			testutil.Checker(t, "status_code", res.StatusCode, test.statusCode)
 			if res.StatusCode == http.StatusOK {
 				songs := []models.UserSong{}
 				utils.BodyToStruct(res.Body, &songs)
-				checker(t, "num", len(songs), test.want_num)
+				testutil.Checker(t, "num", len(songs), test.want_num)
 			}
 
 		})

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"example.com/app/testutil"
 	"gorm.io/gorm"
 )
 
@@ -53,9 +54,7 @@ func TestUserSong(t *testing.T) {
 
 		song2 := UserSong{}
 		song2.GetByID(tx, song.ID, false)
-		if l := len(song2.Tags); l != want {
-			t.Errorf("want =%d , but got =%d ", want, l)
-		}
+		testutil.Checker(t, "tags_num", len(song2.Tags), want)
 	})
 	t.Run("append tag to UserSong", func(t *testing.T) {
 		want := 2
@@ -101,9 +100,7 @@ func TestUserSong(t *testing.T) {
 
 		song2 := UserSong{}
 		song2.GetByID(tx, song.ID, false)
-		if l := len(song2.Tags); l != want {
-			t.Errorf("want =%d , but got =%d ", want, l)
-		}
+		testutil.Checker(t, "tags_num", len(song2.Tags), want)
 	})
 
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"testing"
+
+	"example.com/app/testutil"
 )
 
 func TestUserTag(t *testing.T) {
@@ -47,8 +49,7 @@ func TestUserTag(t *testing.T) {
 		want := 0
 		us := UserSong{}
 		us.GetByID(tx, us1.ID, false)
-		if l := len(us.Tags); l != want {
-			t.Errorf("want =%d , but got =%d ", want, l)
-		}
+
+		testutil.Checker(t, "tags_num", len(us.Tags), want)
 	})
 }
