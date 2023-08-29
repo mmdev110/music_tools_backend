@@ -18,3 +18,8 @@ func Checker[T comparable](t *testing.T, parameterName string, got, want T) {
 		t.Errorf("%s: got %v, want %v", parameterName, got, want)
 	}
 }
+func CheckerIsDifferent[T comparable](t *testing.T, parameterName string, got, want T) {
+	if got == want {
+		t.Errorf("%s: got %v, want %v", parameterName, got, want)
+	}
+}

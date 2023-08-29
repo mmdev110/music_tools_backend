@@ -74,7 +74,7 @@ func Test_RefreshHandler(t *testing.T) {
 				}
 				got_cookie := w.Cookies()[0]
 				testutil.Checker(t, "cookie_name", got_cookie.Name, cookie.Name)
-				testutil.Checker(t, "cookie_value", got_cookie.Value, cookie.Value)
+				testutil.CheckerIsDifferent(t, "cookie_value", got_cookie.Value, cookie.Value)
 			} else {
 				//返ったエラーの中身を見る
 				got_e_response := customError.CustomError{} //なげぇ・・・
