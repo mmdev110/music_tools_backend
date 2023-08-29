@@ -9,6 +9,7 @@ import (
 
 	"example.com/app/customError"
 	"example.com/app/models"
+	"example.com/app/testutil"
 	"example.com/app/utils"
 	"github.com/google/uuid"
 )
@@ -57,9 +58,8 @@ func Test_RefreshHandler(t *testing.T) {
 
 			want_status := test.status
 			got_status := w.StatusCode
-			if got_status != want_status {
-				t.Errorf("statusCode: got %d, want %d", got_status, want_status)
-			}
+			testutil.Checker(t, "status_code", got_status, want_status)
+
 			if want_status == http.StatusOK {
 				//responseの中身を見る
 				type Response = struct {
@@ -73,23 +73,16 @@ func Test_RefreshHandler(t *testing.T) {
 					t.Error("access token not found after successful response")
 				}
 				got_cookie := w.Cookies()[0]
-				if got_cookie.Name != cookie.Name {
-					got := got_cookie.Name
-					want := cookie.Name
-					t.Errorf("different cookie: got %s, want: %s", got, want)
-				}
-				if got_cookie.Value == cookie.Value {
-					t.Error("refresh token not changed after successful response")
-				}
+				testutil.Checker(t, "cookie_name", got_cookie.Name, cookie.Name)
+				testutil.CheckerIsDifferent(t, "cookie_value", got_cookie.Value, cookie.Value)
 			} else {
 				//返ったエラーの中身を見る
 				got_e_response := customError.CustomError{} //なげぇ・・・
 				if err := json.NewDecoder(w.Body).Decode(&got_e_response); err != nil {
 					t.Error(err)
 				}
-				if got_e_response.Code != test.errorCode {
-					t.Errorf("error response code: got %d, want %d", got_e_response.Code, test.errorCode)
-				}
+				testutil.Checker(t, "error_code", got_e_response.Code, test.errorCode)
+
 			}
 		})
 	}

@@ -11,6 +11,7 @@ import (
 
 	"example.com/app/customError"
 	"example.com/app/models"
+	"example.com/app/testutil"
 	"example.com/app/utils"
 	"gorm.io/gorm"
 )
@@ -85,9 +86,8 @@ func template(t *testing.T) {
 
 			want_status := test.status
 			got_status := w.Result().StatusCode
-			if got_status != want_status {
-				t.Errorf("statusCode: got %d, want %d", got_status, want_status)
-			}
+			testutil.Checker(t, "status_code", got_status, want_status)
+
 			if want_status == http.StatusOK {
 				//responseの中身を見る
 				got_u := models.User{}
@@ -102,20 +102,46 @@ func template(t *testing.T) {
 				if err := json.NewDecoder(w.Result().Body).Decode(&got_e_response); err != nil {
 					t.Error(err)
 				}
-				if got_e_response.Code != test.errorCode {
-					t.Errorf("error response code: got %d, want %d", got_e_response.Code, test.errorCode)
-				}
+				testutil.Checker(t, "error_code", got_e_response.Code, test.errorCode)
 			}
 		})
 	}
 
 }
 
-func addAuthorizationHeader(req *http.Request, user *models.User) error {
-	authorization, err := user.GenerateToken("access")
-	if err != nil {
-		return err
+/*
+requestテストのテンプレ
+*/
+func template_request(t *testing.T) {
+	//テストデータを定義する
+	tests := []struct {
+		name   string
+		status int
+	}{
+		{"test 1", http.StatusOK},
+		{"test 2", http.StatusBadRequest},
 	}
-	req.Header.Add("Authorization", "Bearer "+authorization)
-	return nil
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			h.DB = TestDB.Begin()
+			defer h.DB.Rollback()
+			data, _ := models.InsertTestData(h.DB)
+
+			//request
+			js, _ := utils.ToJSON(test.status)
+			req := httptest.NewRequest(http.MethodPost, ts.URL+"/test", strings.NewReader(js))
+			req.RequestURI = ""
+			token, _ := data.User.GenerateToken("access")
+			testutil.AddAuthorizationHeader(req, token)
+			//response
+			res, err := ts.Client().Do(req)
+			if err != nil {
+				t.Error(err)
+			}
+			//responseがwに書き込まれるのでtestと比較
+			testutil.Checker(t, "status_code", res.StatusCode, test.status)
+
+		})
+	}
+
 }

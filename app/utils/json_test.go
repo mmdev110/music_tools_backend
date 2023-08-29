@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"example.com/app/customError"
+	"example.com/app/testutil"
 )
 
 func Test_ResponseJSON(t *testing.T) {
@@ -64,9 +65,8 @@ func Test_ResponseJSON(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if got_body != want_body {
-			t.Errorf("bodyString: got %s, want %s", got_body, want_body)
-		}
+		testutil.Checker(t, "body_string", got_body, want_body)
+
 	}
 }
 
@@ -91,9 +91,8 @@ func Test_ErrorJSON(t *testing.T) {
 
 		got_status := w.Result().StatusCode
 		want_status := http.StatusBadRequest
-		if got_status != want_status {
-			t.Errorf("StatusCode: got %d, want %d", got_status, want_status)
-		}
+		testutil.Checker(t, "status_code", got_status, want_status)
+
 		got_body := BodyToString(w.Result().Body)
 		payload := test.err
 		if test.additionalErr != nil {
@@ -104,8 +103,7 @@ func Test_ErrorJSON(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if got_body != want_body {
-			t.Errorf("bodyString: got %s, want %s", got_body, want_body)
-		}
+		testutil.Checker(t, "body_string", got_body, want_body)
+
 	}
 }

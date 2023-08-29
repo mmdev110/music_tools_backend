@@ -121,7 +121,7 @@ func (us *UserSong) GetByID(db *gorm.DB, id uint, lock bool) *gorm.DB {
 	}
 	return result
 }
-func (us *UserSong) GetByUUID(db *gorm.DB, uuid string, lock bool) *gorm.DB {
+func (us *UserSong) GetByUUID(db *gorm.DB, uuid string, lock bool) (err error, isFound bool) {
 	if lock {
 		fmt.Println("lock!")
 		db = db.Clauses(clause.Locking{Strength: "UPDATE"})
@@ -149,10 +149,13 @@ func (us *UserSong) GetByUUID(db *gorm.DB, uuid string, lock bool) *gorm.DB {
 		}).
 		Where("uuid = ?", uuid).
 		First(&us)
-	if result.RowsAffected == 0 {
-		return result
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, false
+		}
+		return result.Error, false
 	}
-	return result
+	return nil, true
 }
 
 // songを返す

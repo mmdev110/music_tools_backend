@@ -16,18 +16,19 @@ import (
 )
 
 // userSongの一覧
-func (h *HandlersConf) ListHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) SearchSongsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed", r.Method))
 		return
 	}
-	fmt.Println("listhandler")
 	user := h.getUserFromContext(r.Context())
-	fmt.Printf("userid in handler = %d\n", user.ID)
 
 	//検索条件取り出し
 	var condition = models.SongSearchCond{}
-	json.NewDecoder(r.Body).Decode(&condition)
+	if err := utils.BodyToStruct(r.Body, &condition); err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
+		return
+	}
 
 	//自分のuserId以外は検索禁止
 	if ids := condition.UserIds; !(len(ids) == 1 && ids[0] == user.ID) {
@@ -203,15 +204,16 @@ func (h *HandlersConf) getSong(w http.ResponseWriter, r *http.Request, user *mod
 	//h.DBから取得
 	var us = models.UserSong{}
 	//result := us.GetByID(userSongId)
-	result := us.GetByUUID(h.DB, uuid, true)
-	if result.RowsAffected == 0 {
+	err, isFound := us.GetByUUID(h.DB, uuid, true)
+	if !isFound {
 		utils.ErrorJSON(w, customError.Others, errors.New("Song not found"))
 		return
 	}
-	if result.Error != nil {
-		utils.ErrorJSON(w, customError.Others, result.Error)
+	if err != nil {
+		utils.ErrorJSON(w, customError.Others, err)
 		return
 	}
+
 	//他人のデータは取得不可
 	if us.UserId != user.ID {
 		utils.ErrorJSON(w, customError.Others, errors.New("you cannot get this Song"))

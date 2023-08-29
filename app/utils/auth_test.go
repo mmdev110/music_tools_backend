@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"fmt"
 	"testing"
 	"time"
+
+	"example.com/app/testutil"
 )
 
 func TestJwt(t *testing.T) {
@@ -17,10 +18,5 @@ func TestJwt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error found at ParseJwt: %v", err2)
 	}
-	fmt.Println(jwt)
-	got := parsedClaims.UserId
-	want := userId
-	if got != want {
-		t.Errorf("got %d, want %d .", got, want)
-	}
+	testutil.Checker(t, "user_id", parsedClaims.UserId, userId)
 }
