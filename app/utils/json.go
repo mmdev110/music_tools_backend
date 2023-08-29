@@ -11,6 +11,9 @@ import (
 	"example.com/app/customError"
 )
 
+/*
+JSONをresponseとして書き込む(返す)
+*/
 func ResponseJSON(w http.ResponseWriter, payload interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -35,7 +38,10 @@ func ResponseJSON(w http.ResponseWriter, payload interface{}, status int) {
 //	ResponseJSON(w, payload, status)
 //}
 
-// add err to overwrite message
+/*
+エラーとしてresponseを返す
+add err to overwrite message
+*/
 func ErrorJSON(w http.ResponseWriter, customError customError.CustomError, err error) {
 	status := http.StatusBadRequest
 	if err != nil {
@@ -46,12 +52,15 @@ func ErrorJSON(w http.ResponseWriter, customError customError.CustomError, err e
 	ResponseJSON(w, payload, status)
 }
 
+// bodyを文字列化
 func BodyToString(body io.ReadCloser) string {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(body)
 	bytes := buf.String()
 	return string(bytes)
 }
+
+// bodyからstructへ格納
 func BodyToStruct(body io.Reader, payload any) error {
 	if err := json.NewDecoder(body).Decode(payload); err != nil {
 		return err
@@ -59,6 +68,7 @@ func BodyToStruct(body io.Reader, payload any) error {
 	return nil
 }
 
+// structからjson文字列へ
 func ToJSON(payload interface{}) (string, error) {
 	b, err := json.MarshalIndent(payload, "", "\t")
 	if err != nil {

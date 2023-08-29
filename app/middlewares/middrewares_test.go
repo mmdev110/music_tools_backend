@@ -1,13 +1,13 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"example.com/app/conf"
 	"example.com/app/models"
+	"example.com/app/testutil"
 	"example.com/app/utils"
 )
 
@@ -44,10 +44,8 @@ func Test_CORS(t *testing.T) {
 		for _, header := range test.headers {
 			got := w.Header().Get(header.name)
 			want := header.value
-			fmt.Printf("%s header want: %s, but got: %s\n", header.name, want, got)
-			if got != want {
-				t.Errorf("%s header want: %s, but got: %s", header.name, want, got)
-			}
+			testutil.Checker(t, "header_value", got, want)
+
 		}
 	}
 
