@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
+	"example.com/app/utils"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	_ "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -56,12 +60,18 @@ type App struct {
 	accessThresholdMin int // n分アクセスなければdestroyさせる
 }
 
-func handleRequest(ctx context.Context, event Event) (*Response, error) {
+func handleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
 	token := os.Getenv("github_token")
-	fmt.Printf("%+v\n", event)
 	if token == "" {
-		return nil, errors.New("github_token not set")
+		return sendResponse(nil, errors.New("github_token not set"))
 	}
+	event := Event{}
+	if err := json.Unmarshal([]byte(req.Body), &event); err != nil {
+		return sendResponse(nil, err)
+	}
+	fmt.Printf("%+v\n", event)
+
 	action := event.Action
 
 	cfg := configureAWS(ctx)
@@ -79,18 +89,18 @@ func handleRequest(ctx context.Context, event Event) (*Response, error) {
 	}
 
 	if action == "status" {
-		res, err := app.Status()
-		return res, err
+		result, err := app.Status()
+		return sendResponse(result, err)
 
 	} else if action == "apply" {
-		res, err := app.Apply()
-		return res, err
+		result, err := app.Apply()
+		return sendResponse(result, err)
 
 	} else if action == "destroy" {
-		res, err := app.Destroy()
-		return res, err
+		result, err := app.Destroy()
+		return sendResponse(result, err)
 	}
-	return nil, fmt.Errorf("invalid action: %s", action)
+	return sendResponse(nil, fmt.Errorf("invalid action: %s", action))
 }
 
 func configureAWS(ctx context.Context) *aws.Config {
@@ -100,6 +110,17 @@ func configureAWS(ctx context.Context) *aws.Config {
 	}
 	return &cfg
 
+}
+func sendResponse(body interface{}, err error) (events.APIGatewayProxyResponse, error) {
+	if err != nil {
+		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
+	} else {
+		bd, err := utils.ToJSON(body)
+		if err != nil {
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
+		}
+		return events.APIGatewayProxyResponse{Body: bd, StatusCode: 200}, nil
+	}
 }
 
 func main() {
