@@ -51,8 +51,8 @@ jobs:
           aws-region: ap-northeast-1
       - name: set env
         run: |
-          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
-          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REGISTRY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_mediaconvert_ecr_registry_url' --query Parameter.Value)" >> $GITHUB_ENV
+          echo "REPOSITORY_URL=$(aws ssm get-parameter --output text --name '/music_tools/prod/backend/lambda_mediaconvert_ecr_repository_url' --query Parameter.Value)" >> $GITHUB_ENV
       - name: docker login
         run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REGISTRY_URL
       - name: Build the Docker image
