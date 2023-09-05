@@ -6,7 +6,7 @@ FROM golang:1.19.2
 WORKDIR /go/src/
 ADD . /go/src/
 RUN go mod tidy
-WORKDIR /go/src/cost_cutter/
+WORKDIR /go/src/backend_manager/
 RUN GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o /main
 
 #stage2

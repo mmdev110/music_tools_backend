@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -34,15 +33,19 @@ func Test_Handler(t *testing.T) {
 		sendRequest:     true,
 		awsConfig:       &cfg,
 	}
-	status, err := app.getDBStatus()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(status)
-
-	found, err := app.findLogWithinThreshold(time.Duration(20))
+	//status, err := app.getDBStatus()
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//fmt.Println(status)
+	//
+	//found, err := app.findLogWithinThreshold(time.Duration(20))
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	res, err := ping(app.backendEndpoint)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("log: ", found)
+	fmt.Println(res)
 }

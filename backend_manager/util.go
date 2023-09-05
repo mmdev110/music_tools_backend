@@ -4,20 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 func ping(endpoint string) (bool, error) {
 	req, _ := http.NewRequest(http.MethodGet, endpoint, nil)
 	client := http.Client{}
-	_, err := client.Do(req)
+	res, _ := client.Do(req)
 
-	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
-			return false, nil
-		} else {
-			return false, err
-		}
+	str := strconv.Itoa(res.StatusCode)
+	if str[0] != 2 {
+		return false, nil
 	}
 	return true, nil
 }

@@ -61,8 +61,8 @@ type App struct {
 }
 
 func handleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
-	token := os.Getenv("github_token")
+	fmt.Printf("%+v\n", req)
+	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return sendResponse(nil, errors.New("github_token not set"))
 	}
