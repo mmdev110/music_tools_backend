@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
-var Key = "AKIASATZSF4JJV5MKS4K"
-var Secret = "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"
+var Key = ""
+var Secret = ""
 
 func Test_Handler(t *testing.T) {
 	ctx := context.TODO()
