@@ -112,14 +112,15 @@ func configureAWS(ctx context.Context) *aws.Config {
 
 }
 func sendResponse(body interface{}, err error) (events.APIGatewayProxyResponse, error) {
+	type ErrorMessage = struct {
+		Message string `json:"message"`
+	}
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
+		bd, _ := utils.ToJSON(ErrorMessage{err.Error()})
+		return events.APIGatewayProxyResponse{Body: bd, StatusCode: http.StatusBadRequest}, nil
 	} else {
-		bd, err := utils.ToJSON(body)
-		if err != nil {
-			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
-		}
-		return events.APIGatewayProxyResponse{Body: bd, StatusCode: 200}, nil
+		bd, _ := utils.ToJSON(body)
+		return events.APIGatewayProxyResponse{Body: bd, StatusCode: http.StatusOK}, nil
 	}
 }
 
