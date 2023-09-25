@@ -39,12 +39,13 @@ type Response struct {
 }
 
 const (
-	ENDPOINT_GITHUB   = "https://api.github.com/repos/mmdev110/music_tools_infra/dispatches"
-	EVENT_TYPE_GITHUB = "backend_manager"
-	ENDPOINT_BACKEND  = "http://backend.music-tools.ys-dev.net/_chk"
-	DB_NAME           = "music-tools-prod-db"
-	LOG_GROUP_NAME    = "/music_tools/prod/backend"
-	REGION            = "ap-northeast-1"
+	ENDPOINT_GITHUB     = "https://api.github.com/repos/mmdev110/music_tools_infra/dispatches"
+	EVENT_TYPE_GITHUB   = "backend_manager"
+	ENDPOINT_BACKEND    = "http://backend.music-tools.ys-dev.net/_chk"
+	DB_NAME             = "music-tools-prod-db"
+	LOG_GROUP_NAME      = "/music_tools/prod/backend"
+	REGION              = "ap-northeast-1"
+	DB_STATUS_AVAILABLE = "available"
 )
 
 type App struct {
@@ -112,14 +113,15 @@ func configureAWS(ctx context.Context) *aws.Config {
 
 }
 func sendResponse(body interface{}, err error) (events.APIGatewayProxyResponse, error) {
+	type ErrorMessage = struct {
+		Message string `json:"message"`
+	}
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
+		bd, _ := utils.ToJSON(ErrorMessage{err.Error()})
+		return events.APIGatewayProxyResponse{Body: bd, StatusCode: http.StatusBadRequest}, nil
 	} else {
-		bd, err := utils.ToJSON(body)
-		if err != nil {
-			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, err
-		}
-		return events.APIGatewayProxyResponse{Body: bd, StatusCode: 200}, nil
+		bd, _ := utils.ToJSON(body)
+		return events.APIGatewayProxyResponse{Body: bd, StatusCode: http.StatusOK}, nil
 	}
 }
 

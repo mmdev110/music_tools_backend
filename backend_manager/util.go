@@ -14,7 +14,7 @@ func ping(endpoint string) (bool, error) {
 	res, _ := client.Do(req)
 
 	str := strconv.Itoa(res.StatusCode)
-	if str[0] != 2 {
+	if str[0:1] != "2" { //2xx
 		return false, nil
 	}
 	return true, nil
