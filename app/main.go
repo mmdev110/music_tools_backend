@@ -37,15 +37,16 @@ func main() {
 func (app *Application) web_server() {
 	fmt.Println("web")
 	//パラメータを詰め込む
-	jwks, err := auth.GetJWKS(conf.AWS_REGION, conf.AWS_COGNITO_USER_POOL_ID)
-	if err != nil {
-		log.Fatal("error at GetJWKS")
+	auth := auth.Auth{}
+
+	if err := auth.Configure(conf.AWS_REGION, conf.AWS_COGNITO_USER_POOL_ID, conf.AWS_COGNITO_APP_CLIENT_ID); err != nil {
+		log.Fatal("error at auth.Configure()")
 	}
 	h := handlers.HandlersConf{
 		DB:        app.DB,
 		SendEmail: true,
 		IsTesting: false,
-		JWKS:      jwks,
+		Auth:      auth,
 	}
 	mux := h.Handlers()
 	conf.OverRideVarsByENV()

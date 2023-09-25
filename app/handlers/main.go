@@ -11,9 +11,9 @@ import (
 
 type HandlersConf struct {
 	DB        *gorm.DB
-	IsTesting bool       //test実行中かどうか
-	SendEmail bool       //メール送信実行するか
-	JWKS      []auth.JWK //cognito認証用の公開鍵リスト
+	IsTesting bool      //test実行中かどうか
+	SendEmail bool      //メール送信実行するか
+	Auth      auth.Auth //auth関連
 }
 
 func (h *HandlersConf) Handlers() http.Handler {

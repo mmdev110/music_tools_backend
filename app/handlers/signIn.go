@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"example.com/app/auth"
 	"example.com/app/conf"
 	"example.com/app/customError"
 	"example.com/app/models"
@@ -93,7 +92,7 @@ func (h *HandlersConf) AuthWithTokenHandler(w http.ResponseWriter, r *http.Reque
 	}
 	//tokenの検証
 	token := body.AccessToken
-	_, err := auth.AuthCognito(token)
+	_, err := h.Auth.AuthCognito(token)
 	if err != nil {
 		utils.ErrorJSON(w, customError.Others, errors.New("invalid body parameters"))
 	}
