@@ -82,26 +82,19 @@ func (h *HandlersConf) AuthWithTokenHandler(w http.ResponseWriter, r *http.Reque
 		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for refresh", r.Method))
 		return
 	}
-	type Body struct {
-		AccessToken string `json:"access_token"`
-	}
-	body := Body{}
-	//tokenを取り出す
-	if err := utils.BodyToStruct(r.Body, &body); err != nil {
-		utils.ErrorJSON(w, customError.Others, errors.New("invalid body parameters"))
-	}
-	//tokenの検証
-	token := body.AccessToken
-	_, err := h.Auth.AuthCognito(token)
-	if err != nil {
-		utils.ErrorJSON(w, customError.Others, errors.New("invalid body parameters"))
-	}
-
+	uuid, email := utils.GetParamsFromContext(r.Context())
 	//uuidからuserを探す
+	user := h.getUserFromContext(r.Context())
 	//トークンが正常で、userいなければ作成して良い
-	//userを返す
-	user := &models.User{}
+	if user == nil {
+		newUser, err := models.CreateUser(h.DB, uuid, email)
+		if err != nil {
+			utils.ErrorJSON(w, customError.Others, err)
+		}
+		user = &newUser
 
+	}
+	//userを返す
 	type Response = struct {
 		User *models.User `json:"user"`
 	}
