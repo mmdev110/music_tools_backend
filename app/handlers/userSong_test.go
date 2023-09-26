@@ -22,16 +22,16 @@ func Test_SearchSongsHandler(t *testing.T) {
 		name        string
 		method      string
 		requireAuth bool
-		uid         uint
+		uuid        string
 		condition   models.SongSearchCond
 		want_num    int
 		statusCode  int
 	}{
-		{"can get by the same user", http.MethodPost, true, data.User.ID, searchCond, 2, http.StatusOK},
-		{"cannont get by different user", http.MethodPost, true, uint(10000), searchCond, 0, http.StatusBadRequest},
-		{"cannont access with get method", http.MethodGet, true, data.User.ID, searchCond, 0, http.StatusBadRequest},
-		{"cannont access without authorization", http.MethodPost, false, data.User.ID, searchCond, 0, http.StatusBadRequest},
-		{"cannont access without condition", http.MethodPost, true, data.User.ID, emptyCond, 0, http.StatusBadRequest},
+		{"can get by the same user", http.MethodPost, true, data.User.UUID, searchCond, 2, http.StatusOK},
+		{"cannont get by different user", http.MethodPost, true, "10000", searchCond, 0, http.StatusBadRequest},
+		{"cannont access with get method", http.MethodGet, true, data.User.UUID, searchCond, 0, http.StatusBadRequest},
+		{"cannont access without authorization", http.MethodPost, false, data.User.UUID, searchCond, 0, http.StatusBadRequest},
+		{"cannont access without condition", http.MethodPost, true, data.User.UUID, emptyCond, 0, http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -44,8 +44,8 @@ func Test_SearchSongsHandler(t *testing.T) {
 			js, err := utils.ToJSON(test.condition)
 			req := httptest.NewRequest(test.method, ts.URL+"/list", strings.NewReader(js))
 			req.RequestURI = ""
-			user := &models.User{ID: test.uid}
-			token, _ := user.GenerateToken("access")
+			user := &models.User{UUID: test.uuid}
+			token, _ := user.FakeGenerateToken()
 			if test.requireAuth {
 				testutil.AddAuthorizationHeader(req, token)
 			}
@@ -91,7 +91,7 @@ func Test_CreateSong(t *testing.T) {
 			js, _ := utils.ToJSON(test.song)
 			req := httptest.NewRequest(http.MethodPost, ts.URL+"/song/new", strings.NewReader(js))
 			req.RequestURI = ""
-			token, _ := data.User.GenerateToken("access")
+			token, _ := data.User.FakeGenerateToken()
 			testutil.AddAuthorizationHeader(req, token)
 
 			//response

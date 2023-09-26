@@ -10,12 +10,12 @@ import (
 	"example.com/app/utils"
 )
 
-func RequireAuth(next http.HandlerFunc, auth *auth.Auth) http.HandlerFunc {
+func RequireAuth(next http.HandlerFunc, authFunc auth.AuthFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println("auth")
 		authHeader := r.Header.Get("Authorization")
-		claim, err := auth.AuthCognito(authHeader)
+		claim, err := authFunc(authHeader)
 		if err != nil {
 			utils.ErrorJSON(w, customError.Others, err)
 			return

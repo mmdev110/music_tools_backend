@@ -14,6 +14,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+type AuthFunc func(authHeader string) (*CognitoClaims, error)
+
 // jwtの中身
 type CognitoClaims struct {
 	UUID     string `json:"cognito:username"`

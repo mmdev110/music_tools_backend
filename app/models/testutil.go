@@ -2,7 +2,9 @@ package models
 
 import (
 	"fmt"
+	"time"
 
+	"example.com/app/auth"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -42,6 +44,7 @@ func GetTestData() TestData {
 	var uid = uint(9999)
 	var user = User{
 		ID:          uid,
+		UUID:        "9999",
 		Email:       "test@test.test",
 		IsConfirmed: true,
 	}
@@ -319,8 +322,8 @@ user[0]: confirmed user with ID 10000, email "test@test.test"
 user[1]: unconfirmed user with UD 10001, email "test2@test.test"
 */
 func GetTestUsers() []*User {
-	user := User{ID: uint(10000), Email: "tes@test.test", Password: "dummy", IsConfirmed: true}
-	user2 := User{ID: uint(10001), Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
+	user := User{ID: uint(10000), UUID: "10000", Email: "tes@test.test", Password: "dummy", IsConfirmed: true}
+	user2 := User{ID: uint(10001), UUID: "10001", Email: "test2@test.test", Password: "dummy", IsConfirmed: false}
 	return []*User{&user, &user2}
 }
 
@@ -364,4 +367,15 @@ func InsertTestData(db *gorm.DB) (*TestData, error) {
 	}
 
 	return &data, nil
+}
+
+func (user *User) FakeGenerateToken() (string, error) {
+	//AllowedTokenTypes := []string{"access", "reset", "refresh", "email_confirm"}
+	var duration time.Duration = 30 * time.Minute
+
+	token, err := auth.FakeGenerateJwt(user.UUID, user.Email, duration)
+	if err != nil {
+		return "", fmt.Errorf("error while generating token: %v", err)
+	}
+	return token, nil
 }

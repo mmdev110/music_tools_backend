@@ -47,6 +47,7 @@ func (app *Application) web_server() {
 		SendEmail: true,
 		IsTesting: false,
 		Auth:      auth,
+		AuthFunc:  auth.AuthCognito,
 	}
 	mux := h.Handlers()
 	conf.OverRideVarsByENV()
