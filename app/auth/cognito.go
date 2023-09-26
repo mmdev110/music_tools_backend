@@ -18,6 +18,7 @@ import (
 type CognitoClaims struct {
 	UserName string `json:"cognito:username"`
 	Email    string `json:"email"`
+	TokenUse string `json:"token_use"`
 	jwt.RegisteredClaims
 }
 
@@ -68,6 +69,7 @@ func (auth *Auth) parseCognitoJwt(tokenString string) (*CognitoClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CognitoClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		//check alg
+		//utils.PrintStruct(token)
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -83,19 +85,26 @@ func (auth *Auth) parseCognitoJwt(tokenString string) (*CognitoClaims, error) {
 		return jwk.convertKey(), nil
 	})
 	if err != nil {
+		//署名ミスマッチ、期限切れはここでキャッチされる
 		return nil, fmt.Errorf("error at ParseWithClaims: %v", err)
 	}
-
 	claims, ok := token.Claims.(*CognitoClaims)
-	utils.PrintStruct(claims)
 	if ok && token.Valid {
-		//add more verifications
-		//fmt.Printf("%v %v", claims.UserId, claims.RegisteredClaims.Issuer)
+		//jwtが改竄されてない&期限内であることがわかったので
+		//中身(claims)をチェック
+		//「クレームを検証する」参照
+
+		//Issuer(iss)
 		if claims.Issuer != auth.Issuer {
 			return nil, errors.New("invalid token issuer")
 		}
+		//Audience(aud)
 		if claims.Audience[0] != auth.AppClientID {
 			return nil, errors.New("invalid token audience")
+		}
+		//token_use
+		if claims.TokenUse != "id" {
+			return nil, errors.New("invalid token_use")
 		}
 		//fmt.Println("OK")
 		return claims, nil
