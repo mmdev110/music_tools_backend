@@ -4,29 +4,25 @@ import (
 	"fmt"
 	"net/http"
 
+	"example.com/app/auth"
 	"example.com/app/conf"
 	"example.com/app/customError"
 	"example.com/app/utils"
 )
 
-func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
+func RequireAuth(next http.HandlerFunc, auth *auth.Auth) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println("auth")
 		authHeader := r.Header.Get("Authorization")
-		claim, err := utils.Authenticate(authHeader, "access")
-		//for key, value := range r.Header {
-		//	fmt.Printf("%v: %v\n", key, value)
-		//}
+		claim, err := auth.AuthCognito(authHeader)
 		if err != nil {
-			//w.WriteHeader(http.StatusUnauthorized)
 			utils.ErrorJSON(w, customError.Others, err)
 			return
-
 		}
-		userId := claim.UserId
-		//fmt.Println(userId)
-		ctx := utils.SetUIDInContext(r.Context(), userId)
+		uuid := claim.UUID
+		email := claim.Email
+		ctx := utils.SetParamsInContext(r.Context(), uuid, email)
 		next(w, r.WithContext(ctx))
 	}
 }

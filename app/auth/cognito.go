@@ -16,7 +16,7 @@ import (
 
 // jwtの中身
 type CognitoClaims struct {
-	UserName string `json:"cognito:username"`
+	UUID     string `json:"cognito:username"`
 	Email    string `json:"email"`
 	TokenUse string `json:"token_use"`
 	jwt.RegisteredClaims

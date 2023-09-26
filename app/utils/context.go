@@ -4,16 +4,23 @@ import (
 	"context"
 )
 
-type UID string
+type UUID string
 
-var UID_key UID = "UserID"
+var UUID_key UUID = "UUID"
 
-func SetUIDInContext(ctx context.Context, value uint) context.Context {
-	return context.WithValue(ctx, UID_key, value) //UID_keyを直接"UserID"にするとwarning出ます
+type Email string
+
+var Email_key Email = "Email"
+
+func SetParamsInContext(ctx context.Context, uuid, email string) context.Context {
+	ctx1 := context.WithValue(ctx, UUID_key, uuid)
+	ctx2 := context.WithValue(ctx1, Email_key, email)
+	return ctx2
 }
 
-func GetUidFromContext(ctx context.Context) uint {
-	userId := ctx.Value(UID_key).(uint)
+func GetParamsFromContext(ctx context.Context) (uuid, email string) {
+	uuid = ctx.Value(UUID_key).(string)
+	email = ctx.Value(Email_key).(string)
 
-	return userId
+	return uuid, email
 }

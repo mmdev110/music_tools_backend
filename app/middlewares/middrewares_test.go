@@ -52,9 +52,10 @@ func Test_CORS(t *testing.T) {
 }
 
 func Test_requireAuth(t *testing.T) {
-	var idFromContext uint
+	var uuid_got string
+	var email_got string
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		idFromContext = utils.GetUidFromContext(r.Context())
+		uuid_got, email_got = utils.GetParamsFromContext(r.Context())
 	})
 	handler := RequireAuth(emptyHandler)
 	u := models.User{}
