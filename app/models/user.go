@@ -12,7 +12,8 @@ import (
 
 type User struct {
 	ID          uint   `gorm:"primarykey" json:"user_id"`
-	Email       string `gorm:"unique;not null" json:"email"`
+	UUID        string `gorm:"unique;not null" json:"uuid"`
+	Email       string `gorm:"not null;type:varchar(191)" json:"email"`
 	IsConfirmed bool   `gorm:"not null;default:0" json:"is_confirmed"`
 	//トークン類はユーザーに返さない
 	Password     string         `gorm:"not null" json:"-"`
@@ -31,10 +32,11 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func CreateUser(db *gorm.DB, email, password string) (User, error) {
+func CreateUser(db *gorm.DB, uuid, email string) (User, error) {
 	user := User{
-		Email:       email,
-		Password:    encrypt(password),
+		UUID:  uuid,
+		Email: email,
+		//Password:    encrypt(password),
 		IsConfirmed: false,
 		//Token:    utils.GenerateJwt(email),
 	}
@@ -44,6 +46,14 @@ func CreateUser(db *gorm.DB, email, password string) (User, error) {
 func GetUserByID(db *gorm.DB, id uint) *User {
 	var user User
 	result := db.First(&user, id)
+	if result.RowsAffected == 0 {
+		return nil
+	}
+	return &user
+}
+func GetUserByUUID(db *gorm.DB, uuid string) *User {
+	var user User
+	result := db.Where("uuid=?", uuid).First(&user)
 	if result.RowsAffected == 0 {
 		return nil
 	}

@@ -52,7 +52,7 @@ func Test_SaveTags(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, ts.URL+"/tags", strings.NewReader(str))
 			req.RequestURI = ""
 			if test.authRequired {
-				token, _ := data.User.GenerateToken("access")
+				token, _ := data.User.FakeGenerateToken()
 				testutil.AddAuthorizationHeader(req, token)
 			}
 			res, err2 := ts.Client().Do(req)
@@ -103,7 +103,7 @@ func Test_GetTags(t *testing.T) {
 		}
 		req := httptest.NewRequest(http.MethodGet, ts.URL+"/tags", nil)
 		req.RequestURI = ""
-		token, _ := data.User.GenerateToken("access")
+		token, _ := data.User.FakeGenerateToken()
 		testutil.AddAuthorizationHeader(req, token)
 
 		res, err := ts.Client().Do(req)

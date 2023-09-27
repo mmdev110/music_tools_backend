@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"example.com/app/auth"
 	"example.com/app/conf"
 	"example.com/app/handlers"
 	"example.com/app/models"
@@ -15,7 +16,7 @@ import (
 )
 
 // TODO: Application, handlers.Base, confなどに散らばってる設定を１か所にまとめたいが、
-// パッケージ跨ぐと難しい。。j
+// パッケージ跨ぐと難しい。。
 type Application struct {
 	DB *gorm.DB
 }
@@ -35,11 +36,18 @@ func main() {
 
 func (app *Application) web_server() {
 	fmt.Println("web")
-	//ハンドラ登録
+	//パラメータを詰め込む
+	auth := auth.Auth{}
+
+	if err := auth.Configure(conf.AWS_REGION, conf.AWS_COGNITO_USER_POOL_ID, conf.AWS_COGNITO_APP_CLIENT_ID); err != nil {
+		log.Fatal("error at auth.Configure()")
+	}
 	h := handlers.HandlersConf{
 		DB:        app.DB,
 		SendEmail: true,
 		IsTesting: false,
+		Auth:      auth,
+		AuthFunc:  auth.AuthCognito,
 	}
 	mux := h.Handlers()
 	conf.OverRideVarsByENV()
