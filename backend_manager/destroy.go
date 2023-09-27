@@ -23,7 +23,21 @@ func (app *App) Destroy() (*Response, error) {
 	return nil, err
 }
 func (app *App) canDestroy() (bool, error) {
-	found, err := app.findLogWithinThreshold(time.Duration(app.accessThresholdMin))
-	//最近のアクセスがあったらdestroyできない
-	return !found, err
+	//最近のアクセスがあったらdestroy不可
+	found, _ := app.findLogWithinThreshold(time.Duration(app.accessThresholdMin))
+	if found {
+		return false, errors.New("recent access found. backend is not ready to destroy")
+	}
+	pingSuccess, _ := ping(app.backendEndpoint)
+	//ping通らなかったらdestroy不可
+	if !pingSuccess {
+		return false, errors.New("backend is not active and not ready to destroy")
+	}
+	dbStatus, _ := app.getDBStatus()
+	//DB起動してなかったらdestroy不可
+	if dbStatus != DB_STATUS_AVAILABLE {
+		return false, errors.New("DB is not active. backend is not ready to destroy")
+	}
+	return true, nil
+
 }

@@ -30,7 +30,7 @@ func Test_UserHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			r := httptest.NewRequest(http.MethodGet, ts.URL+"/user", nil)
-			token, _ := test.user.GenerateToken("access")
+			token, _ := test.user.FakeGenerateToken()
 			testutil.AddAuthorizationHeader(r, token)
 			r.RequestURI = ""
 

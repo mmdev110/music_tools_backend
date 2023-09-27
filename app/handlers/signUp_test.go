@@ -77,7 +77,8 @@ func Test_SignUpHandler(t *testing.T) {
 /*
  */
 func Test_EmailConfirmationHandler(t *testing.T) {
-
+	//cognito移行により不要になったためskip
+	t.Skip()
 	//テストデータを定義する
 	users := models.GetTestUsers()
 	token_confirmed, _ := users[0].GenerateToken("email_confirm")

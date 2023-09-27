@@ -25,7 +25,7 @@ func Test_GetGenres(t *testing.T) {
 		}
 		req := httptest.NewRequest(http.MethodGet, ts.URL+"/genres", nil)
 		req.RequestURI = ""
-		token, _ := data.User.GenerateToken("access")
+		token, _ := data.User.FakeGenerateToken()
 		testutil.AddAuthorizationHeader(req, token)
 
 		res, err := ts.Client().Do(req)

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"example.com/app/auth"
 	"example.com/app/customError"
 	"example.com/app/models"
 	"example.com/app/testutil"
@@ -25,7 +26,10 @@ var h = HandlersConf{
 	DB:        nil,
 	IsTesting: true,
 	SendEmail: false,
+	Auth:      auth.Auth{},
+	AuthFunc:  auth.FakeAuthenticate,
 }
+
 var TestDB *gorm.DB
 
 func TestMain(m *testing.M) {
@@ -73,7 +77,7 @@ func template(t *testing.T) {
 			js, _ := utils.ToJSON(test.somedata)
 			r := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(js))
 			//contextにuidを仕込む
-			ctx := utils.SetUIDInContext(r.Context(), uint(100))
+			ctx := utils.SetParamsInContext(r.Context(), "100", "test@test.test")
 			//response
 			w := httptest.NewRecorder()
 			//handlerの準備

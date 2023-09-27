@@ -15,6 +15,9 @@ import (
 )
 
 func Test_RefreshHandler(t *testing.T) {
+	//cognitoに認証移行したので不要になりました
+	t.Skip()
+
 	h.DB = TestDB.Begin()
 	defer h.DB.Rollback()
 	users, _ := models.InsertTestUsersOnly(h.DB)

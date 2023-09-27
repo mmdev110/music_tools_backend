@@ -77,39 +77,26 @@ func (h *HandlersConf) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 // accesss_tokenによる認証
 // UserHandlerにtoken更新をつけたもの
-func (h *HandlersConf) SignInWithTokenHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersConf) AuthWithTokenHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.ErrorJSON(w, customError.Others, fmt.Errorf("method %s not allowed for refresh", r.Method))
+		return
+	}
+	uuid, email := utils.GetParamsFromContext(r.Context())
+	//uuidからuserを探す
 	user := h.getUserFromContext(r.Context())
-	fmt.Printf("userid in handler = %d\n", user.ID)
+	//トークンが正常で、userいなければ作成して良い
+	if user == nil {
+		newUser, err := models.CreateUser(h.DB, uuid, email)
+		if err != nil {
+			utils.ErrorJSON(w, customError.Others, err)
+		}
+		user = &newUser
 
-	//generate jwt
-	accessToken, _ := user.GenerateToken("access")
-	refreshToken, _ := user.GenerateToken("refresh")
-	user.AccessToken = accessToken
-	if err := user.Update(h.DB); err != nil {
-		utils.ErrorJSON(w, customError.Others, err)
-		return
 	}
-
-	//session生成
-	session := models.Session{}
-	result := session.GetByUserID(h.DB, user.ID)
-	if result.RowsAffected == 0 {
-		session.UserId = user.ID
-	}
-	session.SessionString = uuid.NewString()
-	session.RefreshToken = "Bearer " + refreshToken
-	if err := session.Update(h.DB); err != nil {
-		utils.ErrorJSON(w, customError.Others, err)
-		return
-	}
-	//sessionIdをクッキーにセットさせる
-	//httponly, secure, samesite
-	cookie := utils.GetSessionCookie(session.SessionString, conf.REFRESH_DURATION)
-	http.SetCookie(w, cookie)
-
+	//userを返す
 	type Response = struct {
-		User        *models.User `json:"user"`
-		AccessToken string       `json:"access_token"`
+		User *models.User `json:"user"`
 	}
-	utils.ResponseJSON(w, &Response{user, accessToken}, http.StatusOK)
+	utils.ResponseJSON(w, &Response{user}, http.StatusOK)
 }
